@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
-    <div className="relative overflow-hidden bg-white pt-[72px]">
+    <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-[72px]">
       <div className="relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="text-center">
@@ -19,7 +19,7 @@ const Hero = () => {
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link
                 to="/diensten"
-                className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors duration-200 flex items-center gap-2"
+                className="rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 flex items-center gap-2"
               >
                 Ontdek onze diensten
                 <ArrowRight className="h-4 w-4" />
