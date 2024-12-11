@@ -40,8 +40,8 @@ const FAQ = () => {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="mt-8 text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+          <div className="mt-8 mb-12 text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
               Veelgestelde Vragen
             </h1>
           </div>

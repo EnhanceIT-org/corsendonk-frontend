@@ -19,8 +19,8 @@ const Projects = () => {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="mt-8 text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+          <div className="mt-8 mb-12 text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
               Eerdere Projecten
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">
