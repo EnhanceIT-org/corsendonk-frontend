@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { ChevronRight } from "lucide-react";
 
 const FAQ = () => {
   const faqs = [
@@ -24,29 +25,32 @@ const FAQ = () => {
   ];
 
   return (
-    <main className="pt-[72px]">
-      <div className="bg-gradient-to-tr from-blue-50 via-indigo-50 to-purple-50">
+    <main className="min-h-screen pt-[72px]">
+      <div className="bg-gradient-to-tr from-blue-50 via-indigo-50 to-purple-50 min-h-[calc(100vh-72px)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Breadcrumb>
-            <BreadcrumbList>
+            <BreadcrumbList className="flex items-center space-x-1">
               <BreadcrumbItem>
-                <BreadcrumbLink as={Link} to="/">Home</BreadcrumbLink>
+                <Link to="/" className="text-gray-600 hover:text-primary">Home</Link>
               </BreadcrumbItem>
-              <BreadcrumbItem>FAQ</BreadcrumbItem>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <BreadcrumbItem>
+                <span className="text-gray-900 font-medium">FAQ</span>
+              </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
 
           <div className="mt-8 text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-6">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
               Veelgestelde Vragen
             </h1>
           </div>
 
           <div className="mt-16 max-w-3xl mx-auto">
-            <Accordion type="single" collapsible className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
+            <Accordion type="single" collapsible className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
               {faqs.map((faq, index) => (
                 <AccordionItem key={index} value={`item-${index}`}>
-                  <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
+                  <AccordionTrigger className="text-left hover:text-primary transition-colors">{faq.question}</AccordionTrigger>
                   <AccordionContent>{faq.answer}</AccordionContent>
                 </AccordionItem>
               ))}
