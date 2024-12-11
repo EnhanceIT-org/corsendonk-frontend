@@ -1,23 +1,27 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 
 const About = () => {
   return (
     <main className="pt-[72px]">
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-[calc(100vh-72px)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink as={Link} to="/">Home</BreadcrumbLink>
+                <Link to="/" className="text-gray-600 hover:text-primary">Home</Link>
               </BreadcrumbItem>
-              <BreadcrumbItem>Over Ons</BreadcrumbItem>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <BreadcrumbItem>
+                <span className="text-gray-900">Over Ons</span>
+              </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          
+
           <div className="mt-8 text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-6">
-              Wie wij zijn
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+              Over EnhanceIT
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">
               EnhanceIT is opgericht door twee gepassioneerde IT-professionals met een gedeelde visie: 

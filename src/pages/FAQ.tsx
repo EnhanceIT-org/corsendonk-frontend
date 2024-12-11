@@ -25,17 +25,17 @@ const FAQ = () => {
   ];
 
   return (
-    <main className="min-h-screen pt-[72px]">
-      <div className="bg-gradient-to-tr from-blue-50 via-indigo-50 to-purple-50 min-h-[calc(100vh-72px)]">
+    <main className="pt-[72px]">
+      <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-[calc(100vh-72px)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Breadcrumb>
-            <BreadcrumbList className="flex items-center space-x-1">
+            <BreadcrumbList>
               <BreadcrumbItem>
                 <Link to="/" className="text-gray-600 hover:text-primary">Home</Link>
               </BreadcrumbItem>
               <ChevronRight className="h-4 w-4 text-gray-400" />
               <BreadcrumbItem>
-                <span className="text-gray-900 font-medium">FAQ</span>
+                <span className="text-gray-900">FAQ</span>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
