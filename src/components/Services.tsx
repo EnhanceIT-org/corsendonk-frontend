@@ -3,6 +3,7 @@ import {
   FileSpreadsheet,
   GitFork,
   Workflow,
+  ArrowRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
