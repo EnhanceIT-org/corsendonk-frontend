@@ -24,18 +24,22 @@ const Projects = () => {
               Eerdere Projecten
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">
-              Hier tonen we enkele van onze projecten die bedrijven hebben geholpen hun processen te optimaliseren. 
-              Momenteel werken we aan het verzamelen van cases die we kunnen delen. Kom binnenkort terug voor meer informatie!
+            Hier presenteren we een selectie van onze projecten waarmee we bedrijven hebben geholpen hun processen te optimaliseren. 
+            Momenteel werken we eraan om meer praktijkvoorbeelden te verzamelen die we binnenkort met je kunnen delen.
             </p>
           </div>
 
           <div className="mt-16 grid gap-8 md:grid-cols-2">
             {/* Placeholder Project 1 */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-              <div className="h-48 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg mb-6"></div>
-              <h3 className="text-xl font-semibold mb-4">Project Naam 1</h3>
+              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                <img src="LI006.png" className="absolute top-0 left-0 h-full w-full rounded-lg object-cover" alt="" />
+              </div>
+              <h3 className="pt-4 text-3xl font-semibold mb-4">Tattletoad</h3>
               <p className="text-gray-600">
-                Korte beschrijving van het project en de oplossing. Binnenkort meer details beschikbaar.
+                  Een project waarbij we een spel ontwikkelden om kinderen op een speelse manier te leren lezen. 
+                  Tegelijkertijd maakten we het werk van leerkrachten eenvoudiger door leestesten en verhalen volledig te automatiseren. 
+                  Daarnaast zorgden we voor een helder overzicht van de prestaties van de leerlingen, zodat leerkrachten deze makkelijk konden opvolgen.
               </p>
             </div>
 
