@@ -86,8 +86,9 @@ const Contact = () => {
               <div className="mt-8 pt-8 border-t">
                 <div className="flex items-center justify-center gap-2 text-gray-600">
                   <Mail className="h-5 w-5" />
-                  <a href="mailto:info@enhanceit.be" className="hover:text-primary">
-                    info@enhanceit.be
+                  <a href="mailto:emile.descheemaeker@enhanceit.be" className="hover:text-primary">
+                  emile.descheemaeker@enhanceit.be
+
                   </a>
                 </div>
               </div>
