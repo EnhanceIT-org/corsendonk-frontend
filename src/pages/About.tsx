@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 
 const About = () => {
   return (
-    <main className="pt-[72px]">
+    <main className="pt-[60px]">
       <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-[calc(100vh-72px)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Breadcrumb>
@@ -19,8 +19,8 @@ const About = () => {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="mt-8 mb-12 text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+          <div className="mt-8 text-center">
+            <h1 className="pb-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
               Over EnhanceIT
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">
@@ -34,15 +34,14 @@ const About = () => {
             <div className="text-center">
               <div className="relative mx-auto h-40 w-40 overflow-hidden rounded-full bg-gradient-to-r from-blue-400 to-indigo-400">
                 <img
-                  src="/placeholder.svg"
+                  src="/pf.jpeg"
                   alt="Team Member 1"
                   className="h-full w-full object-cover"
                 />
               </div>
-              <h3 className="mt-6 text-xl font-semibold">John Doe</h3>
+              <h3 className="mt-6 text-xl font-semibold">Raynaud Cornille</h3>
               <p className="mt-4 text-gray-600 leading-relaxed">
-                Ik ben John, een masterstudent IT met een passie voor programmeren en automatisering. 
-                Mijn doel is om bedrijven te ondersteunen bij het oplossen van complexe problemen op een eenvoudige manier.
+              Ik ben Raynaud, een masterstudent IT met een passie voor programmeren en automatisering. Ik haal energie uit het oplossen van complexe problemen en streef ernaar om dit op een eenvoudige en effectieve manier te doen. Naast mijn werk in IT ben ik een actief sporter, lees ik graag en help ik een <a href="https://www.ugentracing.be/" target="_blank" rel="noopener noreferrer">raceauto</a> bouwen!
               </p>
             </div>
 
@@ -55,7 +54,7 @@ const About = () => {
                   className="h-full w-full object-cover"
                 />
               </div>
-              <h3 className="mt-6 text-xl font-semibold">Jane Smith</h3>
+              <h3 className="mt-6 text-xl font-semibold">Emile Descheemaeker</h3>
               <p className="mt-4 text-gray-600 leading-relaxed">
                 Ik ben Jane, gespecialiseerd in informatietechnologie en procesoptimalisatie. 
                 Ik streef ernaar om technologie toegankelijk en effectief te maken voor KMO's.

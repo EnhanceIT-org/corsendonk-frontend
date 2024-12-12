@@ -27,7 +27,7 @@ const Services = () => {
   ];
 
   return (
-    <main className="pt-[72px]">
+    <main className="pt-[60px]">
       <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-[calc(100vh-72px)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Breadcrumb>
@@ -42,9 +42,9 @@ const Services = () => {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="mt-8 mb-12 text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-              Wat wij bieden
+          <div className="mt-8 text-center">
+            <h1 className="pb-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+              Wat Wij Bieden
             </h1>
           </div>
 
