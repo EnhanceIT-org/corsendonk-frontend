@@ -1,8 +1,21 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
 import { Mail, ChevronRight } from "lucide-react";
+import emailjs from '@emailjs/browser';
 
 const Contact = () => {
+
+  function sendEmail(e) {
+    e.preventDefault();    //This is important, i'm not sure why, but the email won't send without it
+    emailjs.sendForm('service_476n24e', 'template_p5xjqvn', e.target, 'V2CVWCO5koDdiRPRq')
+      .then((result) => {
+        console.log(result);  
+        window.location.reload()  //This is if you still want the page to reload (since e.preventDefault() cancelled that behavior) 
+      }, (error) => {
+          console.log(error);
+      });
+  }
+
   return (
     <main className="pt-[60px]">
       <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-[calc(100vh-72px)]">
@@ -30,14 +43,14 @@ const Contact = () => {
 
           <div className="mt-16 max-w-xl mx-auto">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-              <form className="space-y-6">
+              <form className="space-y-6" id="contact-form" onSubmit={sendEmail}>
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                     Naam
                   </label>
                   <input
                     type="text"
-                    id="name"
+                    name="name"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                   />
                 </div>
@@ -48,7 +61,7 @@ const Contact = () => {
                   </label>
                   <input
                     type="email"
-                    id="email"
+                    name="email"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                   />
                 </div>
@@ -59,7 +72,7 @@ const Contact = () => {
                   </label>
                   <input
                     type="text"
-                    id="company"
+                    name="company"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                   />
                 </div>
@@ -69,18 +82,17 @@ const Contact = () => {
                     Bericht
                   </label>
                   <textarea
-                    id="message"
+                    name="message"
                     rows={4}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                   ></textarea>
                 </div>
 
-                <button
+                <input
                   type="submit"
+                  value="Verstuur"
                   className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-3 rounded-full hover:from-blue-600 hover:to-indigo-600 transition-all"
-                >
-                  Verstuur
-                </button>
+                />
               </form>
 
               <div className="mt-8 pt-8 border-t">
