@@ -49,15 +49,18 @@ const About = () => {
             <div className="text-center">
               <div className="relative mx-auto h-40 w-40 overflow-hidden rounded-full bg-gradient-to-r from-blue-400 to-indigo-400">
                 <img
-                  src="/placeholder.svg"
+                  src="/pf_emile.jpeg"
                   alt="Team Member 2"
                   className="h-full w-full object-cover"
                 />
               </div>
               <h3 className="mt-6 text-xl font-semibold">Emile Descheemaeker</h3>
               <p className="mt-4 text-gray-600 leading-relaxed">
-                Ik ben Jane, gespecialiseerd in informatietechnologie en procesoptimalisatie. 
-                Ik streef ernaar om technologie toegankelijk en effectief te maken voor KMO's.
+              Ik ben Emile, recent afgestudeerd aan de Universiteit Gent met een master in Management en IT.
+              Ik specialiseer me in het slaan van bruggen tussen bedrijfsdoelstellingen en de IT-oplossingen die nodig
+              zijn om die doelen te realiseren.
+              Mijn sterkte ligt in het optimaliseren van processen 
+              en het verbinden van strategie met technologie om duurzame waarde te creëren. 
               </p>
             </div>
           </div>

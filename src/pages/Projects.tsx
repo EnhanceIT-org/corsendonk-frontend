@@ -24,8 +24,8 @@ const Projects = () => {
               Eerdere Projecten
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">
-            Hier presenteren we een selectie van onze projecten waarmee we bedrijven hebben geholpen hun processen te optimaliseren. 
-            Momenteel werken we eraan om meer praktijkvoorbeelden te verzamelen die we binnenkort met je kunnen delen.
+            Hier presenteren we een selectie van onze projecten waarmee we bedrijven hebben geholpen hun processen te optimaliseren, tijd te besparen en de efficiëntie te verhogen. 
+            
             </p>
           </div>
 
@@ -45,12 +45,26 @@ const Projects = () => {
 
             {/* Placeholder Project 2 */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-              <div className="h-48 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-lg mb-6"></div>
-              <h3 className="text-xl font-semibold mb-4">Project Naam 2</h3>
+              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                <img src="dashboard2.png" className="absolute top-0 left-0 h-full w-full rounded-lg object-cover" alt="" />
+              </div>
+              <h3 className="pt-4 text-3xl font-semibold mb-4">Data dashboards</h3>
               <p className="text-gray-600">
-                Korte beschrijving van het project en de oplossing. Binnenkort meer details beschikbaar.
+              We ontwikkelden een op maat gemaakt dashboard specifiek voor de hotelindustrie. Dit dashboard biedt een helder overzicht van cruciale statistieken zoals omzet, bezettingsgraad, gemiddelde kamerprijs en meer. Het stelt hotelmanagers in staat om eenvoudig historische data te analyseren en trends te identificeren. Dankzij de gebruiksvriendelijke interface en op maat gemaakte grafieken krijg je in één oogopslag de informatie die nodig is om strategische beslissingen te nemen en de prestaties van jouw hotel te optimaliseren.
               </p>
             </div>
+
+            {/* Placeholder Project 3 */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                <img src="reportgenerator.png" className="absolute top-0 left-0 h-full w-full rounded-lg object-cover" alt="" />
+              </div>
+              <h3 className="pt-4 text-3xl font-semibold mb-4">Hotel Client Report Generator</h3>
+              <p className="text-gray-600">
+              We ontwikkelden een gebruiksvriendelijke webapp waarmee gebruikers eenvoudig rapporten kunnen genereren voor hotels binnen hun account. De interface toont een lijst met beschikbare hotels, waarbij de gebruiker kan selecteren voor welke hotels hij rapporten wil genereren. Met één klik op 'Genereer rapport' verwerkt de backend de gegevens en creëert een gedetailleerd PDF-rapport, klaar om naar de klant gestuurd te worden!. Uren werk om klantenrapporten samen te stellen werden via onze oplossing bespaard.
+              </p>
+            </div>
+
           </div>
         </div>
       </div>
