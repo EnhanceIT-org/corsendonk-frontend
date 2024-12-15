@@ -3,20 +3,27 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
   },
+  build: {
+    outDir: "dist", // Output folder for production build
+  },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === "development" && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  // Add this for proper routing fallback in development and production
+  preview: {
+    port: 8080, // Ensures preview server works with the same port
+    // Fallback for SPA routes
+    historyApiFallback: true,
   },
 }));
