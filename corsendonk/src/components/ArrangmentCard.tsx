@@ -1,15 +1,31 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-interface RoomCardProps {
+interface ArrangmentCardProps {
   title: string;
   description: string;
   price: number;
   image: string;
   amenities: string[];
+  selectedArrangement: string | null;
+  setSelectedArrangement: (arrangment: string | null) => void;
 }
 
-export function RoomCard({ title, description, price, image, amenities }: RoomCardProps) {
+export function ArrangmentCard({
+  title,
+  description,
+  price,
+  image,
+  amenities,
+  selectedArrangement,
+  setSelectedArrangement,
+}: RoomCardProps) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg animate-fade-in">
       <div className="aspect-video relative overflow-hidden">
@@ -40,7 +56,17 @@ export function RoomCard({ title, description, price, image, amenities }: RoomCa
           ${price}
           <span className="text-sm text-muted-foreground">/night</span>
         </div>
-        <Button className="bg-accent hover:bg-accent/90">Select Room</Button>
+        <Button
+          onClick={() => {
+            setSelectedArrangement(title);
+            console.log("Arrangment selected!");
+          }}
+          className={`hover:bg-gray-500 transition-all duration-200 ${
+            selectedArrangement === title ? "bg-gray-500" : "bg-accent"
+          }`}
+        >
+          Select Arrangment
+        </Button>
       </CardFooter>
     </Card>
   );
