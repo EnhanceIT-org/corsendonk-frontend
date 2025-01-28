@@ -25,7 +25,7 @@ export function ArrangmentCard({
   amenities,
   selectedArrangement,
   setSelectedArrangement,
-}: RoomCardProps) {
+}: ArrangmentCardProps) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg animate-fade-in">
       <div className="aspect-video relative overflow-hidden">

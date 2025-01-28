@@ -41,6 +41,17 @@ const Index = () => {
     setCurrentStep((prev) => prev + 1);
   };
 
+  const handleToConfirmation = () => {
+    //TODO: add a prettier confirmation
+    const confirmed = window.confirm(
+      `Are you sure you want to select room ${selectedArrangement}?`,
+    );
+    if (confirmed) {
+      console.log(selectedArrangement); // Log the selected arrangement
+      setCurrentStep((prev) => prev + 1);
+    }
+  };
+
   const handlePrevStep = () => {
     setCurrentStep((prev) => prev - 1);
   };
@@ -138,7 +149,9 @@ const Index = () => {
               <Button variant="outline" onClick={handlePrevStep}>
                 Back
               </Button>
-              <Button onClick={handleNextStep}>Continue to Confirmation</Button>
+              <Button onClick={handleToConfirmation}>
+                Continue to Confirmation
+              </Button>
             </div>
           </div>
         )}
