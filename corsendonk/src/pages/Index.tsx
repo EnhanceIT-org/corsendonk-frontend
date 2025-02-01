@@ -3,7 +3,11 @@ import { OccupancySelector } from "@/components/OccupancySelector";
 import { ArrangmentCard } from "@/components/ArrangmentCard";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Check, CircleDot } from "lucide-react";
+import { fetchWithBaseUrl } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
+import axios from "axios";
 
 const SAMPLE_ROOMS = [
   {
@@ -35,10 +39,41 @@ const SAMPLE_ROOMS = [
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedArrangement, setSelectedArrangement] = useState(null); // State to hold the selected room
+  const [arrangement, setArrangement] = useState(3); // Default to 3
+  const today = new Date();
+  const [startDate, setStartDate] = useState<DateRange | undefined>({
+    from: today,
+    to: today,
+  }); // State for start date
+  const [rooms, setRooms] = useState(1);
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
 
-  const handleNextStep = () => {
-    console.log(selectedArrangement);
-    setCurrentStep((prev) => prev + 1);
+  const handleAdultsChange = (adults: string) => {
+    setAdults(Number(adults));
+  };
+
+  const handleChildrenChange = (children: string) => {
+    setChildren(Number(children));
+  };
+
+  const handlePrevStep = () => {
+    setCurrentStep((prev) => prev - 1);
+  };
+
+  const handleToRoomSelectionStep = () => {
+    requestPossibleArrangments.mutate();
+    setCurrentStep(2);
+  };
+
+  const handleArrangementChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    setArrangement(Number(event.target.value));
+  };
+
+  const handleRoomsChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setRooms(Number(event.target.value));
   };
 
   const handleToConfirmation = () => {
@@ -52,9 +87,48 @@ const Index = () => {
     }
   };
 
-  const handlePrevStep = () => {
-    setCurrentStep((prev) => prev - 1);
-  };
+  // Example of a query
+  const initialQuery = useQuery({
+    queryKey: ["initialSetup"],
+    queryFn: async () => {
+      const response = await fetchWithBaseUrl(
+        "/reservations/initial-setup-basics/",
+      );
+      return response.json();
+    },
+  });
+  // post request with data
+  const requestPossibleArrangments = useMutation({
+    mutationFn: async () => {
+      return axios.post("http://localhost:8000/reservations/availability/", {
+        startDate: `${startDate?.from.getDate().toString().padStart(2, "0")}-${(
+          startDate?.from.getMonth() + 1
+        )
+          .toString()
+          .padStart(2, "0")}-${startDate?.from.getFullYear()}`, // (DD-MM-YYYY)
+        length: arrangement,
+        guests: {
+          adults: adults,
+          children: children,
+        },
+        amountOfRooms: rooms,
+        useHalfBoard: true,
+      });
+    },
+    onSuccess: (data) => {
+      console.log("Request successful:", data);
+    },
+    onError: (error) => {
+      console.error("Request failed:", error);
+    },
+  });
+
+  if (initialQuery.isPending) {
+    return "Loading... initial";
+  }
+  if (initialQuery.isError) {
+    return <div>Error: {initialQuery.error.message}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-secondary">
@@ -118,14 +192,41 @@ const Index = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm space-y-6 animate-fade-in">
             <div>
               <h2 className="text-lg font-semibold mb-4">Select Dates</h2>
-              <DateRangePicker />
+              <DateRangePicker onChange={(date) => setStartDate(date)} />
             </div>
             <div>
               <h2 className="text-lg font-semibold mb-4">Number of Guests</h2>
-              <OccupancySelector />
+              <OccupancySelector
+                adults={adults}
+                children={children}
+                onAdultsChange={handleAdultsChange}
+                onChildrenChange={handleChildrenChange}
+              />
             </div>
+            {/* New Arrangement Picker */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4">
+                Select Arrangement Length
+              </h2>
+              <select value={arrangement} onChange={handleArrangementChange}>
+                <option value={3}>3</option>
+                <option value={4}>4</option>
+              </select>
+            </div>
+            {/* Amount of rooms picker */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Amount of Rooms</h2>
+              <select value={rooms} onChange={handleRoomsChange}>
+                {[...Array(adults + children).keys()].map((i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex justify-end mt-6">
-              <Button onClick={handleNextStep}>
+              <Button onClick={handleToRoomSelectionStep}>
                 Continue to Room Selection
               </Button>
             </div>
@@ -135,6 +236,17 @@ const Index = () => {
         {/* Step 2: Room Selection */}
         {currentStep === 2 && (
           <div className="space-y-6 animate-fade-in">
+            {requestPossibleArrangments.isPending && (
+              <div>Loading arrangements...</div>
+            )}
+            {requestPossibleArrangments.isError && (
+              <div className="text-red-500">
+                Error: {requestPossibleArrangments.error.message}
+              </div>
+            )}
+
+            {requestPossibleArrangments.isSuccess && <div>Succes</div>}
+
             <div className="grid gap-6">
               {SAMPLE_ROOMS.map((room) => (
                 <ArrangmentCard

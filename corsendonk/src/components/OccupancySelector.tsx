@@ -7,12 +7,22 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
-export function OccupancySelector() {
+export function OccupancySelector({
+  adults,
+  children,
+  onAdultsChange,
+  onChildrenChange,
+}: {
+  adults: number;
+  children: number;
+  onAdultsChange: (adults: string) => void;
+  onChildrenChange: (children: string) => void;
+}) {
   return (
     <div className="grid gap-4">
       <div className="space-y-2">
         <Label>Adults</Label>
-        <Select defaultValue="2">
+        <Select defaultValue={adults.toString()} onValueChange={onAdultsChange}>
           <SelectTrigger>
             <SelectValue placeholder="Select number of adults" />
           </SelectTrigger>
@@ -27,7 +37,10 @@ export function OccupancySelector() {
       </div>
       <div className="space-y-2">
         <Label>Children</Label>
-        <Select defaultValue="0">
+        <Select
+          defaultValue={children.toString()}
+          onValueChange={onChildrenChange}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select number of children" />
           </SelectTrigger>
