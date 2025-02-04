@@ -1,3 +1,4 @@
+// src/pages/Index.tsx
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { OccupancySelector } from "@/components/OccupancySelector";
 import { ArrangmentCard } from "@/components/ArrangmentCard";
@@ -41,8 +42,8 @@ const Index = () => {
   // STATE DECLARATIONS
   // -------------------------
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedArrangement, setSelectedArrangement] = useState(null);
-  const [arrangement, setArrangement] = useState(3); // Arrangement length: 3 or 4 nights
+  const [selectedArrangement, setSelectedArrangement] = useState<any>(null);
+  const [arrangement, setArrangement] = useState(3); // 3 or 4 nights
   const today = new Date();
   const [startDate, setStartDate] = useState<DateRange | undefined>({
     from: today,
@@ -52,38 +53,25 @@ const Index = () => {
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [availableArrangements, setAvailableArrangements] = useState<any>(null);
+  const [pricingData, setPricingData] = useState<any>(null);
   const [isLoadingArrangements, setIsLoadingArrangements] = useState(false);
   const [arrangementError, setArrangementError] = useState<any>(null);
 
   // -------------------------
   // HANDLER FUNCTIONS
   // -------------------------
-  const handleAdultsChange = (adults: string) => {
-    setAdults(Number(adults));
-  };
-
-  const handleChildrenChange = (children: string) => {
-    setChildren(Number(children));
-  };
-
-  const handlePrevStep = () => {
-    setCurrentStep((prev) => prev - 1);
-  };
-
-  const handleArrangementChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleAdultsChange = (val: string) => setAdults(Number(val));
+  const handleChildrenChange = (val: string) => setChildren(Number(val));
+  const handlePrevStep = () => setCurrentStep((prev) => prev - 1);
+  const handleArrangementChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
     setArrangement(Number(e.target.value));
-  };
-
-  const handleRoomsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleRoomsChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
     setRooms(Number(e.target.value));
-  };
 
-  // Format the start date for the GET endpoint (YYYY-MM-DD)
+  // Format dates for API calls.
   const formattedStartDateGET = startDate?.from
     ? startDate.from.toISOString().split("T")[0]
     : null;
-
-  // Format the start date for the POST payload (DD-MM-YYYY)
   const formattedStartDatePOST = startDate?.from
     ? `${startDate.from.getDate().toString().padStart(2, "0")}-${(
         startDate.from.getMonth() + 1
@@ -92,11 +80,8 @@ const Index = () => {
         .padStart(2, "0")}-${startDate.from.getFullYear()}`
     : null;
 
-  // -------------------------
-  // REACT QUERY: GET CONFIG DATA
-  // -------------------------
-  // This query is defined with enabled: false so it does not run immediately.
-  // We’ll trigger it manually when the user clicks "Continue to Room Selection."
+  // React Query: GET full configuration (without pricing)
+  // (enabled: false so it runs only when manually triggered)
   const {
     data: initialSetupData,
     refetch: fetchInitialSetup,
@@ -108,7 +93,7 @@ const Index = () => {
       if (!formattedStartDateGET) {
         throw new Error("No start date provided");
       }
-      // Note the trailing slash to avoid Django's 301 redirect.
+      // Trailing slash avoids Django 301 redirects.
       const response = await fetchWithBaseUrl(
         `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangement}`
       );
@@ -120,34 +105,32 @@ const Index = () => {
     enabled: false,
   });
 
-  // -------------------------
-  // HANDLER TO MOVE TO ROOM SELECTION STEP
-  // -------------------------
+  // Handler: Called when clicking "Continue to Room Selection"
+  // This now:
+  // 1. Calls the config endpoint.
+  // 2. Calls the availability endpoint twice.
+  // 3. Immediately calls the new pricing endpoint for each availability response.
   const handleToRoomSelectionStep = async () => {
     try {
       setArrangementError(null);
       setIsLoadingArrangements(true);
 
-      // 1. Manually trigger the GET call for configuration data.
+      // 1. Fetch configuration data.
       const configResponse = await fetchInitialSetup();
-      // (You can use configResponse.data later if needed.)
 
-      // 2. Build the payload for the availability endpoint.
+      // 2. Build payload for availability.
       if (!formattedStartDatePOST) {
         throw new Error("Start date is missing for availability call");
       }
       const payload = {
         startDate: formattedStartDatePOST,
         length: arrangement,
-        guests: {
-          adults,
-          children,
-        },
+        guests: { adults, children },
         amountOfRooms: rooms,
       };
 
-      // 3. Make two POST requests concurrently for half board true and false.
-      const [availabilityHBTrue, availabilityHBFalse] = await Promise.all([
+      // 3. Call availability endpoint twice.
+      const [availHBTrue, availHBFalse] = await Promise.all([
         axios.post("http://localhost:8000/reservations/availability/", {
           ...payload,
           useHalfBoard: true,
@@ -158,14 +141,39 @@ const Index = () => {
         }),
       ]);
 
-      // 4. Save the returned arrangements along with the config data.
+      // 4. Save availability responses along with config.
       setAvailableArrangements({
-        halfBoardTrue: availabilityHBTrue.data,
-        halfBoardFalse: availabilityHBFalse.data,
+        halfBoardTrue: availHBTrue.data,
+        halfBoardFalse: availHBFalse.data,
         config: configResponse.data,
       });
 
-      // 5. Advance to Step 2 (Room Selection).
+      // 5. Immediately call the new pricing endpoint for each optimal sequence.
+      // We assume that each availability response contains an "optimal_sequence" field.
+      const optimalTrue = availHBTrue.data.optimal_sequence;
+      const optimalFalse = availHBFalse.data.optimal_sequence;
+
+      // Call pricing endpoint for both sequences concurrently.
+      const [pricingTrueRes, pricingFalseRes] = await Promise.all([
+        axios.post("http://localhost:8000/reservations/pricing/", {
+          selectedArrangement: optimalTrue,
+        }),
+        axios.post("http://localhost:8000/reservations/pricing/", {
+          selectedArrangement: optimalFalse,
+        }),
+      ]);
+
+      // Save the pricing data in state.
+      setPricingData({
+        halfBoardTrue: pricingTrueRes.data,
+        halfBoardFalse: pricingFalseRes.data,
+      });
+
+      // Optionally, you can auto-select one arrangement.
+      // For example, here we default to the halfBoardTrue sequence:
+      setSelectedArrangement(optimalTrue);
+
+      // Advance to Step 2.
       setCurrentStep(2);
     } catch (error: any) {
       console.error("Error in room selection step:", error);
@@ -175,19 +183,6 @@ const Index = () => {
     }
   };
 
-  const handleToConfirmation = () => {
-    const confirmed = window.confirm(
-      `Are you sure you want to select room ${selectedArrangement}?`
-    );
-    if (confirmed) {
-      console.log("Selected arrangement:", selectedArrangement);
-      setCurrentStep(3);
-    }
-  };
-
-  // -------------------------
-  // RENDERING
-  // -------------------------
   return (
     <div className="min-h-screen bg-secondary">
       <header className="bg-white shadow-sm">
@@ -256,9 +251,7 @@ const Index = () => {
               />
             </div>
             <div>
-              <h2 className="text-lg font-semibold mb-4">
-                Select Arrangement Length
-              </h2>
+              <h2 className="text-lg font-semibold mb-4">Select Arrangement Length</h2>
               <select value={arrangement} onChange={handleArrangementChange}>
                 <option value={3}>3</option>
                 <option value={4}>4</option>
@@ -282,13 +275,11 @@ const Index = () => {
           </div>
         )}
 
-        {/* Step 2: Room Selection */}
+        {/* Step 2: Room Selection & Pricing */}
         {currentStep === 2 && (
           <div className="space-y-6 animate-fade-in">
             {isLoadingArrangements && (
-              <div className="mb-4 text-blue-600">
-                Loading arrangements...
-              </div>
+              <div className="mb-4 text-blue-600">Loading arrangements...</div>
             )}
             {arrangementError && (
               <div className="mb-4 text-red-500">
@@ -297,13 +288,15 @@ const Index = () => {
             )}
             {availableArrangements && (
               <div>
-                <h2 className="text-xl font-semibold mb-4">
-                  Available Arrangements
-                </h2>
+                <h2 className="text-xl font-semibold mb-4">Available Arrangements</h2>
                 <div>
                   <h3 className="text-lg font-medium">Half Board: Yes</h3>
                   <pre className="bg-gray-100 p-2 rounded">
                     {JSON.stringify(availableArrangements.halfBoardTrue, null, 2)}
+                  </pre>
+                  <h4 className="mt-2 font-medium">Nightly Pricing:</h4>
+                  <pre className="bg-gray-100 p-2 rounded">
+                    {JSON.stringify(pricingData?.halfBoardTrue, null, 2)}
                   </pre>
                 </div>
                 <div className="mt-4">
@@ -311,11 +304,13 @@ const Index = () => {
                   <pre className="bg-gray-100 p-2 rounded">
                     {JSON.stringify(availableArrangements.halfBoardFalse, null, 2)}
                   </pre>
+                  <h4 className="mt-2 font-medium">Nightly Pricing:</h4>
+                  <pre className="bg-gray-100 p-2 rounded">
+                    {JSON.stringify(pricingData?.halfBoardFalse, null, 2)}
+                  </pre>
                 </div>
               </div>
             )}
-
-            {/* (Optional) You can still display SAMPLE_ROOMS or merge these with the arrangements */}
             <div className="grid gap-6">
               {SAMPLE_ROOMS.map((room) => (
                 <ArrangmentCard
@@ -330,7 +325,7 @@ const Index = () => {
               <Button variant="outline" onClick={handlePrevStep}>
                 Back
               </Button>
-              <Button onClick={handleToConfirmation}>
+              <Button onClick={() => setCurrentStep(3)}>
                 Continue to Confirmation
               </Button>
             </div>
@@ -341,7 +336,18 @@ const Index = () => {
         {currentStep === 3 && (
           <div className="bg-white p-6 rounded-lg shadow-sm animate-fade-in">
             <h2 className="text-xl font-semibold mb-4">Booking Summary</h2>
-            {/* Booking summary details go here */}
+            <div>
+              <h3>Selected Arrangement:</h3>
+              <pre className="bg-gray-100 p-2 rounded">
+                {JSON.stringify(selectedArrangement, null, 2)}
+              </pre>
+            </div>
+            <div className="mt-4">
+              <h3>Nightly Pricing Information:</h3>
+              <pre className="bg-gray-100 p-2 rounded">
+                {JSON.stringify(pricingData, null, 2)}
+              </pre>
+            </div>
             <div className="flex justify-between mt-6">
               <Button variant="outline" onClick={handlePrevStep}>
                 Back
