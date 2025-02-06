@@ -1,4 +1,3 @@
-// src/pages/Index.tsx
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { OccupancySelector } from "@/components/OccupancySelector";
 import { ArrangmentCard } from "@/components/ArrangmentCard";
@@ -10,6 +9,7 @@ import { fetchWithBaseUrl } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import axios from "axios";
 
+// Dummy placeholder – you can remove SAMPLE_ROOMS once your UI is complete.
 const SAMPLE_ROOMS = [
   {
     title: "Deluxe King Room",
@@ -19,22 +19,7 @@ const SAMPLE_ROOMS = [
       "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80",
     amenities: ["King Bed", "City View", "Free WiFi", "Mini Bar"],
   },
-  {
-    title: "Superior Twin Room",
-    description: "Comfortable room with two single beds",
-    price: 249,
-    image:
-      "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&q=80",
-    amenities: ["Twin Beds", "Garden View", "Free WiFi", "Work Desk"],
-  },
-  {
-    title: "Executive Suite",
-    description: "Luxury suite with separate living area",
-    price: 499,
-    image:
-      "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80",
-    amenities: ["King Bed", "Living Room", "Ocean View", "Bathtub"],
-  },
+  // ... more sample rooms if needed
 ];
 
 const Index = () => {
@@ -52,10 +37,77 @@ const Index = () => {
   const [rooms, setRooms] = useState(1);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
+
+  // These state vars hold our combined responses from our API calls:
+  // availableArrangements contains the two availability responses and the raw config.
   const [availableArrangements, setAvailableArrangements] = useState<any>(null);
+  // pricingData holds the pricing responses (one for half board true and one for false)
   const [pricingData, setPricingData] = useState<any>(null);
   const [isLoadingArrangements, setIsLoadingArrangements] = useState(false);
   const [arrangementError, setArrangementError] = useState<any>(null);
+
+  // -------------------------
+  // HELPER FUNCTIONS
+  // -------------------------
+  // Given a hotel key and a category id, look up the corresponding category details from the raw config.
+  const getCategoryDetails = (hotelKey: string, categoryId: string) => {
+    // availableArrangements.config is expected to be an object keyed by hotel key.
+    if (
+      availableArrangements &&
+      availableArrangements.config &&
+      availableArrangements.config[hotelKey] &&
+      availableArrangements.config[hotelKey].rawConfig &&
+      availableArrangements.config[hotelKey].rawConfig.Configurations &&
+      availableArrangements.config[hotelKey].rawConfig.Configurations.length > 0
+    ) {
+      const rawConfig = availableArrangements.config[hotelKey].rawConfig;
+      const imageBaseUrl = rawConfig.ImageBaseUrl;
+      // Assume the first configuration's Enterprise object contains the Categories.
+      const categories =
+        rawConfig.Configurations[0].Enterprise.Categories || [];
+      const category = categories.find((cat: any) => cat.Id === categoryId);
+      if (category) {
+        const name = category.Name["en-GB"] || "Unknown";
+        const imageId =
+          category.ImageIds && category.ImageIds.length > 0
+            ? category.ImageIds[0]
+            : null;
+        const imageUrl = imageId ? `${imageBaseUrl}/${imageId}` : null;
+        return { name, imageUrl };
+      }
+    }
+    return { name: "Unknown", imageUrl: null };
+  };
+
+  // Given a hotel key, a date, and a category id, find the price from pricingData.
+  const getPriceForNight = (
+    hotelKey: string,
+    date: string,
+    categoryId: string,
+    halfBoard: boolean
+  ) => {
+    if (!pricingData) return "N/A";
+    // pricingData is stored with keys halfBoardTrue and halfBoardFalse.
+    const key = halfBoard ? "halfBoardTrue" : "halfBoardFalse";
+    if (!pricingData[key] || !pricingData[key].nightlyPricing) return "N/A";
+    // Find the pricing record for this hotel and date.
+    const record = pricingData[key].nightlyPricing.find(
+      (item: any) => item.hotel === hotelKey && item.date === date
+    );
+    if (record && record.pricing && record.pricing.CategoryPrices) {
+      const catPrice = record.pricing.CategoryPrices.find(
+        (cp: any) => cp.CategoryId === categoryId
+      );
+      if (catPrice && catPrice.OccupancyPrices && catPrice.OccupancyPrices.length > 0) {
+        // For simplicity, use the first RateGroupPrice's MinPrice.
+        const rateGroup = catPrice.OccupancyPrices[0].RateGroupPrices[0];
+        if (rateGroup && rateGroup.MinPrice && rateGroup.MinPrice.TotalAmount) {
+          return `${rateGroup.MinPrice.TotalAmount.GrossValue} ${rateGroup.MinPrice.TotalAmount.Currency}`;
+        }
+      }
+    }
+    return "N/A";
+  };
 
   // -------------------------
   // HANDLER FUNCTIONS
@@ -63,8 +115,9 @@ const Index = () => {
   const handleAdultsChange = (val: string) => setAdults(Number(val));
   const handleChildrenChange = (val: string) => setChildren(Number(val));
   const handlePrevStep = () => setCurrentStep((prev) => prev - 1);
-  const handleArrangementChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
-    setArrangement(Number(e.target.value));
+  const handleArrangementChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => setArrangement(Number(e.target.value));
   const handleRoomsChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
     setRooms(Number(e.target.value));
 
@@ -80,8 +133,7 @@ const Index = () => {
         .padStart(2, "0")}-${startDate.from.getFullYear()}`
     : null;
 
-  // React Query: GET full configuration (without pricing)
-  // (enabled: false so it runs only when manually triggered)
+  // React Query: GET full configuration (no pricing)
   const {
     data: initialSetupData,
     refetch: fetchInitialSetup,
@@ -93,7 +145,7 @@ const Index = () => {
       if (!formattedStartDateGET) {
         throw new Error("No start date provided");
       }
-      // Trailing slash avoids Django 301 redirects.
+      // Trailing slash avoids Django 301 redirect.
       const response = await fetchWithBaseUrl(
         `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangement}`
       );
@@ -105,17 +157,17 @@ const Index = () => {
     enabled: false,
   });
 
-  // Handler: Called when clicking "Continue to Room Selection"
-  // This now:
-  // 1. Calls the config endpoint.
-  // 2. Calls the availability endpoint twice.
-  // 3. Immediately calls the new pricing endpoint for each availability response.
+  // Handler: When clicking "Continue to Room Selection"
+  // Now this calls:
+  // 1. The config endpoint.
+  // 2. The availability endpoint twice (for halfBoard true and false).
+  // 3. Immediately calls the new pricing endpoint for each optimal_sequence.
   const handleToRoomSelectionStep = async () => {
     try {
       setArrangementError(null);
       setIsLoadingArrangements(true);
 
-      // 1. Fetch configuration data.
+      // 1. Fetch config data.
       const configResponse = await fetchInitialSetup();
 
       // 2. Build payload for availability.
@@ -133,45 +185,39 @@ const Index = () => {
       const [availHBTrue, availHBFalse] = await Promise.all([
         axios.post("http://localhost:8000/reservations/availability/", {
           ...payload,
-          useHalfBoard: true,
+          useHalfBoard: false, // for example
         }),
         axios.post("http://localhost:8000/reservations/availability/", {
           ...payload,
-          useHalfBoard: false,
+          useHalfBoard: true,
         }),
       ]);
 
       // 4. Save availability responses along with config.
       setAvailableArrangements({
+        config: configResponse.data.hotels, // config response per hotel
+        halfBoardFalse: availHBFalse.data, // assume halfBoard true in one and false in the other
         halfBoardTrue: availHBTrue.data,
-        halfBoardFalse: availHBFalse.data,
-        config: configResponse.data,
       });
 
-      // 5. Immediately call the new pricing endpoint for each optimal sequence.
-      // We assume that each availability response contains an "optimal_sequence" field.
-      const optimalTrue = availHBTrue.data.optimal_sequence;
+      // 5. Immediately call the pricing endpoint for both sequences.
       const optimalFalse = availHBFalse.data.optimal_sequence;
-
-      // Call pricing endpoint for both sequences concurrently.
-      const [pricingTrueRes, pricingFalseRes] = await Promise.all([
-        axios.post("http://localhost:8000/reservations/pricing/", {
-          selectedArrangement: optimalTrue,
-        }),
+      const optimalTrue = availHBTrue.data.optimal_sequence;
+      const [pricingFalseRes, pricingTrueRes] = await Promise.all([
         axios.post("http://localhost:8000/reservations/pricing/", {
           selectedArrangement: optimalFalse,
         }),
+        axios.post("http://localhost:8000/reservations/pricing/", {
+          selectedArrangement: optimalTrue,
+        }),
       ]);
-
-      // Save the pricing data in state.
       setPricingData({
-        halfBoardTrue: pricingTrueRes.data,
         halfBoardFalse: pricingFalseRes.data,
+        halfBoardTrue: pricingTrueRes.data,
       });
 
-      // Optionally, you can auto-select one arrangement.
-      // For example, here we default to the halfBoardTrue sequence:
-      setSelectedArrangement(optimalTrue);
+      // Optionally auto-select one arrangement to use (we default here to the false case)
+      setSelectedArrangement(optimalFalse);
 
       // Advance to Step 2.
       setCurrentStep(2);
@@ -183,6 +229,9 @@ const Index = () => {
     }
   };
 
+  // -------------------------
+  // UI RENDERING
+  // -------------------------
   return (
     <div className="min-h-screen bg-secondary">
       <header className="bg-white shadow-sm">
@@ -275,7 +324,7 @@ const Index = () => {
           </div>
         )}
 
-        {/* Step 2: Room Selection & Pricing */}
+        {/* Step 2: Room Selection & Pricing Display */}
         {currentStep === 2 && (
           <div className="space-y-6 animate-fade-in">
             {isLoadingArrangements && (
@@ -286,41 +335,193 @@ const Index = () => {
                 Error: {arrangementError.message}
               </div>
             )}
-            {availableArrangements && (
+            {availableArrangements && pricingData && (
               <div>
-                <h2 className="text-xl font-semibold mb-4">Available Arrangements</h2>
-                <div>
-                  <h3 className="text-lg font-medium">Half Board: Yes</h3>
-                  <pre className="bg-gray-100 p-2 rounded">
-                    {JSON.stringify(availableArrangements.halfBoardTrue, null, 2)}
-                  </pre>
-                  <h4 className="mt-2 font-medium">Nightly Pricing:</h4>
-                  <pre className="bg-gray-100 p-2 rounded">
-                    {JSON.stringify(pricingData?.halfBoardTrue, null, 2)}
-                  </pre>
+                <h2 className="text-xl font-semibold mb-4">
+                  Available Arrangements
+                </h2>
+
+                {/* Section for Half Board: No */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-bold mb-2">Half Board: No</h3>
+                  {availableArrangements.halfBoardFalse.optimal_sequence && (
+                    <div>
+                      <p className="mb-2">
+                        <strong>Sequence:</strong>{" "}
+                        {availableArrangements.halfBoardFalse.optimal_sequence.sequence.join(
+                          " → "
+                        )}
+                      </p>
+                      {availableArrangements.halfBoardFalse.optimal_sequence.night_details.map(
+                        (night: any, idx: number) => {
+                          // Look up pricing for this night:
+                          const price = getPriceForNight(
+                            night.hotel,
+                            night.date,
+                            night.chosen_rooms[0].category_id,
+                            false
+                          );
+                          return (
+                            <div key={idx} className="border p-4 rounded mb-4">
+                              <p>
+                                <strong>Date:</strong> {night.date}
+                              </p>
+                              <p>
+                                <strong>Hotel:</strong> {night.hotel}
+                              </p>
+                              <p>
+                                <strong>Board Type:</strong> {night.board_type}
+                              </p>
+                              {night.restaurant_chosen && (
+                                <p>
+                                  <strong>Restaurant:</strong>{" "}
+                                  {night.restaurant_chosen}
+                                </p>
+                              )}
+                              <p>
+                                <strong>Price:</strong> {price}
+                              </p>
+                              <div className="mt-2">
+                                <strong>Room Options:</strong>
+                                <div className="grid grid-cols-3 gap-4 mt-2">
+                                  {night.room_options.map(
+                                    (option: any, optIdx: number) => {
+                                      const details = getCategoryDetails(
+                                        night.hotel,
+                                        option.category_id
+                                      );
+                                      return (
+                                        <div
+                                          key={optIdx}
+                                          className="border rounded p-2"
+                                        >
+                                          {details.imageUrl && (
+                                            <img
+                                              src={details.imageUrl}
+                                              alt={details.name}
+                                              className="w-full h-24 object-cover mb-2"
+                                            />
+                                          )}
+                                          <p className="font-bold">
+                                            {option.category_name}
+                                          </p>
+                                          <p>Bed Capacity: {option.bed_capacity}</p>
+                                          <p>
+                                            Available: {option.available_count}
+                                          </p>
+                                        </div>
+                                      );
+                                    }
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                      )}
+                      {availableArrangements.halfBoardFalse.optimal_sequence.overall_notes && (
+                        <div>
+                          <strong>Notes:</strong>{" "}
+                          {availableArrangements.halfBoardFalse.optimal_sequence.overall_notes.join(
+                            "; "
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="mt-4">
-                  <h3 className="text-lg font-medium">Half Board: No</h3>
-                  <pre className="bg-gray-100 p-2 rounded">
-                    {JSON.stringify(availableArrangements.halfBoardFalse, null, 2)}
-                  </pre>
-                  <h4 className="mt-2 font-medium">Nightly Pricing:</h4>
-                  <pre className="bg-gray-100 p-2 rounded">
-                    {JSON.stringify(pricingData?.halfBoardFalse, null, 2)}
-                  </pre>
+
+                {/* Section for Half Board: Yes */}
+                <div>
+                  <h3 className="text-lg font-bold mb-2">Half Board: Yes</h3>
+                  {availableArrangements.halfBoardTrue.optimal_sequence && (
+                    <div>
+                      <p className="mb-2">
+                        <strong>Sequence:</strong>{" "}
+                        {availableArrangements.halfBoardTrue.optimal_sequence.sequence.join(
+                          " → "
+                        )}
+                      </p>
+                      {availableArrangements.halfBoardTrue.optimal_sequence.night_details.map(
+                        (night: any, idx: number) => {
+                          const price = getPriceForNight(
+                            night.hotel,
+                            night.date,
+                            night.chosen_rooms[0].category_id,
+                            true
+                          );
+                          return (
+                            <div key={idx} className="border p-4 rounded mb-4">
+                              <p>
+                                <strong>Date:</strong> {night.date}
+                              </p>
+                              <p>
+                                <strong>Hotel:</strong> {night.hotel}
+                              </p>
+                              <p>
+                                <strong>Board Type:</strong> {night.board_type}
+                              </p>
+                              {night.restaurant_chosen && (
+                                <p>
+                                  <strong>Restaurant:</strong>{" "}
+                                  {night.restaurant_chosen}
+                                </p>
+                              )}
+                              <p>
+                                <strong>Price:</strong> {price}
+                              </p>
+                              <div className="mt-2">
+                                <strong>Room Options:</strong>
+                                <div className="grid grid-cols-3 gap-4 mt-2">
+                                  {night.room_options.map(
+                                    (option: any, optIdx: number) => {
+                                      const details = getCategoryDetails(
+                                        night.hotel,
+                                        option.category_id
+                                      );
+                                      return (
+                                        <div
+                                          key={optIdx}
+                                          className="border rounded p-2"
+                                        >
+                                          {details.imageUrl && (
+                                            <img
+                                              src={details.imageUrl}
+                                              alt={details.name}
+                                              className="w-full h-24 object-cover mb-2"
+                                            />
+                                          )}
+                                          <p className="font-bold">
+                                            {option.category_name}
+                                          </p>
+                                          <p>Bed Capacity: {option.bed_capacity}</p>
+                                          <p>
+                                            Available: {option.available_count}
+                                          </p>
+                                        </div>
+                                      );
+                                    }
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                      )}
+                      {availableArrangements.halfBoardTrue.optimal_sequence.overall_notes && (
+                        <div>
+                          <strong>Notes:</strong>{" "}
+                          {availableArrangements.halfBoardTrue.optimal_sequence.overall_notes.join(
+                            "; "
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
-            <div className="grid gap-6">
-              {SAMPLE_ROOMS.map((room) => (
-                <ArrangmentCard
-                  key={room.title}
-                  {...room}
-                  selectedArrangement={selectedArrangement}
-                  setSelectedArrangement={setSelectedArrangement}
-                />
-              ))}
-            </div>
+            {/* You can remove the SAMPLE_ROOMS placeholder if not needed */}
             <div className="flex justify-between">
               <Button variant="outline" onClick={handlePrevStep}>
                 Back
@@ -332,7 +533,7 @@ const Index = () => {
           </div>
         )}
 
-        {/* Step 3: Confirmation */}
+        {/* Step 3: Confirmation (Summary) */}
         {currentStep === 3 && (
           <div className="bg-white p-6 rounded-lg shadow-sm animate-fade-in">
             <h2 className="text-xl font-semibold mb-4">Booking Summary</h2>
@@ -343,7 +544,7 @@ const Index = () => {
               </pre>
             </div>
             <div className="mt-4">
-              <h3>Nightly Pricing Information:</h3>
+              <h3>Pricing Information:</h3>
               <pre className="bg-gray-100 p-2 rounded">
                 {JSON.stringify(pricingData, null, 2)}
               </pre>
