@@ -1,3 +1,4 @@
+// components/booking/BookingForm.tsx
 import React, { useState } from "react";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { OccupancySelector } from "@/components/OccupancySelector";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
 
 export interface BookingFormData {
-  startDate: string; // formatted as DD-MM-YYYY
+  startDate: string; // formatted as DD-MM-YYYY (we'll send the start date)
   arrangementLength: number;
   rooms: number;
   adults: number;
@@ -20,7 +21,10 @@ interface BookingFormProps {
 
 export const BookingForm: React.FC<BookingFormProps> = ({ onContinue }) => {
   const today = new Date();
-  const [startDate, setStartDate] = useState<DateRange | undefined>({ from: today, to: today });
+  const [startDateRange, setStartDateRange] = useState<DateRange | undefined>({
+    from: today,
+    to: today,
+  });
   const [arrangementLength, setArrangementLength] = useState<number>(3);
   const [rooms, setRooms] = useState<number>(1);
   const [adults, setAdults] = useState<number>(2);
@@ -29,32 +33,41 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onContinue }) => {
   const [boardOption, setBoardOption] = useState<"breakfast" | "halfBoard">("breakfast");
 
   // Format the selected start date as "DD-MM-YYYY"
-  const formatDateRange = (range: DateRange | undefined): string => {
-    if (!range || !range.from) return "";
-    const d = range.from;
-    return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth() + 1)
+  const formatDate = (date: Date): string =>
+    `${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1)
       .toString()
-      .padStart(2, "0")}-${d.getFullYear()}`;
-  };
+      .padStart(2, "0")}-${date.getFullYear()}`;
 
   const handleContinue = () => {
-    const formattedStartDate = formatDateRange(startDate);
-    onContinue({
-      startDate: formattedStartDate,
-      arrangementLength,
-      rooms,
-      adults,
-      children,
-      travelMode,
-      boardOption,
-    });
+    if (startDateRange?.from) {
+      const formattedStartDate = formatDate(startDateRange.from);
+      onContinue({
+        startDate: formattedStartDate,
+        arrangementLength,
+        rooms,
+        adults,
+        children,
+        travelMode,
+        boardOption,
+      });
+    }
   };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm space-y-6 animate-fade-in">
       <div>
-        <h2 className="text-lg font-semibold mb-4">Select Dates</h2>
-        <DateRangePicker onChange={(date) => setStartDate(date)} />
+        <h2 className="text-lg font-semibold mb-4">Select Arrangement Length</h2>
+        <select value={arrangementLength} onChange={(e) => setArrangementLength(Number(e.target.value))}>
+          <option value={3}>3</option>
+          <option value={4}>4</option>
+        </select>
+      </div>
+      <div>
+        <h2 className="text-lg font-semibold mb-4">Pick Start Date</h2>
+        <DateRangePicker
+          arrangementLength={arrangementLength}
+          onChange={(range) => setStartDateRange(range)}
+        />
       </div>
       <div>
         <h2 className="text-lg font-semibold mb-4">Number of Guests</h2>
@@ -64,13 +77,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onContinue }) => {
           onAdultsChange={(val) => setAdults(Number(val))}
           onChildrenChange={(val) => setChildren(Number(val))}
         />
-      </div>
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Select Arrangement Length</h2>
-        <select value={arrangementLength} onChange={(e) => setArrangementLength(Number(e.target.value))}>
-          <option value={3}>3</option>
-          <option value={4}>4</option>
-        </select>
       </div>
       <div>
         <h2 className="text-lg font-semibold mb-4">Amount of Rooms</h2>
