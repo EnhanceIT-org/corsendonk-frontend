@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
@@ -14,10 +14,19 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({ onChange, arrangementLength }: DateRangePickerProps) {
-  // Initialize with today and compute the end date from arrangementLength
-  const initialFrom = new Date();
-  const initialTo = addDays(initialFrom, arrangementLength - 1);
-  const [range, setRange] = useState<DateRange>({ from: initialFrom, to: initialTo });
+  const [range, setRange] = useState<DateRange>({
+    from: new Date(),
+    to: addDays(new Date(), arrangementLength - 1),
+  });
+
+  // When arrangementLength changes, update the 'to' date accordingly.
+  useEffect(() => {
+    if (range.from) {
+      const newRange = { from: range.from, to: addDays(range.from, arrangementLength - 1) };
+      setRange(newRange);
+      onChange(newRange);
+    }
+  }, [arrangementLength]);
 
   const handleDateSelect = (selectedDate: Date | null) => {
     if (selectedDate) {
@@ -31,10 +40,7 @@ export function DateRangePicker({ onChange, arrangementLength }: DateRangePicker
     <div className="grid gap-2">
       <Popover>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn("w-full justify-start text-left font-normal", !range && "text-muted-foreground")}
-          >
+          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !range && "text-muted-foreground")}>
             <CalendarIcon className="mr-2 h-4 w-4" />
             {range?.from ? (
               <>
