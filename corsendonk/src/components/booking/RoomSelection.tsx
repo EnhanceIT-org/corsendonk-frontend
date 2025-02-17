@@ -1,4 +1,6 @@
 // components/booking/RoomSelection.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -27,7 +29,7 @@ export interface RoomSelectionProps {
     selectedArrangement: any,
     pricingData: any,
     rawConfig: any,
-    totalPrice: number
+    totalPrice: number,
   ) => void;
   onBack: () => void;
 }
@@ -38,12 +40,18 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
   onBack,
 }) => {
   const [rawConfig, setRawConfig] = useState<any>(null);
-  const [arrangements, setArrangements] = useState<{ breakfast: any; halfBoard: any }>({
+  const [arrangements, setArrangements] = useState<{
+    breakfast: any;
+    halfBoard: any;
+  }>({
     breakfast: null,
     halfBoard: null,
   });
   const [selectedArrangement, setSelectedArrangement] = useState<any>(null);
-  const [pricingData, setPricingData] = useState<{ breakfast: any; halfBoard: any }>({
+  const [pricingData, setPricingData] = useState<{
+    breakfast: any;
+    halfBoard: any;
+  }>({
     breakfast: null,
     halfBoard: null,
   });
@@ -56,11 +64,12 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
     bicycleTransport: boolean;
   }>({ lunch: false, bicycleRent: false, bicycleTransport: false });
   // Local board option state.
-  const [selectedBoardOption, setSelectedBoardOption] = useState<"breakfast" | "halfBoard">(
-    bookingData.boardOption
-  );
+  const [selectedBoardOption, setSelectedBoardOption] = useState<
+    "breakfast" | "halfBoard"
+  >(bookingData.boardOption);
 
-  const { startDate, arrangementLength, rooms, adults, children, travelMode } = bookingData;
+  const { startDate, arrangementLength, rooms, adults, children, travelMode } =
+    bookingData;
 
   // Convert startDate (DD-MM-YYYY) to YYYY-MM-DD for configuration call.
   const [day, month, year] = startDate.split("-");
@@ -77,7 +86,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
       try {
         // 1. Fetch configuration.
         const configRes = await fetchWithBaseUrl(
-          `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangementLength}`
+          `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangementLength}`,
         );
         if (!configRes.ok) throw new Error("Failed to fetch configuration");
         const configData = await configRes.json();
@@ -102,8 +111,8 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
             useHalfBoard: true,
           }),
         ]);
-        const availBreakfast = availBreakfastRes.data;
-        const availHalfBoard = availHalfBoardRes.data;
+        const availBreakfast = availBreakfastRes.data.data;
+        const availHalfBoard = availHalfBoardRes.data.data;
         setArrangements({
           breakfast: availBreakfast.optimal_sequence,
           halfBoard: availHalfBoard.optimal_sequence,
@@ -165,7 +174,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
   const getProductPrice = (
     hotelKey: string,
     productName: string,
-    config: any
+    config: any,
   ): number => {
     if (
       config &&
@@ -178,7 +187,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
       const products = raw.Configurations[0].Enterprise.Products || [];
       const product = products.find(
         (p: any) =>
-          p.Name["en-GB"] === productName && p.Prices && p.Prices["EUR"]
+          p.Name["en-GB"] === productName && p.Prices && p.Prices["EUR"],
       );
       if (product) return product.Prices["EUR"];
     }
@@ -189,7 +198,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
   const getCategoryDetails = (
     hotelKey: string,
     categoryId: string,
-    config: any
+    config: any,
   ) => {
     if (
       config &&
@@ -223,17 +232,17 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
     boardType: string,
     travelMode: string,
     pricingData: any,
-    occupancy: number
+    occupancy: number,
   ) => {
     if (!pricingData) return "N/A";
     const key = boardType === "HB" ? "halfBoard" : "breakfast";
     if (!pricingData[key] || !pricingData[key].nightlyPricing) return "N/A";
     const record = pricingData[key].nightlyPricing.find(
-      (item: any) => item.hotel === hotelKey && item.date === date
+      (item: any) => item.hotel === hotelKey && item.date === date,
     );
     if (record && record.pricing && record.pricing.CategoryPrices) {
       const catPrice = record.pricing.CategoryPrices.find(
-        (cp: any) => cp.CategoryId === categoryId
+        (cp: any) => cp.CategoryId === categoryId,
       );
       if (catPrice && catPrice.OccupancyPrices) {
         let candidate = null;
@@ -241,7 +250,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         for (const occ of catPrice.OccupancyPrices) {
           const total = occ.Occupancies.reduce(
             (sum: number, o: any) => sum + o.PersonCount,
-            0
+            0,
           );
           if (total === occupancy) {
             candidate = occ.RateGroupPrices[0];
@@ -273,7 +282,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
     children: number,
     rooms: number,
     config: any,
-    selectedOptionalProducts: { [key: string]: boolean }
+    selectedOptionalProducts: { [key: string]: boolean },
   ) => {
     let total = 0;
     const nights = optimalSequence.night_details;
@@ -287,7 +296,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           night.board_type,
           travelMode,
           pricingData,
-          occupancyPerRoom
+          occupancyPerRoom,
         );
         const price = parseFloat(priceStr.split(" ")[0]) || 0;
         total += price;
@@ -296,7 +305,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         const lunchPrice = getProductPrice(
           night.hotel,
           productNames.lunch,
-          config
+          config,
         );
         total += lunchPrice * (adults + children);
       }
@@ -305,7 +314,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           const rentPrice = getProductPrice(
             night.hotel,
             productNames.bicycleRent,
-            config
+            config,
           );
           total += rentPrice * (adults + children);
         }
@@ -313,7 +322,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           const transportPrice = getProductPrice(
             night.hotel,
             productNames.bicycleTransport,
-            config
+            config,
           );
           total += transportPrice;
         }
@@ -331,7 +340,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         children,
         rooms,
         rawConfig,
-        selectedOptionalProducts
+        selectedOptionalProducts,
       )
     : 0;
 
@@ -386,7 +395,10 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         </Button>
       </div>
       <h2 className="text-xl font-bold mb-4">
-        {travelMode === "walking" ? "Walking Arrangement" : "Cycling Arrangement"} –{" "}
+        {travelMode === "walking"
+          ? "Walking Arrangement"
+          : "Cycling Arrangement"}{" "}
+        –{" "}
         {selectedBoardOption === "halfBoard" ? "Half Board" : "Breakfast Only"}
       </h2>
       {selectedArrangement.night_details.map((night: any, idx: number) => (
@@ -409,7 +421,11 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
             <strong>Chosen Rooms:</strong>
             <div className="grid grid-cols-2 gap-4 mt-2">
               {night.chosen_rooms.map((room: any, roomIdx: number) => {
-                const details = getCategoryDetails(night.hotel, room.category_id, rawConfig);
+                const details = getCategoryDetails(
+                  night.hotel,
+                  room.category_id,
+                  rawConfig,
+                );
                 const priceStr = getPriceForNight(
                   night.hotel,
                   night.date,
@@ -417,7 +433,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
                   night.board_type,
                   travelMode,
                   pricingData,
-                  occupancyPerRoom
+                  occupancyPerRoom,
                 );
                 return (
                   <div
@@ -425,12 +441,17 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
                     className="border rounded p-2 cursor-pointer hover:bg-gray-100"
                     onClick={() => {
                       const updated = { ...selectedArrangement };
-                      updated.night_details[idx].chosen_rooms = night.room_options;
+                      updated.night_details[idx].chosen_rooms =
+                        night.room_options;
                       setSelectedArrangement(updated);
                     }}
                   >
                     {details.imageUrl && (
-                      <img src={details.imageUrl} alt={details.name} className="w-full h-24 object-cover mb-2" />
+                      <img
+                        src={details.imageUrl}
+                        alt={details.name}
+                        className="w-full h-24 object-cover mb-2"
+                      />
                     )}
                     <p className="font-bold">{room.category_name}</p>
                     <p>Bed Capacity: {room.bed_capacity}</p>
@@ -445,7 +466,11 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
             <strong>Alternative Options:</strong>
             <div className="grid grid-cols-2 gap-4 mt-2">
               {night.room_options.map((option: any, optIdx: number) => {
-                const details = getCategoryDetails(night.hotel, option.category_id, rawConfig);
+                const details = getCategoryDetails(
+                  night.hotel,
+                  option.category_id,
+                  rawConfig,
+                );
                 const altPrice = getPriceForNight(
                   night.hotel,
                   night.date,
@@ -453,7 +478,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
                   night.board_type,
                   travelMode,
                   pricingData,
-                  occupancyPerRoom
+                  occupancyPerRoom,
                 );
                 return (
                   <div
@@ -461,12 +486,19 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
                     className="border rounded p-2 cursor-pointer hover:bg-gray-100"
                     onClick={() => {
                       const updated = { ...selectedArrangement };
-                      updated.night_details[idx].chosen_rooms = updated.night_details[idx].chosen_rooms.map(() => option);
+                      updated.night_details[idx].chosen_rooms =
+                        updated.night_details[idx].chosen_rooms.map(
+                          () => option,
+                        );
                       setSelectedArrangement(updated);
                     }}
                   >
                     {details.imageUrl && (
-                      <img src={details.imageUrl} alt={details.name} className="w-full h-24 object-cover mb-2" />
+                      <img
+                        src={details.imageUrl}
+                        alt={details.name}
+                        className="w-full h-24 object-cover mb-2"
+                      />
                     )}
                     <p className="font-bold">{option.category_name}</p>
                     <p>Bed Capacity: {option.bed_capacity}</p>
@@ -521,7 +553,10 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         </p>
         <p>
           <strong>Price per Night:</strong>{" "}
-          {(computedTotalPrice / selectedArrangement.night_details.length).toFixed(2)} EUR
+          {(
+            computedTotalPrice / selectedArrangement.night_details.length
+          ).toFixed(2)}{" "}
+          EUR
         </p>
       </div>
       <div className="flex justify-between mt-6">
@@ -535,7 +570,12 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
               ...selectedArrangement,
               optionalProducts: optionalProductsMapping,
             };
-            onContinue(finalArrangement, pricingData, rawConfig, computedTotalPrice);
+            onContinue(
+              finalArrangement,
+              pricingData,
+              rawConfig,
+              computedTotalPrice,
+            );
           }}
         >
           Continue to Confirmation
