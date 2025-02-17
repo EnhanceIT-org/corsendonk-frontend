@@ -90,7 +90,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         );
         if (!configRes.ok) throw new Error("Failed to fetch configuration");
         const configData = await configRes.json();
-        setRawConfig(configData.hotels);
+        setRawConfig(configData.data.hotels);
 
         // 2. Build payload for availability.
         const payload = {
