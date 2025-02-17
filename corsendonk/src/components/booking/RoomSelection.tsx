@@ -127,8 +127,8 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           }),
         ]);
         setPricingData({
-          breakfast: pricingBreakfastRes.data,
-          halfBoard: pricingHalfBoardRes.data,
+          breakfast: pricingBreakfastRes.data.data,
+          halfBoard: pricingHalfBoardRes.data.data,
         });
         // 5. Set default selected arrangement based on board option.
         if (bookingData.boardOption === "breakfast") {
