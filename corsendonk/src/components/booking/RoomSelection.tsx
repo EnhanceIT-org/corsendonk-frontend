@@ -1,5 +1,6 @@
 // components/booking/RoomSelection.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -32,26 +33,6 @@ export interface RoomSelectionProps {
   ) => void;
   onBack: () => void;
 }
-
-//
-// ***** NEW: Age category mapping for occupancy distribution *****
-//
-const AGE_CATEGORY_MAP: {
-  [hotel: string]: { adult: string; child: string };
-} = {
-  hotel1: {
-    adult: "32e02e9a-53c9-439a-8718-ae7000f2f342",
-    child: "73435727-9f3a-49b7-ab8f-ae7000f2f342",
-  },
-  hotel2: {
-    adult: "8bedb859-a9f1-40fb-aec6-b18e00f698c2",
-    child: "2062df74-bcb4-4ee3-99ef-b18e00f698cc",
-  },
-  hotel3: {
-    adult: "32e02e9a-53c9-439a-8718-ae7000f2f342",
-    child: "59afee2b-132e-471c-a75c-ae7000f2f33d",
-  },
-};
 
 export const RoomSelection: React.FC<RoomSelectionProps> = ({
   bookingData,
@@ -136,13 +117,6 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           breakfast: availBreakfast.optimal_sequence,
           halfBoard: availHalfBoard.optimal_sequence,
         });
-        // 5. Set default selected arrangement based on board option.
-        if (bookingData.boardOption === "breakfast") {
-          setSelectedArrangement(availBreakfast.optimal_sequence);
-        } else {
-          setSelectedArrangement(availHalfBoard.optimal_sequence);
-        }
-
         // 4. Call pricing endpoint for each arrangement.
         const [pricingBreakfastRes, pricingHalfBoardRes] = await Promise.all([
           axios.post("http://localhost:8000/reservations/pricing/", {
@@ -156,6 +130,12 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           breakfast: pricingBreakfastRes.data.data,
           halfBoard: pricingHalfBoardRes.data.data,
         });
+        // 5. Set default selected arrangement based on board option.
+        if (bookingData.boardOption === "breakfast") {
+          setSelectedArrangement(availBreakfast.optimal_sequence);
+        } else {
+          setSelectedArrangement(availHalfBoard.optimal_sequence);
+        }
       } catch (err: any) {
         console.error(err);
         setError(err.message || "Error fetching data");
@@ -174,95 +154,12 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
     rooms,
   ]);
 
-  // Always initialize occupantDistribution for each chosen room if not set.
-  useEffect(() => {
-    if (selectedArrangement) {
-      const updatedArrangement = { ...selectedArrangement };
-      updatedArrangement.night_details = updatedArrangement.night_details.map(
-        (night: any) => {
-          if (!night.chosen_rooms) return night;
-          const defaultAdultsPerRoom = Math.floor(adults / rooms);
-          const remainderAdults = adults % rooms;
-          const defaultChildrenPerRoom = Math.floor(children / rooms);
-          const remainderChildren = children % rooms;
-          const newChosenRooms = night.chosen_rooms.map(
-            (room: any, index: number) => {
-              if (!room.occupantDistribution) {
-                return {
-                  ...room,
-                  occupantDistribution: {
-                    adults: {
-                      count:
-                        defaultAdultsPerRoom + (index < remainderAdults ? 1 : 0),
-                      ageCategoryId: AGE_CATEGORY_MAP[night.hotel].adult,
-                    },
-                    children: {
-                      count:
-                        defaultChildrenPerRoom + (index < remainderChildren ? 1 : 0),
-                      ageCategoryId: AGE_CATEGORY_MAP[night.hotel].child,
-                    },
-                  },
-                };
-              }
-              return room;
-            }
-          );
-          return { ...night, chosen_rooms: newChosenRooms };
-        }
-      );
-      setSelectedArrangement(updatedArrangement);
-    }
-  }, [selectedArrangement, rooms, adults, children]);
-
-  // Handler: Update occupant count for a specific room, for either "adults" or "children"
-  const updateOccupant = (
-    nightIndex: number,
-    roomIndex: number,
-    category: "adults" | "children",
-    delta: number,
-  ) => {
-    if (!selectedArrangement) return;
-    const updatedArrangement = { ...selectedArrangement };
-    const night = { ...updatedArrangement.night_details[nightIndex] };
-    const chosenRooms = [...night.chosen_rooms];
-    const room = { ...chosenRooms[roomIndex] };
-    const currentValue = room.occupantDistribution[category].count;
-    const newValue = currentValue + delta;
-    if (newValue < 0) return; // cannot be negative
-
-    // Calculate the total for this category across all rooms after update.
-    let totalForNight = 0;
-    for (let i = 0; i < chosenRooms.length; i++) {
-      if (i === roomIndex) {
-        totalForNight += newValue;
-      } else {
-        totalForNight += chosenRooms[i].occupantDistribution[category].count;
-      }
-    }
-    const globalTotal = category === "adults" ? adults : children;
-    if (totalForNight > globalTotal) return; // disallow if exceeds total
-
-    // Update the room occupancy and then update state.
-    room.occupantDistribution[category].count = newValue;
-    chosenRooms[roomIndex] = room;
-    night.chosen_rooms = chosenRooms;
-    updatedArrangement.night_details[nightIndex] = night;
-    setSelectedArrangement(updatedArrangement);
-  };
-
-  // Compute totals per night for occupancy distribution so that we can warn if the sum does not match global totals.
-  const getNightOccupancyTotals = (night: any) => {
-    let totalAdults = 0;
-    let totalChildren = 0;
-    if (night.chosen_rooms) {
-      night.chosen_rooms.forEach((room: any) => {
-        if (room.occupantDistribution) {
-          totalAdults += room.occupantDistribution.adults.count;
-          totalChildren += room.occupantDistribution.children.count;
-        }
-      });
-    }
-    return { totalAdults, totalChildren };
+  // Handler: Toggle an optional product checkbox.
+  const toggleOptionalProduct = (key: string) => {
+    setSelectedOptionalProducts((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   };
 
   // Handler: Toggle board option.
@@ -399,7 +296,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           night.board_type,
           travelMode,
           pricingData,
-          occupancy,
+          occupancyPerRoom,
         );
         const price = parseFloat(priceStr.split(" ")[0]) || 0;
         total += price;
@@ -501,172 +398,153 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         {travelMode === "walking"
           ? "Walking Arrangement"
           : "Cycling Arrangement"}{" "}
-        – {selectedBoardOption === "halfBoard" ? "Half Board" : "Breakfast Only"}
+        –{" "}
+        {selectedBoardOption === "halfBoard" ? "Half Board" : "Breakfast Only"}
       </h2>
-      {selectedArrangement.night_details.map((night: any, idx: number) => {
-        // Compute occupancy totals for this night
-        const { totalAdults, totalChildren } = getNightOccupancyTotals(night);
-        return (
-          <div key={idx} className="border p-4 rounded mb-4">
-            <p>
-              <strong>Date:</strong> {night.date}
-            </p>
-            <p>
-              <strong>Hotel:</strong> {night.hotel}
-            </p>
-            <p>
-              <strong>Board Type:</strong> {night.board_type}{" "}
-              {selectedBoardOption === "halfBoard" &&
-                (night.restaurant_chosen
-                  ? `- Dinner at ${night.restaurant_chosen}`
-                  : "- Dinner at hotel")}
-            </p>
-            {/* Chosen Rooms */}
-            <div className="mt-2">
-              <strong>Chosen Room(s):</strong>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                {night.chosen_rooms.map((room: any, roomIdx: number) => {
-                  const details = getCategoryDetails(
-                    night.hotel,
-                    room.category_id,
-                    rawConfig,
-                  );
-                  const priceStr = getPriceForNight(
-                    night.hotel,
-                    night.date,
-                    room.category_id,
-                    night.board_type,
-                    travelMode,
-                    pricingData,
-                    occupancyPerRoom,
-                  );
-                  return (
-                    <div
-                      key={roomIdx}
-                      className="border rounded p-2 cursor-default hover:bg-gray-100"
-                    >
-                      {details.imageUrl && (
-                        <img
-                          src={details.imageUrl}
-                          alt={details.name}
-                          className="w-full h-24 object-cover mb-2"
-                        />
-                      )}
-                      <p className="font-bold">{room.category_name}</p>
-                      <p>Bed Capacity: {room.bed_capacity}</p>
-                      <p>Price: {priceStr}</p>
-                      {/* Show occupancy controls only if more than one room is booked */}
-                      {rooms > 1 && room.occupantDistribution && (
-                        <div className="mt-2 space-y-2" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">Adults:</span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateOccupant(idx, roomIdx, "adults", -1);
-                              }}
-                              className="px-2 border"
-                            >
-                              -
-                            </button>
-                            <span className="px-2">
-                              {room.occupantDistribution.adults.count}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateOccupant(idx, roomIdx, "adults", 1);
-                              }}
-                              className="px-2 border"
-                            >
-                              +
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">Children:</span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateOccupant(idx, roomIdx, "children", -1);
-                              }}
-                              className="px-2 border"
-                            >
-                              -
-                            </button>
-                            <span className="px-2">
-                              {room.occupantDistribution.children.count}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateOccupant(idx, roomIdx, "children", 1);
-                              }}
-                              className="px-2 border"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {/* Warning message if totals do not match */}
-              {(totalAdults !== adults || totalChildren !== children) && (
-                <div className="mt-2 text-red-600 text-sm">
-                  Warning: Total assigned occupants for this night (Adults: {totalAdults}, Children: {totalChildren}) do not match the required numbers (Adults: {adults}, Children: {children}).
-                </div>
-              )}
-            </div>
-            {/* Alternative Options */}
-            <div className="mt-4">
-              <strong>Alternative Options:</strong>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                {night.room_options.map((option: any, optIdx: number) => {
-                  const details = getCategoryDetails(
-                    night.hotel,
-                    option.category_id,
-                    rawConfig,
-                  );
-                  const altPrice = getPriceForNight(
-                    night.hotel,
-                    night.date,
-                    option.category_id,
-                    night.board_type,
-                    travelMode,
-                    pricingData,
-                    occupancyPerRoom,
-                  );
-                  return (
-                    <div
-                      key={optIdx}
-                      className="border rounded p-2 cursor-pointer hover:bg-gray-100"
-                      onClick={() => {
-                        const updated = { ...selectedArrangement };
-                        updated.night_details[idx].chosen_rooms =
-                          updated.night_details[idx].chosen_rooms.map(() => option);
-                        setSelectedArrangement(updated);
-                      }}
-                    >
-                      {details.imageUrl && (
-                        <img
-                          src={details.imageUrl}
-                          alt={details.name}
-                          className="w-full h-24 object-cover mb-2"
-                        />
-                      )}
-                      <p className="font-bold">{option.category_name}</p>
-                      <p>Bed Capacity: {option.bed_capacity}</p>
-                      <p>Price: {altPrice}</p>
-                    </div>
-                  );
-                })}
-              </div>
+      {selectedArrangement.night_details.map((night: any, idx: number) => (
+        <div key={idx} className="border p-4 rounded mb-4">
+          <p>
+            <strong>Date:</strong> {night.date}
+          </p>
+          <p>
+            <strong>Hotel:</strong> {night.hotel}
+          </p>
+          <p>
+            <strong>Board Type:</strong> {night.board_type}{" "}
+            {selectedBoardOption === "halfBoard" &&
+              (night.restaurant_chosen
+                ? `- Dinner at ${night.restaurant_chosen}`
+                : "- Dinner at hotel")}
+          </p>
+          {/* Chosen Rooms */}
+          <div className="mt-2">
+            <strong>Chosen Rooms:</strong>
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              {night.chosen_rooms.map((room: any, roomIdx: number) => {
+                const details = getCategoryDetails(
+                  night.hotel,
+                  room.category_id,
+                  rawConfig,
+                );
+                const priceStr = getPriceForNight(
+                  night.hotel,
+                  night.date,
+                  room.category_id,
+                  night.board_type,
+                  travelMode,
+                  pricingData,
+                  occupancyPerRoom,
+                );
+                return (
+                  <div
+                    key={roomIdx}
+                    className="border rounded p-2 cursor-pointer hover:bg-gray-100"
+                    onClick={() => {
+                      const updated = { ...selectedArrangement };
+                      updated.night_details[idx].chosen_rooms =
+                        night.room_options;
+                      setSelectedArrangement(updated);
+                    }}
+                  >
+                    {details.imageUrl && (
+                      <img
+                        src={details.imageUrl}
+                        alt={details.name}
+                        className="w-full h-24 object-cover mb-2"
+                      />
+                    )}
+                    <p className="font-bold">{room.category_name}</p>
+                    <p>Bed Capacity: {room.bed_capacity}</p>
+                    <p>Price: {priceStr}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        );
-      })}
+          {/* Alternative Options */}
+          <div className="mt-4">
+            <strong>Alternative Options:</strong>
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              {night.room_options.map((option: any, optIdx: number) => {
+                const details = getCategoryDetails(
+                  night.hotel,
+                  option.category_id,
+                  rawConfig,
+                );
+                const altPrice = getPriceForNight(
+                  night.hotel,
+                  night.date,
+                  option.category_id,
+                  night.board_type,
+                  travelMode,
+                  pricingData,
+                  occupancyPerRoom,
+                );
+                return (
+                  <div
+                    key={optIdx}
+                    className="border rounded p-2 cursor-pointer hover:bg-gray-100"
+                    onClick={() => {
+                      const updated = { ...selectedArrangement };
+                      updated.night_details[idx].chosen_rooms =
+                        updated.night_details[idx].chosen_rooms.map(
+                          () => option,
+                        );
+                      setSelectedArrangement(updated);
+                    }}
+                  >
+                    {details.imageUrl && (
+                      <img
+                        src={details.imageUrl}
+                        alt={details.name}
+                        className="w-full h-24 object-cover mb-2"
+                      />
+                    )}
+                    <p className="font-bold">{option.category_name}</p>
+                    <p>Bed Capacity: {option.bed_capacity}</p>
+                    <p>Price: {altPrice}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ))}
+      {/* Optional Products */}
+      <div className="border p-4 rounded mb-4">
+        <h3 className="text-lg font-bold mb-2">Optional Products</h3>
+        <label className="flex items-center mb-2">
+          <input
+            type="checkbox"
+            checked={selectedOptionalProducts.lunch}
+            onChange={() => toggleOptionalProduct("lunch")}
+            className="mr-2"
+          />
+          Lunch Package (Per person per night)
+        </label>
+        {travelMode === "cycling" && (
+          <>
+            <label className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                checked={selectedOptionalProducts.bicycleRent}
+                onChange={() => toggleOptionalProduct("bicycleRent")}
+                className="mr-2"
+              />
+              Bicycle Renting (Per person)
+            </label>
+            <label className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                checked={selectedOptionalProducts.bicycleTransport}
+                onChange={() => toggleOptionalProduct("bicycleTransport")}
+                className="mr-2"
+              />
+              Bicycle Transport (Once)
+            </label>
+          </>
+        )}
+      </div>
       {/* Price Summary */}
       <div className="border p-4 rounded">
         <h3 className="text-lg font-bold mb-2">Price Summary</h3>
@@ -675,7 +553,9 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         </p>
         <p>
           <strong>Price per Night:</strong>{" "}
-          {(computedTotalPrice / selectedArrangement.night_details.length).toFixed(2)}{" "}
+          {(
+            computedTotalPrice / selectedArrangement.night_details.length
+          ).toFixed(2)}{" "}
           EUR
         </p>
       </div>
