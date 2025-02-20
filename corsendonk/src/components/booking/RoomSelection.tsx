@@ -34,6 +34,299 @@ export interface RoomSelectionProps {
   onBack: () => void;
 }
 
+// Mews AgeCategory IDs for occupant-based logic
+const ageCategoryMapping: Record<string, { adult: string; child: string }> = {
+  hotel1: {
+    adult: "32e02e9a-53c9-439a-8718-ae7000f2f342",
+    child: "73435727-9f3a-49b7-ab8f-ae7000f2f342",
+  },
+  hotel2: {
+    adult: "8bedb859-a9f1-40fb-aec6-b18e00f698c2",
+    child: "2062df74-bcb4-4ee3-99ef-b18e00f698cc",
+  },
+  hotel3: {
+    adult: "46d0861f-5e49-4a2e-b37e-b18d00d33c13",
+    child: "4212c88e-c280-4b65-a69f-b18d00d33c28",
+  },
+};
+
+/**
+ * Helper: pick the correct RateId for (hotel, boardType, travelMode).
+ */
+function getNightlyRateId(
+  hotel: string,
+  boardType: string, // "HB" or "B&B"
+  travelMode: string
+) {
+  const board = boardType === "HB" ? "halfboard" : "breakfast";
+  const map: any = {
+    hotel1: {
+      walking: {
+        halfboard: "8800eb6d-0e04-4050-abfc-ae7000f2f347",
+        breakfast: "a5687667-ba3d-40f3-9380-b27b016a290e",
+      },
+      cycling: {
+        halfboard: "7054672b-5324-474c-a71b-b27b016ad183",
+        breakfast: "bfae17fd-d945-4b3d-b27f-b27c015254dd",
+      },
+    },
+    hotel2: {
+      walking: {
+        halfboard: "acef6be3-5594-4056-99c1-b27c0153f853",
+        breakfast: "8d65cfbd-c721-4f5c-a355-b18e00f698e0",
+      },
+      cycling: {
+        halfboard: "f3efa627-9b59-4c39-baaa-b27c01584870",
+        breakfast: "8217396f-8db5-4e32-a69b-b27c01586992",
+      },
+    },
+    hotel3: {
+      walking: {
+        halfboard: "4b1be4b2-0699-42aa-bdbb-b27f00e382fb",
+        breakfast: "d10f8d15-4b06-4ea1-aa2a-b27f00e16550",
+      },
+      cycling: {
+        halfboard: "c00bb42d-20d1-4df6-a56f-b27f00e3e778",
+        breakfast: "1186693d-57b7-41a2-9080-b27f00e3c985",
+      },
+    },
+  };
+  let mode = travelMode;
+  if (mode !== "walking" && mode !== "cycling") mode = "walking";
+  return map[hotel]?.[mode]?.[board] || "";
+}
+
+/**
+ * occupant-based getPriceForNight function
+ * Used to display occupant-based price for the single (hotel/date/room).
+ */
+function getPriceForNight(
+  hotelKey: string,
+  date: string,
+  categoryId: string,
+  boardType: string, // "HB" or "B&B"
+  travelMode: string,
+  pricingData: any,
+  room: any // contains occupant_countAdults, occupant_countChildren, bed_capacity...
+): string {
+  if (!pricingData) return "N/A";
+  const dataKey = boardType === "HB" ? "halfBoard" : "breakfast";
+  const nightlyArr = pricingData[dataKey]?.nightlyPricing || [];
+  const foundEntry = nightlyArr.find(
+    (x: any) => x.hotel === hotelKey && x.date === date
+  );
+  if (!foundEntry?.pricing?.CategoryPrices) return "N/A";
+
+  const cat = foundEntry.pricing.CategoryPrices.find(
+    (cp: any) => cp.CategoryId === categoryId
+  );
+  if (!cat) return "N/A";
+
+  const occupantAdults = room.occupant_countAdults || 0;
+  const occupantChildren = room.occupant_countChildren || 0;
+  const occupantTotal = occupantAdults + occupantChildren;
+  // occupant array
+  const occupantArray: any[] = [];
+  if (occupantAdults > 0) {
+    occupantArray.push({
+      AgeCategoryId: ageCategoryMapping[hotelKey]?.adult,
+      PersonCount: occupantAdults,
+    });
+  }
+  if (occupantChildren > 0) {
+    occupantArray.push({
+      AgeCategoryId: ageCategoryMapping[hotelKey]?.child,
+      PersonCount: occupantChildren,
+    });
+  }
+
+  // find occupantPriceEntry
+  let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
+    if (op.Occupancies.length !== occupantArray.length) return false;
+    const sorted1 = [...op.Occupancies].sort((a, b) =>
+      (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || "")
+    );
+    const sorted2 = occupantArray.sort((a, b) =>
+      (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || "")
+    );
+    for (let i = 0; i < sorted1.length; i++) {
+      if (
+        sorted1[i].AgeCategoryId !== sorted2[i].AgeCategoryId ||
+        sorted1[i].PersonCount !== sorted2[i].PersonCount
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+  if (!occupantPriceEntry) {
+    occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
+      const sum = op.Occupancies.reduce(
+        (acc: number, x: any) => acc + x.PersonCount,
+        0
+      );
+      return sum === occupantTotal;
+    });
+  }
+  if (!occupantPriceEntry) return "N/A";
+
+  const rateId = getNightlyRateId(hotelKey, boardType, travelMode);
+  const rPrice = occupantPriceEntry.RateGroupPrices.find(
+    (rgp: any) => rgp.MinRateId === rateId
+  );
+  if (!rPrice) return "N/A";
+
+  const val = rPrice.MinPrice?.TotalAmount?.GrossValue;
+  if (typeof val === "number") return `${val} EUR`;
+  return "N/A";
+}
+
+/**
+ * occupant-based single-room function for the final total
+ */
+function getPriceForSingleRoom(
+  nightlyPricing: any,
+  hotel: string,
+  boardType: string,
+  travelMode: string,
+  room: any
+): number {
+  if (!nightlyPricing?.CategoryPrices) return 0;
+  const cat = nightlyPricing.CategoryPrices.find(
+    (cp: any) => cp.CategoryId === room.category_id
+  );
+  if (!cat) return 0;
+
+  const occupantAdults = room.occupant_countAdults || 0;
+  const occupantChildren = room.occupant_countChildren || 0;
+  const occupantTotal = occupantAdults + occupantChildren;
+
+  // occupant array
+  const occupantArray: any[] = [];
+  if (occupantAdults > 0) {
+    occupantArray.push({
+      AgeCategoryId: ageCategoryMapping[hotel]?.adult,
+      PersonCount: occupantAdults,
+    });
+  }
+  if (occupantChildren > 0) {
+    occupantArray.push({
+      AgeCategoryId: ageCategoryMapping[hotel]?.child,
+      PersonCount: occupantChildren,
+    });
+  }
+
+  let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
+    if (op.Occupancies.length !== occupantArray.length) return false;
+    const sorted1 = [...op.Occupancies].sort((a, b) =>
+      (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || "")
+    );
+    const sorted2 = occupantArray.sort((a, b) =>
+      (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || "")
+    );
+    for (let i = 0; i < sorted1.length; i++) {
+      if (
+        sorted1[i].AgeCategoryId !== sorted2[i].AgeCategoryId ||
+        sorted1[i].PersonCount !== sorted2[i].PersonCount
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+  if (!occupantPriceEntry) {
+    occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
+      const sum = op.Occupancies.reduce(
+        (acc: number, x: any) => acc + x.PersonCount,
+        0
+      );
+      return sum === occupantTotal;
+    });
+  }
+  if (!occupantPriceEntry) return 0;
+
+  const rateId = getNightlyRateId(hotel, boardType, travelMode);
+  const rPrice = occupantPriceEntry.RateGroupPrices.find(
+    (rgp: any) => rgp.MinRateId === rateId
+  );
+  if (!rPrice) return 0;
+
+  const val = rPrice.MinPrice?.TotalAmount?.GrossValue;
+  if (typeof val === "number") return val;
+  return 0;
+}
+
+// The occupant-based final total
+function calculateTotalPrice(
+  arrangement: any,
+  pricingDataObj: any,
+  travelMode: string,
+  adults: number,
+  children: number,
+  rooms: number,
+  config: any,
+  selectedOptionalProducts: { [key: string]: boolean },
+  sumNightAdultsFn: (night: any) => number,
+  sumNightChildrenFn: (night: any) => number,
+  getProductPriceFn: (
+    hotelKey: string,
+    productName: string,
+    config: any
+  ) => number
+): number {
+  if (!arrangement?.night_details) return 0;
+  let total = 0;
+  for (const night of arrangement.night_details) {
+    const boardKey = night.board_type === "HB" ? "halfBoard" : "breakfast";
+    const nightlyArr = pricingDataObj[boardKey]?.nightlyPricing || [];
+    const foundEntry = nightlyArr.find(
+      (x: any) => x.date === night.date && x.hotel === night.hotel
+    );
+    if (!foundEntry) continue;
+
+    // occupant-based sum for all chosen rooms
+    let nightRoomSum = 0;
+    for (const room of night.chosen_rooms) {
+      nightRoomSum += getPriceForSingleRoom(
+        foundEntry.pricing,
+        night.hotel,
+        night.board_type,
+        travelMode,
+        room
+      );
+    }
+    total += nightRoomSum;
+
+    // optional products
+    const assignedAdults = sumNightAdultsFn(night);
+    const assignedChildren = sumNightChildrenFn(night);
+
+    if (selectedOptionalProducts.lunch) {
+      const lunchPrice = getProductPriceFn(night.hotel, productNames.lunch, config);
+      total += lunchPrice * (assignedAdults + assignedChildren);
+    }
+    if (travelMode === "cycling") {
+      if (selectedOptionalProducts.bicycleRent) {
+        const rentPrice = getProductPriceFn(
+          night.hotel,
+          productNames.bicycleRent,
+          config
+        );
+        total += rentPrice * (assignedAdults + assignedChildren);
+      }
+      if (selectedOptionalProducts.bicycleTransport) {
+        const transportPrice = getProductPriceFn(
+          night.hotel,
+          productNames.bicycleTransport,
+          config
+        );
+        total += transportPrice;
+      }
+    }
+  }
+  return total;
+};
+
 export const RoomSelection: React.FC<RoomSelectionProps> = ({
   bookingData,
   onContinue,
@@ -65,7 +358,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
     bicycleTransport: boolean;
   }>({ lunch: false, bicycleRent: false, bicycleTransport: false });
 
-  // Local board option state.
+  // Local board option
   const [selectedBoardOption, setSelectedBoardOption] = useState<
     "breakfast" | "halfBoard"
   >(bookingData.boardOption);
@@ -73,23 +366,21 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
   const { startDate, arrangementLength, rooms, adults, children, travelMode } =
     bookingData;
 
-  // Convert startDate (DD-MM-YYYY) to YYYY-MM-DD for configuration call.
   const [day, month, year] = startDate.split("-");
   const formattedStartDateGET = `${year}-${month}-${day}`;
-  const formattedStartDatePOST = startDate; // Expected by backend
+  const formattedStartDatePOST = startDate;
 
-  // We'll still compute occupantPerRoom for your existing price calculation:
+  // occupantPerRoom from older references
   const occupancyPerRoom = Math.ceil((adults + children) / rooms);
 
-  // We'll track whether we've already done our "default occupant distribution"
   const [defaultDistributed, setDefaultDistributed] = useState(false);
 
+  // fetch config + availability + pricing
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        // 1. Fetch configuration.
         const configRes = await fetchWithBaseUrl(
           `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangementLength}`
         );
@@ -97,7 +388,6 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         const configData = await configRes.json();
         setRawConfig(configData.data.hotels);
 
-        // 2. Build payload for availability.
         const payload = {
           startDate: formattedStartDatePOST,
           length: arrangementLength,
@@ -105,7 +395,6 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           amountOfRooms: rooms,
         };
 
-        // 3. Call availability endpoint for both board options.
         const [availBreakfastRes, availHalfBoardRes] = await Promise.all([
           axios.post("http://localhost:8000/reservations/availability/", {
             ...payload,
@@ -123,7 +412,6 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           halfBoard: availHalfBoard.optimal_sequence,
         });
 
-        // 4. Call pricing endpoint for each arrangement.
         const [pricingBreakfastRes, pricingHalfBoardRes] = await Promise.all([
           axios.post("http://localhost:8000/reservations/pricing/", {
             selectedArrangement: availBreakfast.optimal_sequence,
@@ -137,7 +425,6 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           halfBoard: pricingHalfBoardRes.data.data,
         });
 
-        // 5. Set default selected arrangement based on board option.
         if (bookingData.boardOption === "breakfast") {
           setSelectedArrangement(availBreakfast.optimal_sequence);
         } else {
@@ -161,29 +448,18 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
     rooms,
   ]);
 
-  // ----- DISTRIBUTION LOGIC -----
-  /**
-   * distributeGuestsEvenly
-   *
-   * Distribute "count" guests as evenly as possible among chosenRooms,
-   * respecting the leftover capacity in each room (room.bed_capacity - current occupant_countAdults - occupant_countChildren).
-   *
-   * Returns how many guests were actually placed (some might remain unplaced if no capacity).
-   */
+  // occupant distribution
   function distributeGuestsEvenly(
     count: number,
     chosenRooms: any[],
     isAdult: boolean
   ): number {
-    // Step 1: create naive even distribution array: e.g. if 5 guests & 2 rooms => [3,2].
     const n = chosenRooms.length;
     if (n === 0) return 0;
 
     let base = Math.floor(count / n);
     let remainder = count % n;
-    // occupantWanted[i] is how many we'd ideally put in room i
     const occupantWanted = new Array(n).fill(0).map(() => base);
-
     for (let i = 0; i < n; i++) {
       if (remainder > 0) {
         occupantWanted[i] += 1;
@@ -191,109 +467,61 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
       }
     }
 
-    // Step 2: We'll do a pass from i=0..n-1, placing occupantWanted[i] but capping by room capacity.
     let totalPlaced = 0;
+    // cap occupantWanted by capacity
     for (let i = 0; i < n; i++) {
       const room = chosenRooms[i];
-
-      // current occupant usage
-      const currentAdults = room.occupant_countAdults || 0;
-      const currentChildren = room.occupant_countChildren || 0;
-
-      // how many free spots are left in this room?
-      const used = currentAdults + currentChildren;
-      const capacityLeft = room.bed_capacity - used;
-      if (capacityLeft <= 0) {
-        // can't place any here
-        occupantWanted[i] = 0;
-        continue;
-      }
-
-      const toPlace = Math.min(occupantWanted[i], capacityLeft);
-      occupantWanted[i] = toPlace;
+      const existingAdults = room.occupant_countAdults || 0;
+      const existingChildren = room.occupant_countChildren || 0;
+      const used = existingAdults + existingChildren;
+      const free = room.bed_capacity - used;
+      occupantWanted[i] = Math.min(occupantWanted[i], free);
     }
 
-    // Step 3: If we have leftover occupantWanted in room i that doesn't fit, push it to next room, etc.
-    //   (like a chain "overflow" approach).
-    for (let i = 0; i < n; i++) {
-      let overflow = occupantWanted[i];
-      // occupantWanted[i] is how many we want to place in the local room (after capacity check).
-      // But we might still need to do the chain pass to see if we can pass any leftover if we can't place here...
-      // Actually, we already did min(...) with capacity. So occupantWanted[i] should be guaranteed to fit in this room.
-      // So there's no overflow to push forward from i. We'll do the next step for correctness if we were to do a second pass.
-      let capacityLeftHere = chosenRooms[i].bed_capacity - (chosenRooms[i].occupant_countAdults || 0) - (chosenRooms[i].occupant_countChildren || 0);
-      if (overflow > capacityLeftHere) {
-        // if occupantWanted[i] > capacityLeftHere => we place only capacityLeftHere, the rest we pass forward
-        occupantWanted[i] = capacityLeftHere;
-        let passOn = overflow - capacityLeftHere;
-        // forward pass
-        for (let j = i + 1; j < n && passOn > 0; j++) {
-          let free = chosenRooms[j].bed_capacity - ((chosenRooms[j].occupant_countAdults || 0) + (chosenRooms[j].occupant_countChildren || 0) + occupantWanted[j]);
-          if (free <= 0) continue;
-          let moveHere = Math.min(free, passOn);
-          occupantWanted[j] += moveHere;
-          passOn -= moveHere;
-        }
-        occupantWanted[i] = capacityLeftHere;
-      }
-    }
-
-    // Step 4: Actually apply occupantWanted[i] to each room
     for (let i = 0; i < n; i++) {
       const room = chosenRooms[i];
-      let existingAdults = room.occupant_countAdults || 0;
-      let existingChildren = room.occupant_countChildren || 0;
-
       if (isAdult) {
-        room.occupant_countAdults = existingAdults + occupantWanted[i];
-        totalPlaced += occupantWanted[i];
+        room.occupant_countAdults =
+          (room.occupant_countAdults || 0) + occupantWanted[i];
       } else {
-        room.occupant_countChildren = existingChildren + occupantWanted[i];
-        totalPlaced += occupantWanted[i];
+        room.occupant_countChildren =
+          (room.occupant_countChildren || 0) + occupantWanted[i];
       }
+      totalPlaced += occupantWanted[i];
     }
     return totalPlaced;
   }
 
-  // useEffect to do the occupant distribution on first load (or on boardOption toggle).
   useEffect(() => {
     if (!selectedArrangement || defaultDistributed) return;
     if (!selectedArrangement.night_details) return;
 
     const updated = { ...selectedArrangement };
-
-    // For each night, if multiple rooms, distribute adults & children
     updated.night_details.forEach((night: any) => {
       const chosenRooms = night.chosen_rooms || [];
       if (chosenRooms.length < 2) {
-        // Single room => no distribution needed, but ensure occupant_count is at least 0
         chosenRooms.forEach((r: any) => {
           if (r.occupant_countAdults === undefined) r.occupant_countAdults = 0;
-          if (r.occupant_countChildren === undefined) r.occupant_countChildren = 0;
+          if (r.occupant_countChildren === undefined)
+            r.occupant_countChildren = 0;
         });
         return;
       }
-      // Reset occupant counts
+      // reset occupant counts
       chosenRooms.forEach((r: any) => {
-        if (r.occupant_countAdults === undefined) r.occupant_countAdults = 0;
-        if (r.occupant_countChildren === undefined) r.occupant_countChildren = 0;
+        r.occupant_countAdults = 0;
+        r.occupant_countChildren = 0;
       });
-
-      // 1) Distribute adults
-      const placedAdults = distributeGuestsEvenly(adults, chosenRooms, true);
-
-      // 2) Distribute children (some rooms may have less leftover bed_capacity now after the adult pass)
+      // distribute adults
+      distributeGuestsEvenly(adults, chosenRooms, true);
+      // distribute children
       distributeGuestsEvenly(children, chosenRooms, false);
-
-      // It's possible we haven't placed all if rooms are at capacity,
-      // user will see warnings about unassigned guests, which is expected behavior.
     });
 
     setSelectedArrangement(updated);
     setDefaultDistributed(true);
   }, [selectedArrangement, defaultDistributed, adults, children]);
 
-  // Handler: Toggle an optional product checkbox.
   const toggleOptionalProduct = (key: string) => {
     setSelectedOptionalProducts((prev) => ({
       ...prev,
@@ -301,19 +529,78 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
     }));
   };
 
-  // Handler: Toggle board option.
   const handleBoardToggle = (option: "breakfast" | "halfBoard") => {
     setSelectedBoardOption(option);
     const arrangementForOption = arrangements[option];
     if (arrangementForOption) {
-      // Re-do occupant distribution next time we load
       setDefaultDistributed(false);
       setSelectedArrangement(arrangementForOption);
     }
   };
 
-  // Helper: Lookup product price from config.
-  const getProductPrice = (hotelKey: string, productName: string, config: any) => {
+  const sumNightAdults = (night: any) =>
+    night.chosen_rooms.reduce(
+      (acc: number, r: any) => acc + (r.occupant_countAdults || 0),
+      0
+    );
+
+  const sumNightChildren = (night: any) =>
+    night.chosen_rooms.reduce(
+      (acc: number, r: any) => acc + (r.occupant_countChildren || 0),
+      0
+    );
+
+  const handleRoomAdultChange = (
+    nightIndex: number,
+    roomIndex: number,
+    delta: number
+  ) => {
+    if (!selectedArrangement) return;
+    const updated = { ...selectedArrangement };
+    const night = updated.night_details[nightIndex];
+    const room = night.chosen_rooms[roomIndex];
+    if (room.occupant_countAdults == null) {
+      room.occupant_countAdults = 0;
+    }
+    const newVal = room.occupant_countAdults + delta;
+    if (newVal < 0) return;
+
+    const existingSum = sumNightAdults(night);
+    if (existingSum + delta > adults) return;
+
+    const c = room.occupant_countChildren || 0;
+    if (newVal + c > room.bed_capacity) return;
+
+    room.occupant_countAdults = newVal;
+    setSelectedArrangement(updated);
+  };
+
+  const handleRoomChildChange = (
+    nightIndex: number,
+    roomIndex: number,
+    delta: number
+  ) => {
+    if (!selectedArrangement) return;
+    const updated = { ...selectedArrangement };
+    const night = updated.night_details[nightIndex];
+    const room = night.chosen_rooms[roomIndex];
+    if (room.occupant_countChildren == null) {
+      room.occupant_countChildren = 0;
+    }
+    const newVal = room.occupant_countChildren + delta;
+    if (newVal < 0) return;
+
+    const existingSum = sumNightChildren(night);
+    if (existingSum + delta > children) return;
+
+    const a = room.occupant_countAdults || 0;
+    if (newVal + a > room.bed_capacity) return;
+
+    room.occupant_countChildren = newVal;
+    setSelectedArrangement(updated);
+  };
+
+  const getProductPriceFn = (hotelKey: string, productName: string, config: any) => {
     if (
       config &&
       config[hotelKey] &&
@@ -331,7 +618,6 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
     return 0;
   };
 
-  // Helper: Get room category details (name and image URL) from config.
   const getCategoryDetails = (
     hotelKey: string,
     categoryId: string,
@@ -361,112 +647,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
     return { name: "Unknown", imageUrl: null };
   };
 
-  // Helper: Get price for a given night and room.
-  const getPriceForNight = (
-    hotelKey: string,
-    date: string,
-    categoryId: string,
-    boardType: string,
-    travelMode: string,
-    pricingData: any,
-    occupancy: number
-  ) => {
-    if (!pricingData) return "N/A";
-    const key = boardType === "HB" ? "halfBoard" : "breakfast";
-    if (!pricingData[key] || !pricingData[key].nightlyPricing) return "N/A";
-    const record = pricingData[key].nightlyPricing.find(
-      (item: any) => item.hotel === hotelKey && item.date === date
-    );
-    if (record && record.pricing && record.pricing.CategoryPrices) {
-      const catPrice = record.pricing.CategoryPrices.find(
-        (cp: any) => cp.CategoryId === categoryId
-      );
-      if (catPrice && catPrice.OccupancyPrices) {
-        let candidate = null;
-        let candidateTotal = 0;
-        for (const occ of catPrice.OccupancyPrices) {
-          const total = occ.Occupancies.reduce(
-            (sum: number, o: any) => sum + o.PersonCount,
-            0
-          );
-          if (total === occupancy) {
-            candidate = occ.RateGroupPrices[0];
-            break;
-          } else if (total < occupancy && total > candidateTotal) {
-            candidateTotal = total;
-            candidate = occ.RateGroupPrices[0];
-          }
-        }
-        if (
-          candidate &&
-          candidate.MinPrice &&
-          candidate.MinPrice.TotalAmount &&
-          typeof candidate.MinPrice.TotalAmount.GrossValue === "number"
-        ) {
-          return `${candidate.MinPrice.TotalAmount.GrossValue} ${candidate.MinPrice.TotalAmount.Currency}`;
-        }
-      }
-    }
-    return "N/A";
-  };
-
-  // Calculate total price (unchanged logic).
-  const calculateTotalPrice = (
-    optimalSequence: any,
-    pricingData: any,
-    travelMode: string,
-    adults: number,
-    children: number,
-    rooms: number,
-    config: any,
-    selectedOptionalProducts: { [key: string]: boolean }
-  ) => {
-    let total = 0;
-    const nights = optimalSequence.night_details;
-    const occupancy = Math.ceil((adults + children) / rooms);
-    nights.forEach((night: any) => {
-      night.chosen_rooms.forEach((room: any) => {
-        // For now, we still rely on occupant_count-based logic from your old approach
-        const priceStr = getPriceForNight(
-          night.hotel,
-          night.date,
-          room.category_id,
-          night.board_type,
-          travelMode,
-          pricingData,
-          occupancyPerRoom
-        );
-        const price = parseFloat(priceStr.split(" ")[0]) || 0;
-        total += price;
-      });
-
-      // Optional products
-      if (selectedOptionalProducts.lunch) {
-        const lunchPrice = getProductPrice(night.hotel, productNames.lunch, config);
-        total += lunchPrice * (adults + children);
-      }
-      if (travelMode === "cycling") {
-        if (selectedOptionalProducts.bicycleRent) {
-          const rentPrice = getProductPrice(
-            night.hotel,
-            productNames.bicycleRent,
-            config
-          );
-          total += rentPrice * (adults + children);
-        }
-        if (selectedOptionalProducts.bicycleTransport) {
-          const transportPrice = getProductPrice(
-            night.hotel,
-            productNames.bicycleTransport,
-            config
-          );
-          total += transportPrice;
-        }
-      }
-    });
-    return total;
-  };
-
+  // occupant-based final total
   const computedTotalPrice = selectedArrangement
     ? calculateTotalPrice(
         selectedArrangement,
@@ -476,88 +657,20 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         children,
         rooms,
         rawConfig,
-        selectedOptionalProducts
+        selectedOptionalProducts,
+        sumNightAdults,
+        sumNightChildren,
+        getProductPriceFn
       )
     : 0;
 
-  // Summation helpers
-  const sumNightAdults = (night: any) => {
-    return night.chosen_rooms.reduce((acc: number, room: any) => {
-      return acc + (room.occupant_countAdults || 0);
-    }, 0);
-  };
-  const sumNightChildren = (night: any) => {
-    return night.chosen_rooms.reduce((acc: number, room: any) => {
-      return acc + (room.occupant_countChildren || 0);
-    }, 0);
-  };
-
-  // Increment occupant_countAdults
-  const handleRoomAdultChange = (
-    nightIndex: number,
-    roomIndex: number,
-    delta: number
-  ) => {
-    if (!selectedArrangement) return;
-    const updated = { ...selectedArrangement };
-    const night = updated.night_details[nightIndex];
-    const room = night.chosen_rooms[roomIndex];
-
-    if (room.occupant_countAdults === undefined) {
-      room.occupant_countAdults = 0;
-    }
-    const newVal = room.occupant_countAdults + delta;
-    if (newVal < 0) return;
-
-    // Check total adult cap
-    const existingSum = sumNightAdults(night);
-    if (existingSum + delta > adults) return;
-
-    // Check bed capacity
-    const currentChildren = room.occupant_countChildren || 0;
-    if (newVal + currentChildren > room.bed_capacity) return;
-
-    room.occupant_countAdults = newVal;
-    setSelectedArrangement(updated);
-  };
-
-  // Increment occupant_countChildren
-  const handleRoomChildChange = (
-    nightIndex: number,
-    roomIndex: number,
-    delta: number
-  ) => {
-    if (!selectedArrangement) return;
-    const updated = { ...selectedArrangement };
-    const night = updated.night_details[nightIndex];
-    const room = night.chosen_rooms[roomIndex];
-
-    if (room.occupant_countChildren === undefined) {
-      room.occupant_countChildren = 0;
-    }
-    const newVal = room.occupant_countChildren + delta;
-    if (newVal < 0) return;
-
-    // Check total child cap
-    const existingSum = sumNightChildren(night);
-    if (existingSum + delta > children) return;
-
-    // Check bed capacity
-    const currentAdults = room.occupant_countAdults || 0;
-    if (newVal + currentAdults > room.bed_capacity) return;
-
-    room.occupant_countChildren = newVal;
-    setSelectedArrangement(updated);
-  };
-
-  // Helper: map optional products
+  // Build optional product mapping
   const computeOptionalProductsMapping = (): Record<string, string[]> => {
     const mapping: Record<string, string[]> = {
       hotel1: [],
       hotel2: [],
       hotel3: [],
     };
-
     if (selectedOptionalProducts.lunch) {
       mapping["hotel1"].push("d78fcc90-f92a-4547-aba2-b27c0143c1ad");
       mapping["hotel2"].push("bf9c20d3-10d1-4e96-b42b-b27c0144c79f");
@@ -599,6 +712,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
           Half Board
         </Button>
       </div>
+
       <h2 className="text-xl font-bold mb-4">
         {travelMode === "walking" ? "Walking Arrangement" : "Cycling Arrangement"} –{" "}
         {selectedBoardOption === "halfBoard" ? "Half Board" : "Breakfast Only"}
@@ -649,7 +763,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
                     night.board_type,
                     travelMode,
                     pricingData,
-                    occupancyPerRoom
+                    room // occupant-based
                   );
 
                   return (
@@ -719,21 +833,20 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
                 })}
               </div>
 
-              {/* Occupant distribution warnings for this night */}
               {rooms > 1 && (
                 <div className="mt-2 text-sm text-red-600">
                   {assignedAdults < adults && (
                     <p>
                       {adults - assignedAdults} adult
-                      {adults - assignedAdults !== 1 ? "s" : ""} not assigned to
-                      any room yet!
+                      {adults - assignedAdults !== 1 ? "s" : ""} not assigned to any room
+                      yet!
                     </p>
                   )}
                   {assignedChildren < children && (
                     <p>
                       {children - assignedChildren} child
-                      {children - assignedChildren !== 1 ? "ren" : ""} not
-                      assigned to any room yet!
+                      {children - assignedChildren !== 1 ? "ren" : ""} not assigned to
+                      any room yet!
                     </p>
                   )}
                 </div>
@@ -750,28 +863,38 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
                     option.category_id,
                     rawConfig
                   );
-                  const altPrice = getPriceForNight(
+
+                  // If you want occupant-based alt price, either copy the occupant distribution from first chosen room or do something else:
+                  const altTempRoom = {
+                    occupant_countAdults:
+                      night.chosen_rooms?.[0]?.occupant_countAdults || 0,
+                    occupant_countChildren:
+                      night.chosen_rooms?.[0]?.occupant_countChildren || 0,
+                    bed_capacity: option.bed_capacity || 0,
+                    category_id: option.category_id,
+                  };
+                  const altPriceStr = getPriceForNight(
                     night.hotel,
                     night.date,
                     option.category_id,
                     night.board_type,
                     travelMode,
                     pricingData,
-                    occupancyPerRoom
+                    altTempRoom
                   );
+
                   return (
                     <div
                       key={optIdx}
                       className="border rounded p-2 cursor-pointer hover:bg-gray-100"
                       onClick={() => {
-                        // Replace chosen_rooms with single 'option' across all rooms for that night.
                         const updated = { ...selectedArrangement };
                         updated.night_details[nightIdx].chosen_rooms =
                           updated.night_details[nightIdx].chosen_rooms.map(
                             () => option
                           );
                         setSelectedArrangement(updated);
-                        setDefaultDistributed(false); // force re-distribution logic next time if needed
+                        setDefaultDistributed(false);
                       }}
                     >
                       {details.imageUrl && (
@@ -783,7 +906,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
                       )}
                       <p className="font-bold">{option.category_name}</p>
                       <p>Bed Capacity: {option.bed_capacity}</p>
-                      <p>Price: {altPrice}</p>
+                      <p>Price: {altPriceStr}</p>
                     </div>
                   );
                 })}
@@ -833,13 +956,43 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
       <div className="border p-4 rounded">
         <h3 className="text-lg font-bold mb-2">Price Summary</h3>
         <p>
-          <strong>Total Price:</strong> {computedTotalPrice} EUR
+          <strong>Total Price:</strong>{" "}
+          {selectedArrangement
+            ? calculateTotalPrice(
+                selectedArrangement,
+                pricingData,
+                travelMode,
+                adults,
+                children,
+                rooms,
+                rawConfig,
+                selectedOptionalProducts,
+                sumNightAdults,
+                sumNightChildren,
+                getProductPriceFn
+              )
+            : 0}{" "}
+          EUR
         </p>
         <p>
           <strong>Price per Night:</strong>{" "}
-          {(
-            computedTotalPrice / selectedArrangement.night_details.length
-          ).toFixed(2)}{" "}
+          {selectedArrangement?.night_details?.length
+            ? (
+                calculateTotalPrice(
+                  selectedArrangement,
+                  pricingData,
+                  travelMode,
+                  adults,
+                  children,
+                  rooms,
+                  rawConfig,
+                  selectedOptionalProducts,
+                  sumNightAdults,
+                  sumNightChildren,
+                  getProductPriceFn
+                ) / selectedArrangement.night_details.length
+              ).toFixed(2)
+            : "0.00"}{" "}
           EUR
         </p>
       </div>
@@ -850,13 +1003,52 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
         </Button>
         <Button
           onClick={() => {
-            const optionalProductsMapping = computeOptionalProductsMapping();
+            const optionalProductsMapping = ((): Record<string, string[]> => {
+              const mapping: Record<string, string[]> = {
+                hotel1: [],
+                hotel2: [],
+                hotel3: [],
+              };
+              if (selectedOptionalProducts.lunch) {
+                mapping["hotel1"].push("d78fcc90-f92a-4547-aba2-b27c0143c1ad");
+                mapping["hotel2"].push("bf9c20d3-10d1-4e96-b42b-b27c0144c79f");
+                mapping["hotel3"].push("96c6bc09-6ebd-4a67-9924-b27c0145acf1");
+              }
+              if (travelMode === "cycling") {
+                if (selectedOptionalProducts.bicycleRent) {
+                  mapping["hotel1"].push("59b38a23-15a4-461d-bea6-b27c0143f0e9");
+                  mapping["hotel2"].push("ecc8e7d4-2a49-4326-a3b1-b27c0144f4bf");
+                  mapping["hotel3"].push("177ea362-600e-436b-b909-b27c01458da2");
+                }
+                if (selectedOptionalProducts.bicycleTransport) {
+                  mapping["hotel1"].push("3dc76cb4-d72f-46b5-8cff-b27c014415ca");
+                  mapping["hotel2"].push("e1365138-e07e-4e5b-9222-b27c0145279f");
+                  mapping["hotel3"].push("91038565-d3dc-448d-9a04-b27c014559a2");
+                }
+              }
+              return mapping;
+            })();
+
             const finalArrangement = {
               ...selectedArrangement,
               optionalProducts: optionalProductsMapping,
               travelMode: bookingData.travelMode,
             };
-            onContinue(finalArrangement, pricingData, rawConfig, computedTotalPrice);
+
+            const totalPrice = calculateTotalPrice(
+              finalArrangement,
+              pricingData,
+              travelMode,
+              adults,
+              children,
+              rooms,
+              rawConfig,
+              selectedOptionalProducts,
+              sumNightAdults,
+              sumNightChildren,
+              getProductPriceFn
+            );
+            onContinue(finalArrangement, pricingData, rawConfig, totalPrice);
           }}
         >
           Continue to Confirmation
@@ -866,4 +1058,5 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
   );
 };
 
+// Named + default export
 export default RoomSelection;
