@@ -569,6 +569,7 @@ export const RoomSelection: React.FC<RoomSelectionProps> = ({
             const finalArrangement = {
               ...selectedArrangement,
               optionalProducts: optionalProductsMapping,
+              travelMode: bookingData.travelMode,  // e.g. "walking" or "cycling"
             };
             onContinue(
               finalArrangement,
