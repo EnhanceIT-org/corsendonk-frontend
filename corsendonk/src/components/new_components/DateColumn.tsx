@@ -29,16 +29,21 @@ function getPriceForSingleRoom(
   boardType: string,
   travelMode: string,
   room: any,
+  children: number,
+  adults: number,
 ): number {
   if (!nightlyPricing?.CategoryPrices) return 0;
   const cat = nightlyPricing.CategoryPrices.find(
     (cp: any) => cp.CategoryId === room.category_id,
   );
   if (!cat) return 0;
-
-  const occupantAdults = room.occupant_countAdults || 0;
-  const occupantChildren = room.occupant_countChildren || 0;
+  const occupantAdults = adults || 0;
+  const occupantChildren = children || 0;
   const occupantTotal = occupantAdults + occupantChildren;
+
+  if (occupantTotal === 0) {
+    return -1;
+  }
 
   // occupant array
   const occupantArray: any[] = [];
@@ -54,7 +59,7 @@ function getPriceForSingleRoom(
       PersonCount: occupantChildren,
     });
   }
-
+  console.log(cat);
   let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
     if (op.Occupancies.length !== occupantArray.length) return false;
     const sorted1 = [...op.Occupancies].sort((a, b) =>
@@ -73,6 +78,7 @@ function getPriceForSingleRoom(
     }
     return true;
   });
+  console.log(occupantPriceEntry);
   if (!occupantPriceEntry) {
     occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
       const sum = op.Occupancies.reduce(
@@ -91,6 +97,7 @@ function getPriceForSingleRoom(
   if (!rPrice) return 0;
 
   const val = rPrice.MinPrice?.TotalAmount?.GrossValue;
+  console.log(val);
   if (typeof val === "number") return val;
   return 0;
 }
@@ -151,8 +158,64 @@ export function DateColumn({
   const [selectedRooms, setSelectedRooms] = useState(
     Array.from({
       length: roomsCount,
-    }).map(() => ({ selectedRoom: null })),
+    }).map(() => ({ selectedRoom: roomTypes[0] })),
   );
+  const [amountOfChildren, setAmountOfChildren] = useState(
+    Array.from({ length: roomsCount }, () => 0),
+  );
+
+  const [amountOfAdults, setAmountOfAdults] = useState(
+    Array.from({ length: roomsCount }, () => 1),
+  );
+
+  const [errorMessages, setErrorMessages] = useState(
+    Array(selectedRooms.length).fill(""),
+  );
+
+  const handleIncrease = (type, index) => {
+    setAmountOfAdults((prev) =>
+      prev.map((item, i) =>
+        i === index ? item + (type === "adult" ? 1 : 0) : item,
+      ),
+    );
+    setAmountOfChildren((prev) =>
+      prev.map((item, i) =>
+        i === index ? item + (type === "child" ? 1 : 0) : item,
+      ),
+    );
+  };
+
+  const handleDecrease = (type, index) => {
+    setErrorMessages((prev) => prev.map((msg, i) => (i === index ? "" : msg)));
+    setAmountOfAdults((prev) =>
+      prev.map((item, i) =>
+        i === index ? Math.max(0, item - (type === "adult" ? 1 : 0)) : item,
+      ),
+    );
+    setAmountOfChildren((prev) =>
+      prev.map((item, i) =>
+        i === index ? Math.max(0, item - (type === "child" ? 1 : 0)) : item,
+      ),
+    );
+  };
+
+  const handleGuestChange = (type, index) => {
+    const totalGuests = amountOfAdults[index] + amountOfChildren[index];
+    const roomCapacity = selectedRooms[index].selectedRoom.bed_capacity;
+
+    if (totalGuests >= roomCapacity) {
+      setErrorMessages((prev) =>
+        prev.map((msg, i) =>
+          i === index ? `Er is een maxium van ${roomCapacity} personen` : msg,
+        ),
+      );
+    } else {
+      setErrorMessages((prev) =>
+        prev.map((msg, i) => (i === index ? "" : msg)),
+      );
+      handleIncrease(type, index);
+    }
+  };
 
   const handleRoomChange = (index, room) => {
     setSelectedRooms((prev) =>
@@ -177,6 +240,11 @@ export function DateColumn({
           length: roomsCount,
         }).map((_, index) => (
           <div key={index} className="border rounded-lg p-4">
+            {errorMessages[index] && (
+              <p className="text-red-500 text-sm mt-2">
+                {errorMessages[index]}
+              </p>
+            )}
             <div className="space-y-4">
               <div className="flex justify-between items-start">
                 <h4 className="font-medium text-[#2C4A3C]">Room {index + 1}</h4>
@@ -185,12 +253,15 @@ export function DateColumn({
               <div className="flex flex-col gap-2">
                 <select
                   className="w-full text-sm border rounded-md px-2 py-1.5 bg-white"
-                  value={selectedRooms[index].selectedRoom || ""}
+                  value={selectedRooms[index].selectedRoom.category_name || ""}
                   onChange={(e) => {
                     onRoomSelect(
                       roomTypes.find((r) => r.category_name === e.target.value),
                     );
-                    handleRoomChange(index, e.target.value);
+                    handleRoomChange(
+                      index,
+                      roomTypes.find((r) => r.category_name === e.target.value),
+                    );
                   }}
                 >
                   {roomTypes.map((room) => (
@@ -207,46 +278,75 @@ export function DateColumn({
                       const foundEntry = nightlyArr.find(
                         (x: any) => x.date === date && x.hotel === hotel,
                       );
-
                       if (!foundEntry) return "Price not available"; // Prevents rendering errors
 
                       const selectedRoom =
                         selectedRooms[index]?.selectedRoom || null;
-                      return getPriceForSingleRoom(
-                        foundEntry.price,
+                      const children = amountOfChildren[index] || null;
+                      const adults = amountOfAdults[index] || null;
+                      const prijs = getPriceForSingleRoom(
+                        foundEntry.pricing,
                         hotel,
                         mealPlan,
                         travelMode,
                         selectedRoom,
+                        children,
+                        adults,
                       );
-                    })()}{" "}
-                    per night
+                      return prijs === -1
+                        ? "Prijs kan niet bepaald worden"
+                        : `€${prijs} per nacht`;
+                    })()}
                   </span>
                 </div>
               </div>
               {/* Guest controls */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Adults</span>
+                  <span className="text-sm text-gray-600">Volwassenen</span>
                   <div className="flex items-center gap-3">
-                    <button className="p-1 hover:bg-gray-100 rounded">
+                    <button
+                      className="p-1 hover:bg-gray-100 rounded"
+                      onClick={() => {
+                        handleDecrease("adult", index);
+                      }}
+                    >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="w-8 text-center">1</span>
-                    <button className="p-1 hover:bg-gray-100 rounded">
+                    <span className="w-8 text-center">
+                      {amountOfAdults[index]}
+                    </span>
+                    <button
+                      className="p-1 hover:bg-gray-100 rounded"
+                      onClick={() => {
+                        handleGuestChange("adult", index);
+                      }}
+                    >
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Children</span>
+                  <span className="text-sm text-gray-600">Kinderen</span>
                   <div className="flex items-center gap-3">
-                    <button className="p-1 hover:bg-gray-100 rounded">
+                    <button
+                      className="p-1 hover:bg-gray-100 rounded"
+                      onClick={() => {
+                        handleDecrease("child", index);
+                      }}
+                    >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="w-8 text-center">1</span>
+                    <span className="w-8 text-center">
+                      {amountOfChildren[index]}
+                    </span>
                     <button className="p-1 hover:bg-gray-100 rounded">
-                      <Plus className="w-4 h-4" />
+                      <Plus
+                        className="w-4 h-4"
+                        onClick={() => {
+                          handleGuestChange("child", index);
+                        }}
+                      />
                     </button>
                   </div>
                 </div>
@@ -259,12 +359,12 @@ export function DateColumn({
       <div className="mt-6 flex gap-4">
         <div className="flex items-center gap-2">
           <Coffee className="w-5 h-5 text-[#2C4A3C]" />
-          <span className="text-sm text-gray-600">Breakfast</span>
+          <span className="text-sm text-gray-600">Ontbijt</span>
         </div>
         {mealPlan === "halfboard" && (
           <div className="flex items-center gap-2">
             <UtensilsCrossed className="w-5 h-5 text-[#2C4A3C]" />
-            <span className="text-sm text-gray-600">Dinner</span>
+            <span className="text-sm text-gray-600">Avondeten</span>
           </div>
         )}
       </div>

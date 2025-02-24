@@ -55,7 +55,7 @@ function getPriceForNight(
   room: any, // contains occupant_countAdults, occupant_countChildren, bed_capacity...
 ): string {
   if (!pricingData) return "N/A";
-  const dataKey = boardType === "HB" ? "halfBoard" : "breakfast";
+  const dataKey = boardType === "HB" ? "halfboard" : "breakfast";
   const nightlyArr = pricingData[dataKey]?.nightlyPricing || [];
   const foundEntry = nightlyArr.find(
     (x: any) => x.hotel === hotelKey && x.date === date,
@@ -218,7 +218,7 @@ function calculateTotalPrice(
   if (!arrangement?.night_details) return 0;
   let total = 0;
   for (const night of arrangement.night_details) {
-    const boardKey = night.board_type === "HB" ? "halfBoard" : "breakfast";
+    const boardKey = night.board_type === "HB" ? "halfboard" : "breakfast";
     const nightlyArr = pricingDataObj[boardKey]?.nightlyPricing || [];
     const foundEntry = nightlyArr.find(
       (x: any) => x.date === night.date && x.hotel === night.hotel,
@@ -280,18 +280,18 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   const [rawConfig, setRawConfig] = useState<any>(null);
   const [arrangements, setArrangements] = useState<{
     breakfast: any;
-    halfBoard: any;
+    halfboard: any;
   }>({
     breakfast: null,
-    halfBoard: null,
+    halfboard: null,
   });
   const [selectedArrangement, setSelectedArrangement] = useState<any>(null);
   const [pricingData, setPricingData] = useState<{
     breakfast: any;
-    halfBoard: any;
+    halfboard: any;
   }>({
     breakfast: null,
-    halfBoard: null,
+    halfboard: null,
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -354,7 +354,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         const availHalfBoard = availHalfBoardRes.data.data;
         setArrangements({
           breakfast: availBreakfast.optimal_sequence,
-          halfBoard: availHalfBoard.optimal_sequence,
+          halfboard: availHalfBoard.optimal_sequence,
         });
 
         const [pricingBreakfastRes, pricingHalfBoardRes] = await Promise.all([
@@ -367,7 +367,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         ]);
         setPricingData({
           breakfast: pricingBreakfastRes.data.data,
-          halfBoard: pricingHalfBoardRes.data.data,
+          halfboard: pricingHalfBoardRes.data.data,
         });
 
         if (bookingData.boardOption === "breakfast") {
@@ -665,8 +665,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
           {selectedArrangement.night_details.map(
             (night: any, nightIdx: number) => {
-              const assignedAdults = sumNightAdults(night);
-              const assignedChildren = sumNightChildren(night);
               return (
                 <Fragment key={night.date}>
                   <DateColumn
@@ -684,7 +682,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                           () => option,
                         );
                       setSelectedArrangement(updated);
-                      setDefaultDistributed(false);
                     }}
                   />
                   {nightIdx < selectedArrangement.night_details.length - 1 && (
