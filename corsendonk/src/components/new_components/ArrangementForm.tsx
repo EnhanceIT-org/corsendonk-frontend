@@ -56,7 +56,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
   };
 
   return (
-    <main className="min-h-screen w-full bg-gray-50 pb-32" data-prototypeId="2">
+    <main className="min-h-screen w-full bg-gray-50 pb-32" data-prototypeid="2">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         <div className="mb-8">
           <img

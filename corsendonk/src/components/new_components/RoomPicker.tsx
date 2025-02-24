@@ -9,9 +9,13 @@ import { Bike } from "lucide-react";
 import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
 
 // Define product names used in pricing lookups.
+
 const productNames = {
   breakfast: "Breakfast (Package)",
-  Fragment,
+  lunch: "Lunch package",
+  koffernabreng: "Koffernabreng",
+  bicycleRent: "Bicylce renting",
+  bicycleTransport: "Bicycle transport cost",
 };
 
 interface RoomPickerProps {
@@ -237,7 +241,6 @@ function calculateTotalPrice(
       );
     }
     total += nightRoomSum;
-
     // optional products
     const assignedAdults = sumNightAdultsFn(night);
     const assignedChildren = sumNightChildrenFn(night);
@@ -272,11 +275,7 @@ function calculateTotalPrice(
   return total;
 }
 
-export const RoomPicker: React.FC<RoomPickerProps> = ({
-  bookingData,
-  onContinue,
-  onBack,
-}) => {
+export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
   const [rawConfig, setRawConfig] = useState<any>(null);
   const [arrangements, setArrangements] = useState<{
     breakfast: any;
@@ -466,13 +465,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     setDefaultDistributed(true);
   }, [selectedArrangement, defaultDistributed, adults, children]);
 
-  const toggleOptionalProduct = (key: string) => {
-    setSelectedOptionalProducts((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
     setSelectedBoardOption(option);
     const arrangementForOption = arrangements[option];
@@ -493,56 +485,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       (acc: number, r: any) => acc + (r.occupant_countChildren || 0),
       0,
     );
-
-  const handleRoomAdultChange = (
-    nightIndex: number,
-    roomIndex: number,
-    delta: number,
-  ) => {
-    if (!selectedArrangement) return;
-    const updated = { ...selectedArrangement };
-    const night = updated.night_details[nightIndex];
-    const room = night.chosen_rooms[roomIndex];
-    if (room.occupant_countAdults == null) {
-      room.occupant_countAdults = 0;
-    }
-    const newVal = room.occupant_countAdults + delta;
-    if (newVal < 0) return;
-
-    const existingSum = sumNightAdults(night);
-    if (existingSum + delta > adults) return;
-
-    const c = room.occupant_countChildren || 0;
-    if (newVal + c > room.bed_capacity) return;
-
-    room.occupant_countAdults = newVal;
-    setSelectedArrangement(updated);
-  };
-
-  const handleRoomChildChange = (
-    nightIndex: number,
-    roomIndex: number,
-    delta: number,
-  ) => {
-    if (!selectedArrangement) return;
-    const updated = { ...selectedArrangement };
-    const night = updated.night_details[nightIndex];
-    const room = night.chosen_rooms[roomIndex];
-    if (room.occupant_countChildren == null) {
-      room.occupant_countChildren = 0;
-    }
-    const newVal = room.occupant_countChildren + delta;
-    if (newVal < 0) return;
-
-    const existingSum = sumNightChildren(night);
-    if (existingSum + delta > children) return;
-
-    const a = room.occupant_countAdults || 0;
-    if (newVal + a > room.bed_capacity) return;
-
-    room.occupant_countChildren = newVal;
-    setSelectedArrangement(updated);
-  };
 
   const getProductPriceFn = (
     hotelKey: string,
@@ -662,11 +604,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             onChange={handleBoardToggle}
           />
         </div>
+
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
           {selectedArrangement.night_details.map(
             (night: any, nightIdx: number) => {
               return (
-                <Fragment key={night.date}>
+                <div key={night.date}>
                   <DateColumn
                     date={night.date}
                     mealPlan={selectedBoardOption}
@@ -702,16 +645,17 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                       )}
                     </div>
                   )}
-                </Fragment>
+                </div>
               );
             },
           )}
         </div>
-        <OptionalExtras />
-        <PricingSummary
-          nights={selectedArrangement.night_details.length - 1}
-          mealPlan={selectedBoardOption}
+        <OptionalExtras
+          travelMode={travelMode}
+          selectedOptionalProducts={selectedOptionalProducts}
+          setSelectedOptionalProducts={setSelectedOptionalProducts}
         />
+        <PricingSummary totalPrice={computedTotalPrice} />
       </div>
     </main>
   );
