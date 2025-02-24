@@ -1,4 +1,3 @@
-// components/booking/BookingForm.tsx
 import React, { useState } from "react";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { Button } from "@/components/ui/button";
@@ -25,8 +24,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onContinue }) => {
   const [rooms, setRooms] = useState<number>(1);
   const [adults, setAdults] = useState<number>(2);
   const [children, setChildren] = useState<number>(0);
-  const [travelMode, setTravelMode] = useState<"walking" | "cycling">("walking");
-  const [boardOption, setBoardOption] = useState<"breakfast" | "halfBoard">("breakfast");
+  const [travelMode, setTravelMode] = useState<"walking" | "cycling">(
+    "walking",
+  );
+  const [boardOption, setBoardOption] = useState<"breakfast" | "halfBoard">(
+    "breakfast",
+  );
 
   const handleDateChange = (range: { from: Date; to: Date }) => {
     if (range.from) {
@@ -56,7 +59,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onContinue }) => {
     <div className="bg-white p-6 rounded-lg shadow-sm space-y-6 animate-fade-in">
       {/* Arrangement Length Selector */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Select Arrangement Length</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          Select Arrangement Length
+        </h2>
         <select
           value={arrangementLength}
           onChange={(e) => setArrangementLength(Number(e.target.value))}
@@ -69,7 +74,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onContinue }) => {
       {/* Date Picker */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Pick Start Date</h2>
-        <DateRangePicker arrangementLength={arrangementLength} onChange={handleDateChange} />
+        <DateRangePicker
+          arrangementLength={arrangementLength}
+          onChange={handleDateChange}
+        />
       </div>
 
       {/* Guests Selector */}
@@ -141,10 +149,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onContinue }) => {
             onChange={(e) => setRooms(Number(e.target.value))}
             className="w-16 text-center border"
           />
-          <button
-            onClick={() => setRooms(rooms + 1)}
-            className="px-2 border"
-          >
+          <button onClick={() => setRooms(rooms + 1)} className="px-2 border">
             +
           </button>
         </div>
@@ -214,5 +219,3 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onContinue }) => {
     </div>
   );
 };
-
-

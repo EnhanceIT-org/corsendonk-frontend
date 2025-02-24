@@ -359,9 +359,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   const { startDate, arrangementLength, rooms, adults, children, travelMode } =
     bookingData;
 
-  const [day, month, year] = startDate.split("-");
+  const [year, month, day] = startDate.split("-");
   const formattedStartDateGET = `${year}-${month}-${day}`;
-  const formattedStartDatePOST = startDate;
+  const formattedStartDatePOST = `${day}-${month}-${year}`;
 
   // occupantPerRoom from older references
   const occupancyPerRoom = Math.ceil((adults + children) / rooms);
@@ -702,7 +702,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             className="h-12 mb-4"
           />
           <h1 className="text-3xl font-semibold text-[#2C4A3C] mb-6">
-            Your Arrangement
+            Uw Boeking
           </h1>
           <MealPlanToggle
             selected={selectedBoardOption}
@@ -717,7 +717,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
               return (
                 <Fragment key={night}>
                   <DateColumn
-                    date={night}
+                    date={night.date}
                     mealPlan={selectedBoardOption}
                     totalGuests={assignedAdults + assignedChildren}
                     roomsCount={night.chosen_rooms.length}

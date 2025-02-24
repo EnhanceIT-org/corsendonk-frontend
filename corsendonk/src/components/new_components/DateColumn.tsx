@@ -1,5 +1,6 @@
 import React, { Children } from "react";
 import { format } from "date-fns";
+import { nl } from "date-fns/locale";
 import { Coffee, UtensilsCrossed, Plus, Minus, Info } from "lucide-react";
 interface DateColumnProps {
   date: string;
@@ -42,7 +43,7 @@ export function DateColumn({
       {/* Date header */}
       <div className="border-b pb-4 mb-6">
         <h2 className="text-xl font-medium text-[#2C4A3C]">
-          {format(new Date(date), "EEE, MMM d")}
+          {format(new Date(date), "EEE, MMM d", { locale: nl })}
         </h2>
       </div>
       {/* Hotel info */}

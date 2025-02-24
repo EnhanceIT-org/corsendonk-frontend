@@ -14,7 +14,7 @@ export function MealPlanToggle({ selected, onChange }: MealPlanToggleProps) {
         }`}
         onClick={() => onChange("breakfast")}
       >
-        Breakfast Only
+        Alleen Ontbijt
       </button>
       <button
         className={`px-4 py-2 rounded-md text-sm font-medium ${
@@ -24,7 +24,7 @@ export function MealPlanToggle({ selected, onChange }: MealPlanToggleProps) {
         }`}
         onClick={() => onChange("halfboard")}
       >
-        Half Board
+        Halfpension
       </button>
     </div>
   );
