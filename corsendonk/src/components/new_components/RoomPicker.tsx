@@ -2,10 +2,10 @@ import React, { useEffect, Fragment, useState } from "react";
 import { MealPlanToggle } from "./MealPlanToggle";
 import { DateColumn } from "./DateColumn";
 import { OptionalExtras } from "./OptionalExtras";
-import { PricingSummary } from "./PricingSummary";
+import { format } from "date-fns";
 import axios from "axios";
 import { fetchWithBaseUrl } from "@/lib/utils";
-import { Bike } from "lucide-react";
+import { Coffee, UtensilsCrossed, Plus, Minus, Bike } from "lucide-react";
 import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
 
 // Define product names used in pricing lookups.
@@ -218,9 +218,16 @@ function calculateTotalPrice(
     productName: string,
     config: any,
   ) => number,
+  pricesPerNight: number[],
 ): number {
   if (!arrangement?.night_details) return 0;
   let total = 0;
+  // occupant-based sum for all chosen rooms
+  console.log(pricesPerNight);
+  for (const price of pricesPerNight) {
+    total += price;
+  }
+  console.log("total", total);
   for (const night of arrangement.night_details) {
     const boardKey = night.board_type === "HB" ? "halfboard" : "breakfast";
     const nightlyArr = pricingDataObj[boardKey]?.nightlyPricing || [];
@@ -229,18 +236,6 @@ function calculateTotalPrice(
     );
     if (!foundEntry) continue;
 
-    // occupant-based sum for all chosen rooms
-    let nightRoomSum = 0;
-    for (const room of night.chosen_rooms) {
-      nightRoomSum += getPriceForSingleRoom(
-        foundEntry.pricing,
-        night.hotel,
-        night.board_type,
-        travelMode,
-        room,
-      );
-    }
-    total += nightRoomSum;
     // optional products
     const assignedAdults = sumNightAdultsFn(night);
     const assignedChildren = sumNightChildrenFn(night);
@@ -309,6 +304,61 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
 
   const { startDate, arrangementLength, rooms, adults, children, travelMode } =
     bookingData;
+
+  const getProductPriceFn = (
+    hotelKey: string,
+    productName: string,
+    config: any,
+  ) => {
+    if (
+      config &&
+      config[hotelKey] &&
+      config[hotelKey].rawConfig &&
+      config[hotelKey].rawConfig.Configurations &&
+      config[hotelKey].rawConfig.Configurations.length > 0
+    ) {
+      const raw = config[hotelKey].rawConfig;
+      const products = raw.Configurations[0].Enterprise.Products || [];
+      const product = products.find(
+        (p: any) =>
+          p.Name["en-GB"] === productName && p.Prices && p.Prices["EUR"],
+      );
+      if (product) return product.Prices["EUR"];
+    }
+    return 0;
+  };
+
+  const sumNightAdults = (night: any) =>
+    night.chosen_rooms.reduce(
+      (acc: number, r: any) => acc + (r.occupant_countAdults || 0),
+      0,
+    );
+
+  const sumNightChildren = (night: any) =>
+    night.chosen_rooms.reduce(
+      (acc: number, r: any) => acc + (r.occupant_countChildren || 0),
+      0,
+    );
+
+  const [pricesPerNight, setPricesPerNight] = useState<number[]>(
+    Array(arrangementLength - 1).fill(0),
+  );
+  const [totalPrice, setTotalPrice] = useState(
+    calculateTotalPrice(
+      selectedArrangement,
+      pricingData,
+      travelMode,
+      adults,
+      children,
+      rooms,
+      rawConfig,
+      selectedOptionalProducts,
+      sumNightAdults,
+      sumNightChildren,
+      getProductPriceFn,
+      pricesPerNight,
+    ),
+  );
 
   const [year, month, day] = startDate.split("-");
   const formattedStartDateGET = `${year}-${month}-${day}`;
@@ -465,6 +515,25 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
     setDefaultDistributed(true);
   }, [selectedArrangement, defaultDistributed, adults, children]);
 
+  useEffect(() => {
+    setTotalPrice(
+      calculateTotalPrice(
+        selectedArrangement,
+        pricingData,
+        travelMode,
+        adults,
+        children,
+        rooms,
+        rawConfig,
+        selectedOptionalProducts,
+        sumNightAdults,
+        sumNightChildren,
+        getProductPriceFn,
+        pricesPerNight,
+      ),
+    );
+  }, [pricesPerNight]);
+
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
     setSelectedBoardOption(option);
     const arrangementForOption = arrangements[option];
@@ -472,41 +541,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
       setDefaultDistributed(false);
       setSelectedArrangement(arrangementForOption);
     }
-  };
-
-  const sumNightAdults = (night: any) =>
-    night.chosen_rooms.reduce(
-      (acc: number, r: any) => acc + (r.occupant_countAdults || 0),
-      0,
-    );
-
-  const sumNightChildren = (night: any) =>
-    night.chosen_rooms.reduce(
-      (acc: number, r: any) => acc + (r.occupant_countChildren || 0),
-      0,
-    );
-
-  const getProductPriceFn = (
-    hotelKey: string,
-    productName: string,
-    config: any,
-  ) => {
-    if (
-      config &&
-      config[hotelKey] &&
-      config[hotelKey].rawConfig &&
-      config[hotelKey].rawConfig.Configurations &&
-      config[hotelKey].rawConfig.Configurations.length > 0
-    ) {
-      const raw = config[hotelKey].rawConfig;
-      const products = raw.Configurations[0].Enterprise.Products || [];
-      const product = products.find(
-        (p: any) =>
-          p.Name["en-GB"] === productName && p.Prices && p.Prices["EUR"],
-      );
-      if (product) return product.Prices["EUR"];
-    }
-    return 0;
   };
 
   const getCategoryDetails = (
@@ -537,23 +571,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
     }
     return { name: "Unknown", imageUrl: null };
   };
-
-  // occupant-based final total
-  const computedTotalPrice = selectedArrangement
-    ? calculateTotalPrice(
-        selectedArrangement,
-        pricingData,
-        travelMode,
-        adults,
-        children,
-        rooms,
-        rawConfig,
-        selectedOptionalProducts,
-        sumNightAdults,
-        sumNightChildren,
-        getProductPriceFn,
-      )
-    : 0;
 
   // Build optional product mapping
   const computeOptionalProductsMapping = (): Record<string, string[]> => {
@@ -608,9 +625,181 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
           {selectedArrangement.night_details.map(
             (night: any, nightIdx: number) => {
+              console.log(nightIdx);
               return (
                 <div key={night.date}>
-                  <DateColumn
+                  <div className="flex-1 bg-white rounded-lg shadow-sm p-6">
+                    {/* Date header */}
+                    <div className="border-b pb-4 mb-6">
+                      <h2 className="text-xl font-medium text-[#2C4A3C]">
+                        {format(new Date(night.date), "EEE, MMM d", {
+                          locale: nl,
+                        })}
+                      </h2>
+                    </div>
+                    {/* Hotel info */}
+                    <div className="mb-6">
+                      <h3 className="text-lg font-medium text-[#2C4A3C]">
+                        {night.hotel}
+                      </h3>
+                    </div>
+                    {/* Room selection */}
+                    <div className="space-y-6">
+                      {Array.from({
+                        length: night.chosen_rooms.length,
+                      }).map((_, index) => (
+                        <div key={index} className="border rounded-lg p-4">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-medium text-[#2C4A3C]">
+                                Room {index + 1}
+                              </h4>
+                            </div>
+                            {/* Room type selector */}
+                            <div className="flex flex-col gap-2">
+                              <select
+                                className="w-full text-sm border rounded-md px-2 py-1.5 bg-white"
+                                value={
+                                  selectedRooms[index].selectedRoom
+                                    .category_name || ""
+                                }
+                                onChange={(e) => {
+                                  onRoomSelect(
+                                    night.room_options.find(
+                                      (r) => r.category_name === e.target.value,
+                                    ),
+                                  );
+                                  handleRoomChange(
+                                    index,
+                                    night.room_options.find(
+                                      (r) => r.category_name === e.target.value,
+                                    ),
+                                  );
+                                }}
+                              >
+                                {night.room_options.map((room) => (
+                                  <option
+                                    key={room.category_id}
+                                    value={room.category_name}
+                                  >
+                                    {room.category_name}
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="flex justify-between text-sm text-gray-500">
+                                <span>
+                                  {(() => {
+                                    const nightlyArr =
+                                      pricingData[selectedBoardOption]
+                                        ?.nightlyPricing || [];
+                                    const foundEntry = nightlyArr.find(
+                                      (x: any) =>
+                                        x.date === night.date &&
+                                        x.hotel === night.hotel,
+                                    );
+                                    if (!foundEntry)
+                                      return "Price not available"; // Prevents rendering errors
+
+                                    const selectedRoom =
+                                      selectedRooms[index]?.selectedRoom ||
+                                      null;
+                                    const children =
+                                      amountOfChildren[index] || null;
+                                    const adults =
+                                      amountOfAdults[index] || null;
+                                    const prijs = getPriceForSingleRoom(
+                                      foundEntry.pricing,
+                                      night.hotel,
+                                      selectedBoardOption,
+                                      travelMode,
+                                      selectedRoom,
+                                      children,
+                                      adults,
+                                    );
+                                    return prijs === -1
+                                      ? "Prijs kan niet bepaald worden"
+                                      : `€${prijs} per nacht`;
+                                  })()}
+                                </span>
+                              </div>
+                            </div>
+                            {/* Guest controls */}
+                            <div className="space-y-3 pt-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">
+                                  Volwassenen
+                                </span>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    className="p-1 hover:bg-gray-100 rounded"
+                                    onClick={() => {
+                                      handleDecrease("adult", index);
+                                    }}
+                                  >
+                                    <Minus className="w-4 h-4" />
+                                  </button>
+                                  <span className="w-8 text-center">
+                                    {amountOfAdults[index]}
+                                  </span>
+                                  <button
+                                    className="p-1 hover:bg-gray-100 rounded"
+                                    onClick={() => {
+                                      handleGuestChange("adult", index);
+                                    }}
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">
+                                  Kinderen
+                                </span>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    className="p-1 hover:bg-gray-100 rounded"
+                                    onClick={() => {
+                                      handleDecrease("child", index);
+                                    }}
+                                  >
+                                    <Minus className="w-4 h-4" />
+                                  </button>
+                                  <span className="w-8 text-center">
+                                    {amountOfChildren[index]}
+                                  </span>
+                                  <button className="p-1 hover:bg-gray-100 rounded">
+                                    <Plus
+                                      className="w-4 h-4"
+                                      onClick={() => {
+                                        handleGuestChange("child", index);
+                                      }}
+                                    />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Meal indicators */}
+                    <div className="mt-6 flex gap-4">
+                      <div className="flex items-center gap-2">
+                        <Coffee className="w-5 h-5 text-[#2C4A3C]" />
+                        <span className="text-sm text-gray-600">Ontbijt</span>
+                      </div>
+                      {selectedBoardOption === "halfboard" && (
+                        <div className="flex items-center gap-2">
+                          <UtensilsCrossed className="w-5 h-5 text-[#2C4A3C]" />
+                          <span className="text-sm text-gray-600">
+                            Avondeten
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* <DateColumn
                     date={night.date}
                     mealPlan={selectedBoardOption}
                     roomsCount={night.chosen_rooms.length}
@@ -626,7 +815,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                         );
                       setSelectedArrangement(updated);
                     }}
-                  />
+                    nightIdx={nightIdx}
+                    setPricesPerNight={setPricesPerNight}
+                  /> */}
                   {nightIdx < selectedArrangement.night_details.length - 1 && (
                     <div className="hidden lg:flex items-center justify-center w-16">
                       {travelMode === "walking" ? (
@@ -655,7 +846,22 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
           selectedOptionalProducts={selectedOptionalProducts}
           setSelectedOptionalProducts={setSelectedOptionalProducts}
         />
-        <PricingSummary totalPrice={computedTotalPrice} />
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <div className="text-sm text-gray-500">Totale Prijs</div>
+                <div className="text-2xl font-semibold">€ {totalPrice}</div>
+                <div className="text-sm text-gray-500">
+                  Gemiddelde prijs € per nacht
+                </div>
+              </div>
+              <button className="w-full sm:w-auto bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors">
+                Book Now
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );

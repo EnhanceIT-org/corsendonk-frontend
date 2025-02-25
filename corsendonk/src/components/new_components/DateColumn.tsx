@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Coffee, UtensilsCrossed, Plus, Minus, Info } from "lucide-react";
@@ -21,6 +21,8 @@ interface DateColumnProps {
   pricingData: any;
   travelMode: "walking" | "cycling";
   onRoomSelect: (option: any) => void;
+  nightIdx: number;
+  setPricesPerNight: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
 function getPriceForSingleRoom(
@@ -59,7 +61,6 @@ function getPriceForSingleRoom(
       PersonCount: occupantChildren,
     });
   }
-  console.log(cat);
   let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
     if (op.Occupancies.length !== occupantArray.length) return false;
     const sorted1 = [...op.Occupancies].sort((a, b) =>
@@ -78,7 +79,6 @@ function getPriceForSingleRoom(
     }
     return true;
   });
-  console.log(occupantPriceEntry);
   if (!occupantPriceEntry) {
     occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
       const sum = op.Occupancies.reduce(
@@ -97,8 +97,9 @@ function getPriceForSingleRoom(
   if (!rPrice) return 0;
 
   const val = rPrice.MinPrice?.TotalAmount?.GrossValue;
-  console.log(val);
-  if (typeof val === "number") return val;
+  if (typeof val === "number") {
+    return val;
+  }
   return 0;
 }
 
@@ -154,7 +155,12 @@ export function DateColumn({
   travelMode,
   pricingData,
   onRoomSelect,
+  nightIdx,
+  setPricesPerNight,
 }: DateColumnProps) {
+  const [totalPrice, setTotalPrice] = useState<number[]>(
+    Array(roomsCount).fill(0),
+  );
   const [selectedRooms, setSelectedRooms] = useState(
     Array.from({
       length: roomsCount,
@@ -171,6 +177,18 @@ export function DateColumn({
   const [errorMessages, setErrorMessages] = useState(
     Array(selectedRooms.length).fill(""),
   );
+
+  console.log(nightIdx);
+
+  useEffect(() => {
+    setPricesPerNight((prev: number[]) => {
+      let prijs = 0;
+      for (const room of totalPrice) {
+        prijs += room;
+      }
+      return prev.map((price, i) => (i === nightIdx ? prijs : price));
+    });
+  }, [totalPrice, nightIdx]);
 
   const handleIncrease = (type, index) => {
     setAmountOfAdults((prev) =>
@@ -220,6 +238,27 @@ export function DateColumn({
   const handleRoomChange = (index, room) => {
     setSelectedRooms((prev) =>
       prev.map((item, i) => (i === index ? { selectedRoom: room } : item)),
+    );
+    const nightlyArr = pricingData[mealPlan]?.nightlyPricing || [];
+    const foundEntry = nightlyArr.find(
+      (x: any) => x.date === date && x.hotel === hotel,
+    );
+    if (!foundEntry) return "Price not available"; // Prevents rendering errors
+
+    const selectedRoom = selectedRooms[index]?.selectedRoom || null;
+    const children = amountOfChildren[index] || null;
+    const adults = amountOfAdults[index] || null;
+    const prijs = getPriceForSingleRoom(
+      foundEntry.pricing,
+      hotel,
+      mealPlan,
+      travelMode,
+      selectedRoom,
+      children,
+      adults,
+    );
+    setTotalPrice((prev) =>
+      prev.map((price, i) => (i === index ? prijs : price)),
     );
   };
   return (
