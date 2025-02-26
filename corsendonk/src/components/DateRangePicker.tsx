@@ -1,4 +1,3 @@
-// components/DateRangePicker.tsx
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ export function DateRangePicker({ onChange, arrangementLength }: DateRangePicker
     to: addDays(new Date(), arrangementLength - 1),
   });
 
-  // When arrangementLength changes, update the 'to' date accordingly.
+  // Update the end date when arrangementLength changes.
   useEffect(() => {
     if (range.from) {
       const newRange = { from: range.from, to: addDays(range.from, arrangementLength - 1) };
@@ -40,14 +39,21 @@ export function DateRangePicker({ onChange, arrangementLength }: DateRangePicker
     <div className="grid gap-2">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !range && "text-muted-foreground")}>
-            <CalendarIcon className="mr-2 h-4 w-4" />
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start text-left font-normal border-[#2C4A3C] hover:border-[#2C4A3C] focus:outline-none focus:ring-[#2C4A3C] focus:ring-offset-0 focus:ring-2",
+              !range && "text-muted-foreground"
+            )}
+          >
+            {/* Ensure the CalendarIcon remains black */}
+            <CalendarIcon className="mr-2 h-4 w-4 text-black" />
             {range?.from ? (
               <>
                 {format(range.from, "LLL dd, y")} - {format(range.to!, "LLL dd, y")}
               </>
             ) : (
-              <span>Pick a start date</span>
+              <span>Kies een startdatum</span>
             )}
           </Button>
         </PopoverTrigger>

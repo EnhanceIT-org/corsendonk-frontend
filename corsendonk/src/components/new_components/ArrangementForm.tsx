@@ -1,6 +1,5 @@
-import React, { useState, Children } from "react";
+import React, { useState } from "react";
 import {
-  Calendar,
   Minus,
   Plus,
   Bike,
@@ -10,6 +9,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
+import { DateRangePicker } from "@/components/DateRangePicker";
 
 interface ArrangementFormData {
   arrangementLength: 3 | 4;
@@ -44,6 +44,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
       [field]: prev[field] + 1,
     }));
   };
+
   const handleDecrement = (field: "adults" | "children" | "rooms") => {
     setFormData((prev) => ({
       ...prev,
@@ -91,44 +92,18 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             <h2 className="text-lg font-semibold mb-3">
               Kies een startdatum van uw verblijf
             </h2>
-            <div
-              className="relative max-w-[400px]"
-              onClick={() => {
-                const dateInput = document.getElementById(
-                  "date-input",
-                ) as HTMLInputElement;
-                if (dateInput) dateInput.showPicker();
-              }}
-            >
-              <div className="w-full border border-gray-200 rounded-lg px-4 py-2.5 flex items-center justify-between hover:border-[#2C4A3C] transition-colors cursor-pointer">
-                <span>
-                  {format(new Date(formData.startDate), "MMMM dd, yyyy", {
-                    locale: nl,
-                  })}
-                </span>
-                <Calendar
-                  className="h-5 w-5 text-gray-400"
-                  onClick={() => {
-                    const dateInput = document.getElementById(
-                      "date-input",
-                    ) as HTMLInputElement;
-                    if (dateInput) dateInput.showPicker();
-                  }}
-                />
-              </div>
-              <input
-                id="date-input"
-                type="date"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                value={formData.startDate}
-                onChange={(e) =>
+            <DateRangePicker
+              arrangementLength={formData.arrangementLength}
+              onChange={(range) => {
+                if (range.from) {
+                  // Store the start date in "yyyy-MM-dd" format
                   setFormData((prev) => ({
                     ...prev,
-                    startDate: format(new Date(e.target.value), "DD-MM-YYYY"),
-                  }))
+                    startDate: format(range.from, "yyyy-MM-dd"),
+                  }));
                 }
-              />
-            </div>
+              }}
+            />
           </div>
           <div>
             <h2 className="text-lg font-semibold mb-4">Aantal Gasten</h2>
