@@ -185,6 +185,8 @@ function getPriceForSingleRoom(
   boardType: string,
   travelMode: string,
   room: any,
+  children: number,
+  adults: number,
 ): number {
   if (!nightlyPricing?.CategoryPrices) return 0;
   const cat = nightlyPricing.CategoryPrices.find(
@@ -192,27 +194,26 @@ function getPriceForSingleRoom(
   );
   if (!cat) return 0;
 
-  const occupantAdults = room.occupant_countAdults || 0;
-  const occupantChildren = room.occupant_countChildren || 0;
-  const occupantTotal = occupantAdults + occupantChildren;
+  const occupantTotal = adults + children;
 
   // occupant array
   const occupantArray: any[] = [];
-  if (occupantAdults > 0) {
+  if (adults > 0) {
     occupantArray.push({
       AgeCategoryId: ageCategoryMapping[hotel]?.adult,
-      PersonCount: occupantAdults,
+      PersonCount: adults,
     });
   }
-  if (occupantChildren > 0) {
+  if (children > 0) {
     occupantArray.push({
       AgeCategoryId: ageCategoryMapping[hotel]?.child,
-      PersonCount: occupantChildren,
+      PersonCount: children,
     });
   }
 
   let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
     if (op.Occupancies.length !== occupantArray.length) return false;
+    console.log("occupancie test");
     const sorted1 = [...op.Occupancies].sort((a, b) =>
       (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || ""),
     );
@@ -229,6 +230,7 @@ function getPriceForSingleRoom(
     }
     return true;
   });
+
   if (!occupantPriceEntry) {
     occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
       const sum = op.Occupancies.reduce(
@@ -238,6 +240,7 @@ function getPriceForSingleRoom(
       return sum === occupantTotal;
     });
   }
+
   if (!occupantPriceEntry) return 0;
 
   const rateId = getNightlyRateId(hotel, boardType, travelMode);
@@ -747,7 +750,23 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                                 ))}
                               </select>
                               <div className="flex justify-between text-sm text-gray-500">
-                                <span>fuck</span>
+                                <span>
+                                  {getPriceForSingleRoom(
+                                    pricingData[
+                                      selectedBoardOption
+                                    ]?.nightlyPricing.find(
+                                      (x: any) =>
+                                        x.date === night.date &&
+                                        x.hotel === night.hotel,
+                                    )?.pricing,
+                                    night.hotel,
+                                    selectedBoardOption,
+                                    travelMode,
+                                    room,
+                                    room?.child_occupants ?? 0,
+                                    room?.adult_occupants ?? 0,
+                                  ) || "Prijs niet beschikbaar"}
+                                </span>
                               </div>
                             </div>
                             {/* Guest controls */}
