@@ -61,7 +61,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         <div className="mb-8">
           <img
-            src="https://placehold.co/200x60?text=Hotel+Chain+Logo"
+            src="https://www.jobhotel.be/_images_upload/jobhot_15616303455d1496894303b.png"
             alt="Hotel Chain Logo"
             className="h-12 mb-4"
           />
