@@ -301,7 +301,7 @@ function distributeGuestsEvenly(count: number, chosenRooms: any[], isAdult: bool
   return totalPlaced;
 }
 
-export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
+export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData, onBack }) => {
   const [rawConfig, setRawConfig] = useState<any>(null);
   const [arrangements, setArrangements] = useState<{ breakfast: any; halfboard: any }>({
     breakfast: null,
@@ -571,22 +571,41 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
     return mapping;
   };
 
-  if (loading) return <div>Loading room arrangements...</div>;
+  if (loading)
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <img
+          src="https://www.jobhotel.be/_images_upload/jobhot_15616303455d1496894303b.png"
+          alt="Loading Logo"
+          className="h-12 mb-4 animate-pulse"
+        />
+        <p className="text-lg text-gray-700">Loading available arrangements...</p>
+      </div>
+    );
+  
   if (error) return <div>Error: {error}</div>;
   if (!selectedArrangement) return <div>No arrangement found.</div>;
 
   return (
     <main className="min-h-screen w-full bg-gray-50 pb-32" data-prototypeid="2">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="mb-8">
-          <img
-            src="https://www.jobhotel.be/_images_upload/jobhot_15616303455d1496894303b.png"
-            alt="Hotel Chain Logo"
-            className="h-12 mb-4"
-          />
-          <h1 className="text-3xl font-semibold text-[#2C4A3C] mb-6">Uw Boeking</h1>
-          <MealPlanToggle selected={selectedBoardOption} onChange={handleBoardToggle} />
-        </div>
+      <div className="mb-8">
+        <button
+          onClick={onBack}
+          className="mb-4 px-4 py-2 rounded-lg border border-[#2C4A3C] text-[#2C4A3C] hover:bg-[#2C4A3C]/10 transition-colors"
+        >
+          Terug
+        </button>
+        <img
+          src="https://www.jobhotel.be/_images_upload/jobhot_15616303455d1496894303b.png"
+          alt="Hotel Chain Logo"
+          className="h-12 mb-4"
+        />
+        <h1 className="text-3xl font-semibold text-[#2C4A3C] mb-6">Uw Boeking</h1>
+        <MealPlanToggle selected={selectedBoardOption} onChange={handleBoardToggle} />
+      </div>
+
+
 
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
           {selectedArrangement.night_details.map((night: any, nightIdx: number) => {
