@@ -805,29 +805,39 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                                           nightIdx
                                         ].chosen_rooms,
                                       ];
-                                      newChosenRooms[index] = {
-                                        ...newChosenRooms[index],
-                                        adult_occupants:
-                                          (newChosenRooms[index]
-                                            .adult_occupants ?? 0) + 1,
-                                      };
-                                      setSelectedArrangement({
-                                        ...selectedArrangement,
-                                        night_details: [
-                                          ...selectedArrangement.night_details.slice(
-                                            0,
-                                            nightIdx,
-                                          ),
-                                          {
-                                            ...selectedArrangement
-                                              .night_details[nightIdx],
-                                            chosen_rooms: newChosenRooms,
-                                          },
-                                          ...selectedArrangement.night_details.slice(
-                                            nightIdx + 1,
-                                          ),
-                                        ],
-                                      });
+                                      const currentRoom = newChosenRooms[index];
+                                      const currentAdults =
+                                        currentRoom.adult_occupants ?? 0;
+                                      const currentChildren =
+                                        currentRoom.child_occupants ?? 0;
+
+                                      // Check if adding one more adult would exceed bed capacity
+                                      if (
+                                        currentAdults + currentChildren + 1 <=
+                                        currentRoom.bed_capacity
+                                      ) {
+                                        newChosenRooms[index] = {
+                                          ...currentRoom,
+                                          adult_occupants: currentAdults + 1,
+                                        };
+                                        setSelectedArrangement({
+                                          ...selectedArrangement,
+                                          night_details: [
+                                            ...selectedArrangement.night_details.slice(
+                                              0,
+                                              nightIdx,
+                                            ),
+                                            {
+                                              ...selectedArrangement
+                                                .night_details[nightIdx],
+                                              chosen_rooms: newChosenRooms,
+                                            },
+                                            ...selectedArrangement.night_details.slice(
+                                              nightIdx + 1,
+                                            ),
+                                          ],
+                                        });
+                                      }
                                     }}
                                   >
                                     <Plus className="w-4 h-4" />
@@ -888,29 +898,41 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                                             nightIdx
                                           ].chosen_rooms,
                                         ];
-                                        newChosenRooms[index] = {
-                                          ...newChosenRooms[index],
-                                          child_occupants:
-                                            (newChosenRooms[index]
-                                              .child_occupants ?? 0) + 1,
-                                        };
-                                        setSelectedArrangement({
-                                          ...selectedArrangement,
-                                          night_details: [
-                                            ...selectedArrangement.night_details.slice(
-                                              0,
-                                              nightIdx,
-                                            ),
-                                            {
-                                              ...selectedArrangement
-                                                .night_details[nightIdx],
-                                              chosen_rooms: newChosenRooms,
-                                            },
-                                            ...selectedArrangement.night_details.slice(
-                                              nightIdx + 1,
-                                            ),
-                                          ],
-                                        });
+                                        const currentRoom =
+                                          newChosenRooms[index];
+                                        const currentAdults =
+                                          currentRoom.adult_occupants ?? 0;
+                                        const currentChildren =
+                                          currentRoom.child_occupants ?? 0;
+
+                                        // Check if adding one more adult would exceed bed capacity
+                                        if (
+                                          currentAdults + currentChildren + 1 <=
+                                          currentRoom.bed_capacity
+                                        ) {
+                                          newChosenRooms[index] = {
+                                            ...currentRoom,
+                                            child_occupants:
+                                              currentChildren + 1,
+                                          };
+                                          setSelectedArrangement({
+                                            ...selectedArrangement,
+                                            night_details: [
+                                              ...selectedArrangement.night_details.slice(
+                                                0,
+                                                nightIdx,
+                                              ),
+                                              {
+                                                ...selectedArrangement
+                                                  .night_details[nightIdx],
+                                                chosen_rooms: newChosenRooms,
+                                              },
+                                              ...selectedArrangement.night_details.slice(
+                                                nightIdx + 1,
+                                              ),
+                                            ],
+                                          });
+                                        }
                                       }}
                                     />
                                   </button>
