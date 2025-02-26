@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { MealPlanToggle } from "./MealPlanToggle";
 import { OptionalExtras } from "./OptionalExtras";
+import { RoomDetailModal } from "./RoomDetailModal";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import axios from "axios";
 import { fetchWithBaseUrl } from "@/lib/utils";
-import { Coffee, UtensilsCrossed, Plus, Minus, Bike, Footprints, User } from "lucide-react";
+import { Coffee, UtensilsCrossed, Plus, Minus, Bike, Footprints, User, Info } from "lucide-react";
 import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
 
 // Define product names used in pricing lookups.
@@ -320,6 +321,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
   const [selectedBoardOption, setSelectedBoardOption] = useState<"breakfast" | "halfboard">(bookingData.boardOption);
   const [defaultDistributed, setDefaultDistributed] = useState(false);
 
+  // NEW: State to control room detail modal
+  const [showRoomDetailModal, setShowRoomDetailModal] = useState(false);
+  const [modalRoomData, setModalRoomData] = useState<any>(null);
+
   const { startDate, arrangementLength, rooms, adults, children, travelMode } = bookingData;
 
   const getProductPriceFn = (hotelKey: string, productName: string, config: any) => {
@@ -561,6 +566,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                         <div className="space-y-4">
                           <div className="flex justify-between items-start">
                             <h4 className="font-medium text-[#2C4A3C]">Room {index + 1}</h4>
+                            {/* Info button to open RoomDetailModal */}
+                            <button
+                              onClick={() => {
+                                setModalRoomData({ ...room, hotel: night.hotel });
+                                setShowRoomDetailModal(true);
+                              }}
+                              className="text-[#2C4A3C] hover:text-[#2C4A3C]/80 ml-2"
+                            >
+                              <Info className="w-4 h-4" />
+                            </button>
                           </div>
                           {/* Room type selector */}
                           <div className="flex flex-col gap-2">
@@ -794,6 +809,14 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
           </div>
         </div>
       </div>
+      {/* Conditionally render RoomDetailModal */}
+      {showRoomDetailModal && modalRoomData && (
+        <RoomDetailModal
+          room={modalRoomData}
+          rawConfig={rawConfig}
+          onClose={() => setShowRoomDetailModal(false)}
+        />
+      )}
     </main>
   );
 };
