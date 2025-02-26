@@ -1,8 +1,8 @@
 import React, { useEffect, Fragment, useState } from "react";
 import { MealPlanToggle } from "./MealPlanToggle";
-import { DateColumn } from "./DateColumn";
 import { OptionalExtras } from "./OptionalExtras";
 import { format } from "date-fns";
+import { nl } from "date-fns/locale";
 import axios from "axios";
 import { fetchWithBaseUrl } from "@/lib/utils";
 import { Coffee, UtensilsCrossed, Plus, Minus, Bike } from "lucide-react";
@@ -17,6 +17,55 @@ const productNames = {
   bicycleRent: "Bicylce renting",
   bicycleTransport: "Bicycle transport cost",
 };
+
+interface selectedArrangementInterface {
+  night_details: {
+    chosen_rooms: {
+      bed_capacity: number;
+      category_id: string;
+      category_name: string;
+      adult_occupants?: number;
+      child_occupants?: number;
+    }[];
+    board_type: string;
+    date: string;
+    hotel: string;
+    notes: string[];
+    restaurant_chosen: string;
+    room_options: {
+      available_count: number;
+      bed_capacity: number;
+      category_id: string;
+      category_name: string;
+      room_group: string;
+    }[];
+  }[];
+  overall_notes: string[];
+  score: number;
+  sequence: string[];
+}
+
+// object that comes through Raw config : { "hotel2" : hotelConfigInterface}
+// interface hotelConfigInterface {
+//   AgeCategories: {}[];
+//   Cities: {}[];
+//   CityId: string;
+//   Configurations: {}[];
+//   CurrencyCode: string;
+//   CurrencyCodes: string[];
+//   DisplayVoucherCode: string;
+//   EndDateOffset: string;
+//   GtmContainerId: string;
+//   ImageBaseUrl: string;
+//   IntroVideoUrl: string;
+//   LanguageCode: string;
+//   NowUtc: string;
+//   PrimaryColor: string;
+//   Services: {}[];
+//   StartdateOffset: string;
+//   Theme: string;
+//   VoucherCode: string;
+// }
 
 interface RoomPickerProps {
   bookingData: {
@@ -223,11 +272,10 @@ function calculateTotalPrice(
   if (!arrangement?.night_details) return 0;
   let total = 0;
   // occupant-based sum for all chosen rooms
-  console.log(pricesPerNight);
   for (const price of pricesPerNight) {
     total += price;
   }
-  console.log("total", total);
+
   for (const night of arrangement.night_details) {
     const boardKey = night.board_type === "HB" ? "halfboard" : "breakfast";
     const nightlyArr = pricingDataObj[boardKey]?.nightlyPricing || [];
@@ -236,7 +284,6 @@ function calculateTotalPrice(
     );
     if (!foundEntry) continue;
 
-    // optional products
     const assignedAdults = sumNightAdultsFn(night);
     const assignedChildren = sumNightChildrenFn(night);
 
@@ -279,7 +326,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
     breakfast: null,
     halfboard: null,
   });
-  const [selectedArrangement, setSelectedArrangement] = useState<any>(null);
+  const [selectedArrangement, setSelectedArrangement] =
+    useState<selectedArrangementInterface>(null);
   const [pricingData, setPricingData] = useState<{
     breakfast: any;
     halfboard: any;
@@ -364,9 +412,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
   const formattedStartDateGET = `${year}-${month}-${day}`;
   const formattedStartDatePOST = `${day}-${month}-${year}`;
 
-  // occupantPerRoom from older references
-  const occupancyPerRoom = Math.ceil((adults + children) / rooms);
-
   const [defaultDistributed, setDefaultDistributed] = useState(false);
 
   // fetch config + availability + pricing
@@ -418,7 +463,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
           breakfast: pricingBreakfastRes.data.data,
           halfboard: pricingHalfBoardRes.data.data,
         });
-
         if (bookingData.boardOption === "breakfast") {
           setSelectedArrangement(availBreakfast.optimal_sequence);
         } else {
@@ -488,7 +532,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
   useEffect(() => {
     if (!selectedArrangement || defaultDistributed) return;
     if (!selectedArrangement.night_details) return;
-
     const updated = { ...selectedArrangement };
     updated.night_details.forEach((night: any) => {
       const chosenRooms = night.chosen_rooms || [];
@@ -511,9 +554,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
       distributeGuestsEvenly(children, chosenRooms, false);
     });
 
-    setSelectedArrangement(updated);
-    setDefaultDistributed(true);
-  }, [selectedArrangement, defaultDistributed, adults, children]);
+    // setSelectedArrangement(updated);
+    // setDefaultDistributed(true);
+  }, [selectedArrangement]);
 
   useEffect(() => {
     setTotalPrice(
@@ -534,6 +577,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
     );
   }, [pricesPerNight]);
 
+  //TODO BROKEN
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
     setSelectedBoardOption(option);
     const arrangementForOption = arrangements[option];
@@ -625,7 +669,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
           {selectedArrangement.night_details.map(
             (night: any, nightIdx: number) => {
-              console.log(nightIdx);
               return (
                 <div key={night.date}>
                   <div className="flex-1 bg-white rounded-lg shadow-sm p-6">
@@ -645,9 +688,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                     </div>
                     {/* Room selection */}
                     <div className="space-y-6">
-                      {Array.from({
-                        length: night.chosen_rooms.length,
-                      }).map((_, index) => (
+                      {night.chosen_rooms.map((room, index) => (
                         <div key={index} className="border rounded-lg p-4">
                           <div className="space-y-4">
                             <div className="flex justify-between items-start">
@@ -659,22 +700,41 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                             <div className="flex flex-col gap-2">
                               <select
                                 className="w-full text-sm border rounded-md px-2 py-1.5 bg-white"
-                                value={
-                                  selectedRooms[index].selectedRoom
-                                    .category_name || ""
-                                }
+                                value={room.category_name}
                                 onChange={(e) => {
-                                  onRoomSelect(
-                                    night.room_options.find(
+                                  const newChosenRooms = [
+                                    ...selectedArrangement.night_details[
+                                      nightIdx
+                                    ].chosen_rooms,
+                                  ];
+                                  newChosenRooms[index] = {
+                                    ...newChosenRooms[index],
+                                    category_name: e.target.value,
+                                    category_id: night.room_options.find(
                                       (r) => r.category_name === e.target.value,
-                                    ),
-                                  );
-                                  handleRoomChange(
-                                    index,
-                                    night.room_options.find(
+                                    ).category_id,
+                                    bed_capacity: night.room_options.find(
                                       (r) => r.category_name === e.target.value,
-                                    ),
-                                  );
+                                    ).bed_capacity,
+                                  };
+                                  setSelectedArrangement({
+                                    ...selectedArrangement,
+                                    night_details: [
+                                      ...selectedArrangement.night_details.slice(
+                                        0,
+                                        nightIdx,
+                                      ),
+                                      {
+                                        ...selectedArrangement.night_details[
+                                          nightIdx
+                                        ],
+                                        chosen_rooms: newChosenRooms,
+                                      },
+                                      ...selectedArrangement.night_details.slice(
+                                        nightIdx + 1,
+                                      ),
+                                    ],
+                                  });
                                 }}
                               >
                                 {night.room_options.map((room) => (
@@ -687,40 +747,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                                 ))}
                               </select>
                               <div className="flex justify-between text-sm text-gray-500">
-                                <span>
-                                  {(() => {
-                                    const nightlyArr =
-                                      pricingData[selectedBoardOption]
-                                        ?.nightlyPricing || [];
-                                    const foundEntry = nightlyArr.find(
-                                      (x: any) =>
-                                        x.date === night.date &&
-                                        x.hotel === night.hotel,
-                                    );
-                                    if (!foundEntry)
-                                      return "Price not available"; // Prevents rendering errors
-
-                                    const selectedRoom =
-                                      selectedRooms[index]?.selectedRoom ||
-                                      null;
-                                    const children =
-                                      amountOfChildren[index] || null;
-                                    const adults =
-                                      amountOfAdults[index] || null;
-                                    const prijs = getPriceForSingleRoom(
-                                      foundEntry.pricing,
-                                      night.hotel,
-                                      selectedBoardOption,
-                                      travelMode,
-                                      selectedRoom,
-                                      children,
-                                      adults,
-                                    );
-                                    return prijs === -1
-                                      ? "Prijs kan niet bepaald worden"
-                                      : `€${prijs} per nacht`;
-                                  })()}
-                                </span>
+                                <span>fuck</span>
                               </div>
                             </div>
                             {/* Guest controls */}
@@ -733,18 +760,74 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                                   <button
                                     className="p-1 hover:bg-gray-100 rounded"
                                     onClick={() => {
-                                      handleDecrease("adult", index);
+                                      const newChosenRooms = [
+                                        ...selectedArrangement.night_details[
+                                          nightIdx
+                                        ].chosen_rooms,
+                                      ];
+                                      newChosenRooms[index] = {
+                                        ...newChosenRooms[index],
+                                        adult_occupants: Math.max(
+                                          0,
+                                          (newChosenRooms[index]
+                                            .adult_occupants ?? 0) - 1,
+                                        ),
+                                      };
+                                      setSelectedArrangement({
+                                        ...selectedArrangement,
+                                        night_details: [
+                                          ...selectedArrangement.night_details.slice(
+                                            0,
+                                            nightIdx,
+                                          ),
+                                          {
+                                            ...selectedArrangement
+                                              .night_details[nightIdx],
+                                            chosen_rooms: newChosenRooms,
+                                          },
+                                          ...selectedArrangement.night_details.slice(
+                                            nightIdx + 1,
+                                          ),
+                                        ],
+                                      });
                                     }}
                                   >
                                     <Minus className="w-4 h-4" />
                                   </button>
                                   <span className="w-8 text-center">
-                                    {amountOfAdults[index]}
+                                    {room.adult_occupants ?? 0}
                                   </span>
                                   <button
                                     className="p-1 hover:bg-gray-100 rounded"
                                     onClick={() => {
-                                      handleGuestChange("adult", index);
+                                      const newChosenRooms = [
+                                        ...selectedArrangement.night_details[
+                                          nightIdx
+                                        ].chosen_rooms,
+                                      ];
+                                      newChosenRooms[index] = {
+                                        ...newChosenRooms[index],
+                                        adult_occupants:
+                                          (newChosenRooms[index]
+                                            .adult_occupants ?? 0) + 1,
+                                      };
+                                      setSelectedArrangement({
+                                        ...selectedArrangement,
+                                        night_details: [
+                                          ...selectedArrangement.night_details.slice(
+                                            0,
+                                            nightIdx,
+                                          ),
+                                          {
+                                            ...selectedArrangement
+                                              .night_details[nightIdx],
+                                            chosen_rooms: newChosenRooms,
+                                          },
+                                          ...selectedArrangement.night_details.slice(
+                                            nightIdx + 1,
+                                          ),
+                                        ],
+                                      });
                                     }}
                                   >
                                     <Plus className="w-4 h-4" />
@@ -759,19 +842,75 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                                   <button
                                     className="p-1 hover:bg-gray-100 rounded"
                                     onClick={() => {
-                                      handleDecrease("child", index);
+                                      const newChosenRooms = [
+                                        ...selectedArrangement.night_details[
+                                          nightIdx
+                                        ].chosen_rooms,
+                                      ];
+                                      newChosenRooms[index] = {
+                                        ...newChosenRooms[index],
+                                        child_occupants: Math.max(
+                                          0,
+                                          (newChosenRooms[index]
+                                            .child_occupants ?? 0) - 1,
+                                        ),
+                                      };
+                                      setSelectedArrangement({
+                                        ...selectedArrangement,
+                                        night_details: [
+                                          ...selectedArrangement.night_details.slice(
+                                            0,
+                                            nightIdx,
+                                          ),
+                                          {
+                                            ...selectedArrangement
+                                              .night_details[nightIdx],
+                                            chosen_rooms: newChosenRooms,
+                                          },
+                                          ...selectedArrangement.night_details.slice(
+                                            nightIdx + 1,
+                                          ),
+                                        ],
+                                      });
                                     }}
                                   >
                                     <Minus className="w-4 h-4" />
                                   </button>
                                   <span className="w-8 text-center">
-                                    {amountOfChildren[index]}
+                                    {room.child_occupants ?? 0}
                                   </span>
                                   <button className="p-1 hover:bg-gray-100 rounded">
                                     <Plus
                                       className="w-4 h-4"
                                       onClick={() => {
-                                        handleGuestChange("child", index);
+                                        const newChosenRooms = [
+                                          ...selectedArrangement.night_details[
+                                            nightIdx
+                                          ].chosen_rooms,
+                                        ];
+                                        newChosenRooms[index] = {
+                                          ...newChosenRooms[index],
+                                          child_occupants:
+                                            (newChosenRooms[index]
+                                              .child_occupants ?? 0) + 1,
+                                        };
+                                        setSelectedArrangement({
+                                          ...selectedArrangement,
+                                          night_details: [
+                                            ...selectedArrangement.night_details.slice(
+                                              0,
+                                              nightIdx,
+                                            ),
+                                            {
+                                              ...selectedArrangement
+                                                .night_details[nightIdx],
+                                              chosen_rooms: newChosenRooms,
+                                            },
+                                            ...selectedArrangement.night_details.slice(
+                                              nightIdx + 1,
+                                            ),
+                                          ],
+                                        });
                                       }}
                                     />
                                   </button>
@@ -798,26 +937,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
                       )}
                     </div>
                   </div>
-
-                  {/* <DateColumn
-                    date={night.date}
-                    mealPlan={selectedBoardOption}
-                    roomsCount={night.chosen_rooms.length}
-                    hotel={night.hotel}
-                    roomTypes={night.room_options}
-                    travelMode={travelMode}
-                    pricingData={pricingData}
-                    onRoomSelect={(option: any) => {
-                      const updated = { ...selectedArrangement };
-                      updated.night_details[nightIdx].chosen_rooms =
-                        updated.night_details[nightIdx].chosen_rooms.map(
-                          () => option,
-                        );
-                      setSelectedArrangement(updated);
-                    }}
-                    nightIdx={nightIdx}
-                    setPricesPerNight={setPricesPerNight}
-                  /> */}
                   {nightIdx < selectedArrangement.night_details.length - 1 && (
                     <div className="hidden lg:flex items-center justify-center w-16">
                       {travelMode === "walking" ? (
