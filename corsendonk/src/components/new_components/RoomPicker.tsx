@@ -415,8 +415,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
   const formattedStartDateGET = `${year}-${month}-${day}`;
   const formattedStartDatePOST = `${day}-${month}-${year}`;
 
-  const [defaultDistributed, setDefaultDistributed] = useState(false);
-
   // fetch config + availability + pricing
   useEffect(() => {
     const fetchData = async () => {
@@ -489,77 +487,48 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
     rooms,
   ]);
 
-  function distributeGuestsEvenly(
-    count: number,
-    chosenRooms: any[],
-    isAdult: boolean,
-  ): number {
-    const n = chosenRooms.length;
-    if (n === 0) return 0;
+  // function distributeGuestsEvenly(
+  //   count: number,
+  //   chosenRooms: any[],
+  //   isAdult: boolean,
+  // ): number {
+  //   const n = chosenRooms.length;
+  //   if (n === 0) return 0;
 
-    const base = Math.floor(count / n);
-    let remainder = count % n;
-    const occupantWanted = new Array(n).fill(0).map(() => base);
-    for (let i = 0; i < n; i++) {
-      if (remainder > 0) {
-        occupantWanted[i] += 1;
-        remainder--;
-      }
-    }
+  //   const base = Math.floor(count / n);
+  //   let remainder = count % n;
+  //   const occupantWanted = new Array(n).fill(0).map(() => base);
+  //   for (let i = 0; i < n; i++) {
+  //     if (remainder > 0) {
+  //       occupantWanted[i] += 1;
+  //       remainder--;
+  //     }
+  //   }
 
-    let totalPlaced = 0;
-    // cap occupantWanted by capacity
-    for (let i = 0; i < n; i++) {
-      const room = chosenRooms[i];
-      const existingAdults = room.occupant_countAdults || 0;
-      const existingChildren = room.occupant_countChildren || 0;
-      const used = existingAdults + existingChildren;
-      const free = room.bed_capacity - used;
-      occupantWanted[i] = Math.min(occupantWanted[i], free);
-    }
+  //   let totalPlaced = 0;
+  //   // cap occupantWanted by capacity
+  //   for (let i = 0; i < n; i++) {
+  //     const room = chosenRooms[i];
+  //     const existingAdults = room.occupant_countAdults || 0;
+  //     const existingChildren = room.occupant_countChildren || 0;
+  //     const used = existingAdults + existingChildren;
+  //     const free = room.bed_capacity - used;
+  //     occupantWanted[i] = Math.min(occupantWanted[i], free);
+  //   }
 
-    for (let i = 0; i < n; i++) {
-      const room = chosenRooms[i];
-      if (isAdult) {
-        room.occupant_countAdults =
-          (room.occupant_countAdults || 0) + occupantWanted[i];
-      } else {
-        room.occupant_countChildren =
-          (room.occupant_countChildren || 0) + occupantWanted[i];
-      }
-      totalPlaced += occupantWanted[i];
-    }
-    return totalPlaced;
-  }
-
-  useEffect(() => {
-    if (!selectedArrangement || defaultDistributed) return;
-    if (!selectedArrangement.night_details) return;
-    const updated = { ...selectedArrangement };
-    updated.night_details.forEach((night: any) => {
-      const chosenRooms = night.chosen_rooms || [];
-      if (chosenRooms.length < 2) {
-        chosenRooms.forEach((r: any) => {
-          if (r.occupant_countAdults === undefined) r.occupant_countAdults = 0;
-          if (r.occupant_countChildren === undefined)
-            r.occupant_countChildren = 0;
-        });
-        return;
-      }
-      // reset occupant counts
-      chosenRooms.forEach((r: any) => {
-        r.occupant_countAdults = 0;
-        r.occupant_countChildren = 0;
-      });
-      // distribute adults
-      distributeGuestsEvenly(adults, chosenRooms, true);
-      // distribute children
-      distributeGuestsEvenly(children, chosenRooms, false);
-    });
-
-    // setSelectedArrangement(updated);
-    // setDefaultDistributed(true);
-  }, [selectedArrangement]);
+  //   for (let i = 0; i < n; i++) {
+  //     const room = chosenRooms[i];
+  //     if (isAdult) {
+  //       room.occupant_countAdults =
+  //         (room.occupant_countAdults || 0) + occupantWanted[i];
+  //     } else {
+  //       room.occupant_countChildren =
+  //         (room.occupant_countChildren || 0) + occupantWanted[i];
+  //     }
+  //     totalPlaced += occupantWanted[i];
+  //   }
+  //   return totalPlaced;
+  // }
 
   useEffect(() => {
     setTotalPrice(
@@ -580,13 +549,18 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
     );
   }, [pricesPerNight]);
 
-  //TODO BROKEN
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
     setSelectedBoardOption(option);
-    const arrangementForOption = arrangements[option];
-    if (arrangementForOption) {
-      setDefaultDistributed(false);
-      setSelectedArrangement(arrangementForOption);
+
+    if (selectedArrangement) {
+      const updatedArrangement = {
+        ...JSON.parse(JSON.stringify(selectedArrangement)),
+        board_type: option,
+      };
+
+      setSelectedArrangement(updatedArrangement);
+    } else if (arrangements[option]) {
+      setSelectedArrangement(arrangements[option]);
     }
   };
 
