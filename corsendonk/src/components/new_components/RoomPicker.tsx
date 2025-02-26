@@ -8,6 +8,7 @@ import axios from "axios";
 import { fetchWithBaseUrl } from "@/lib/utils";
 import { Coffee, UtensilsCrossed, Plus, Minus, Bike, Footprints, User, Info } from "lucide-react";
 import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
+import { PricingSummary } from "./PricingSummary";
 
 // Define product names used in pricing lookups.
 const productNames = {
@@ -425,29 +426,74 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
   useEffect(() => {
     if (!selectedArrangement || defaultDistributed) return;
     if (!selectedArrangement.night_details) return;
-
+  
     const updated = { ...selectedArrangement };
     updated.night_details.forEach((night: any) => {
       const chosenRooms = night.chosen_rooms || [];
-      if (chosenRooms.length < 2) {
+      if (chosenRooms.length === 1) {
+        // For a single room, assign all guests to that room
+        chosenRooms[0].occupant_countAdults = adults;
+        chosenRooms[0].occupant_countChildren = children;
+      } else if (chosenRooms.length >= 2) {
+        // Reset occupant counts and distribute evenly among multiple rooms
         chosenRooms.forEach((r: any) => {
-          if (r.occupant_countAdults === undefined) r.occupant_countAdults = 0;
-          if (r.occupant_countChildren === undefined) r.occupant_countChildren = 0;
+          r.occupant_countAdults = 0;
+          r.occupant_countChildren = 0;
         });
-        return;
+        distributeGuestsEvenly(adults, chosenRooms, true);
+        distributeGuestsEvenly(children, chosenRooms, false);
       }
-      // Reset occupant counts
-      chosenRooms.forEach((r: any) => {
-        r.occupant_countAdults = 0;
-        r.occupant_countChildren = 0;
-      });
-      // Distribute adults and children evenly
-      distributeGuestsEvenly(adults, chosenRooms, true);
-      distributeGuestsEvenly(children, chosenRooms, false);
     });
     setSelectedArrangement(updated);
     setDefaultDistributed(true);
   }, [selectedArrangement, defaultDistributed, adults, children]);
+  
+  // Needed for pricingsummary:
+  useEffect(() => {
+    if (!selectedArrangement || !pricingData) return;
+    // For each night, update its price based on the room(s) selected
+    setPricesPerNight(
+      selectedArrangement.night_details.map((night: any) => {
+        const chosenRooms = night.chosen_rooms;
+        const boardKey = night.board_type === "HB" ? "halfboard" : "breakfast";
+        const nightlyArr = pricingData[boardKey]?.nightlyPricing || [];
+        const foundEntry = nightlyArr.find(
+          (x: any) => x.date === night.date && x.hotel === night.hotel
+        );
+        if (!foundEntry) return 0;
+        // If there's only one room, compute its price with the full guest count
+        if (chosenRooms.length === 1) {
+          const room = chosenRooms[0];
+          return getPriceForSingleRoom(
+            foundEntry.pricing,
+            night.hotel,
+            night.board_type,
+            travelMode,
+            room,
+            room.occupant_countChildren || 0,
+            room.occupant_countAdults || 0
+          );
+        }
+        // If multiple rooms, sum the price from each room
+        return chosenRooms.reduce((acc: number, room: any) => {
+          return (
+            acc +
+            getPriceForSingleRoom(
+              foundEntry.pricing,
+              night.hotel,
+              night.board_type,
+              travelMode,
+              room,
+              room.occupant_countChildren || 0,
+              room.occupant_countAdults || 0
+            )
+          );
+        }, 0);
+      })
+    );
+  }, [selectedArrangement, pricingData, travelMode]);
+  
+
 
   // Update total price when dependencies change
   useEffect(() => {
@@ -794,20 +840,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({ bookingData }) => {
           selectedOptionalProducts={selectedOptionalProducts}
           setSelectedOptionalProducts={setSelectedOptionalProducts}
         />
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <div className="text-sm text-gray-500">Totale Prijs</div>
-                <div className="text-2xl font-semibold">€ {totalPrice}</div>
-                <div className="text-sm text-gray-500">Gemiddelde prijs € per nacht</div>
-              </div>
-              <button className="w-full sm:w-auto bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors">
-                Book Now
-              </button>
-            </div>
-          </div>
-        </div>
+        
+          <PricingSummary 
+            totalPrice={totalPrice} 
+            nights={selectedArrangement.night_details.length} 
+            rooms={bookingData.rooms} 
+          />
+
       </div>
       {/* Conditionally render RoomDetailModal */}
       {showRoomDetailModal && modalRoomData && (
