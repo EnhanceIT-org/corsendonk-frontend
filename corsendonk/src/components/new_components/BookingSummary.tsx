@@ -512,7 +512,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
             <BookingDetails bookingData={bookingData} />
           </div>
           <div className="lg:w-[400px]">
-            <PersonalInformationForm />
+            <PersonalInformationForm bookingData={bookingData} />
           </div>
         </div>
       </div>

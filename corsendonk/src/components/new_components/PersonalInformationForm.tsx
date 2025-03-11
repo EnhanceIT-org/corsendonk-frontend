@@ -1,15 +1,46 @@
 import React, { useState } from "react";
-export function PersonalInformationForm() {
+import validator from "validator";
+
+export function PersonalInformationForm({ bookingData }) {
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
     lastName: "",
     phone: "",
     nationality: "",
+    creditCard: "",
+    cvc: "",
+    expiry: "",
   });
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
+    console.log(
+      JSON.stringify({
+        ...bookingData,
+        personalInformation: formData,
+      }),
+    );
+    try {
+      const response = await fetch("http://localhost:8000/reservations/book/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...bookingData,
+          personalInformation: formData,
+        }),
+      });
+      if (response.ok) {
+        console.log("Booking successful!");
+      } else {
+        const error = await response.json();
+        setErrorMessage(error.message);
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Something went wrong. Please try again later.");
+    }
   };
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -19,16 +50,72 @@ export function PersonalInformationForm() {
       [e.target.name]: e.target.value,
     }));
   };
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const validateCreditCard = (value) => {
+    if (validator.isCreditCard(value)) {
+      setFormData({ ...formData, creditCard: value });
+    } else {
+      setErrorMessage("Krediet-kaart nummer niet geldig");
+    }
+  };
+  const validateCvc = (value) => {
+    if (value.length === 3 && /^\d+$/.test(value)) {
+      setFormData({ ...formData, cvc: value });
+    } else {
+      setErrorMessage("CVC-nummer is niet geldig");
+    }
+  };
+
+  const validateExpiry = (value) => {
+    const [month, year] = value.split("/").map(Number);
+    const currentDate = new Date();
+    let error = false;
+
+    const fullYear = year < 100 ? 2000 + year : year;
+    const expiryDate = new Date(fullYear, month - 1, 1);
+
+    const maxDate = new Date(currentDate);
+    maxDate.setFullYear(maxDate.getFullYear() + 5);
+
+    if (expiryDate > maxDate) {
+      error = true;
+    }
+
+    if (
+      value.length === 5 &&
+      /^\d{2}\/\d{2}$/.test(value) &&
+      expiryDate > currentDate &&
+      month >= 1 &&
+      month <= 12 &&
+      !error
+    ) {
+      setFormData({ ...formData, expiry: value });
+    } else {
+      setErrorMessage(
+        "Vervaldatum is niet geldig of is in het verleden of ligt meer dan 5 jaar in toekomst",
+      );
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-lg font-semibold mb-6">Personal Information</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
+        <span
+          style={{
+            fontWeight: "bold",
+            color: "red",
+          }}
+        >
+          {errorMessage}
+        </span>
         <div>
           <label
             htmlFor="email"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Email Address
+            Email
           </label>
           <input
             type="email"
@@ -46,7 +133,7 @@ export function PersonalInformationForm() {
               htmlFor="firstName"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              First Name
+              Voornaam
             </label>
             <input
               type="text"
@@ -63,7 +150,7 @@ export function PersonalInformationForm() {
               htmlFor="lastName"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Last Name
+              Achternaam
             </label>
             <input
               type="text"
@@ -81,7 +168,7 @@ export function PersonalInformationForm() {
             htmlFor="phone"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Phone Number
+            Telefoonnummer
           </label>
           <input
             type="tel"
@@ -95,10 +182,67 @@ export function PersonalInformationForm() {
         </div>
         <div>
           <label
+            htmlFor="credit"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            KredietKaart
+          </label>
+          <input
+            type="text"
+            id="credit"
+            name="credit"
+            required
+            className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]"
+            value={formData.creditCard}
+            onChange={(e) => {
+              validateCreditCard(e.target.value);
+            }}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="cvc"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Cvc
+          </label>
+          <input
+            type="text"
+            id="cvc"
+            name="cvc"
+            required
+            className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]"
+            value={formData.cvc}
+            onChange={(e) => {
+              validateCvc(e.target.value);
+            }}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="expiry Date"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Vervaldatum (MM/JJ)
+          </label>
+          <input
+            type="text"
+            id="expiry Date"
+            name="expiry Date"
+            required
+            className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]"
+            value={formData.expiry}
+            onChange={(e) => {
+              validateExpiry(e.target.value);
+            }}
+          />
+        </div>
+        <div>
+          <label
             htmlFor="nationality"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Nationality
+            Nationaliteit
           </label>
           <select
             id="nationality"
@@ -108,19 +252,15 @@ export function PersonalInformationForm() {
             value={formData.nationality}
             onChange={handleChange}
           >
-            <option value="">Select nationality</option>
-            <option value="US">United States</option>
-            <option value="UK">United Kingdom</option>
-            <option value="DE">Germany</option>
-            <option value="FR">France</option>
-            <option value="NL">Netherlands</option>
+            {/* todo */}
+            <option>Belg</option>
           </select>
         </div>
         <button
           type="submit"
           className="w-full bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors mt-6"
         >
-          Complete Reservation
+          Bevestig Reservatie
         </button>
       </form>
     </div>
