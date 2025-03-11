@@ -8,6 +8,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     lastName: "",
     phone: "",
     nationality: "",
+    creditCardName: "",
     creditCard: "",
     cvc: "",
     expiry: "",
@@ -27,6 +28,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          // TODO: Cut out pricing data of bookingData
           ...bookingData,
           travelMode: travelMode,
           personalInformation: formData,
@@ -178,6 +180,23 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             required
             className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]"
             value={formData.phone}
+            onChange={handleChange}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="credit"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Naam van de kaarthouder op uw kredietkaart
+          </label>
+          <input
+            type="text"
+            id="creditName"
+            name="creditName"
+            required
+            className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]"
+            value={formData.creditCardName}
             onChange={handleChange}
           />
         </div>
