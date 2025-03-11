@@ -92,6 +92,15 @@ function getNightlyRateId(
   return BoardMapping[hotel]?.[mode]?.[boardType] || "";
 }
 
+function calculateTotalHumans(bookingData): number {
+  let total = 0;
+  bookingData.reservations[0].chosen_rooms.forEach((room: any) => {
+    total += room.occupant_countAdults;
+    total += room.occupant_countChildren;
+  });
+  return total;
+}
+
 export function BookingDetails({ bookingData }) {
   const [selectedRoom, setSelectedRoom] = useState<null | {
     type: string;
@@ -171,13 +180,23 @@ export function BookingDetails({ bookingData }) {
         {bookingData.optionalExtras.lunch && (
           <div className="flex justify-between items-center mb-2">
             <span>Lunch</span>
-            <span>€{15 * bookingData.reservations.length}</span>
+            <span>
+              €
+              {15 *
+                bookingData.reservations.length *
+                calculateTotalHumans(bookingData)}
+            </span>
           </div>
         )}
         {bookingData.optionalExtras.bicycleRent && (
           <div className="flex justify-between items-center">
             <span>Bicycle Rental</span>
-            <span>€{25 * bookingData.reservations.length}</span>
+            <span>
+              €
+              {25 *
+                bookingData.reservations.length *
+                calculateTotalHumans(bookingData)}
+            </span>
           </div>
         )}
       </div>
