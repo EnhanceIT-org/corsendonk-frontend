@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import validator from "validator";
 
-export function PersonalInformationForm({ bookingData }) {
+export function PersonalInformationForm({ bookingData, travelMode }) {
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -28,6 +28,7 @@ export function PersonalInformationForm({ bookingData }) {
         },
         body: JSON.stringify({
           ...bookingData,
+          travelMode: travelMode,
           personalInformation: formData,
         }),
       });
