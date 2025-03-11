@@ -3,30 +3,473 @@ import { format } from "date-fns";
 import { PersonalInformationForm } from "./PersonalInformationForm";
 import { BookingDetails } from "./BookingDetails";
 interface BookingData {
-  dates: {
+  reservations: {
     date: string;
-    hotel: {
-      name: string;
-      location: string;
-    };
-    rooms: {
-      type: string;
-      adults: number;
-      children: number;
-      price: number;
+    board_type: string;
+    hotel: string;
+    notes: string[];
+    restaurant_chosen: string;
+    chosen_rooms: {
+      bed_capacity: number;
+      category_id: string;
+      category_name: string;
+      occupant_countAdults: number;
+      occupant_countChildren: number;
+    }[];
+    room_options: {
+      available_count: number;
+      bed_capacity: number;
+      category_id: string;
+      category_name: string;
+      room_group: string;
     }[];
   }[];
   optionalExtras: {
-    lunchPackage: boolean;
-    bicycleRental: boolean;
+    lunch: boolean;
+    bicycleRent: boolean;
+    bicycleTransport: boolean;
   };
   mealPlan: "breakfast" | "halfboard";
   total: number;
+  pricing_data: {
+    breakfast: {
+      nightlyPricing: {
+        date: string;
+        hotel: string;
+        pricing: {
+          RateGroups: {
+            Id: string;
+            Ordering: number;
+            SettlementAction: string;
+            SettlementCurrencyCode: string;
+            SettlementFlatValue: null | number;
+            SettlementMaximumNights: null | number;
+            SettlementMaximumTimeUnits: null | number;
+            SettlementOffset: string;
+            SettlementTrigger: string;
+            SettlementType: string;
+            SettlementValue: number;
+          }[];
+          Rates: {
+            Id: string;
+            RateGroupId: string;
+            Ordering: number;
+            CurrencyCode: string;
+            Description: any;
+            Name: any;
+            IsPrivate: false;
+          }[];
+          CategoryPrices: {
+            CategoryId: string;
+            OccupancyPrices: {
+              Occupancies: [{ AgeCategoryId: string; PersonCount: number }];
+              RateGroupPrices: {
+                MinRateId: string;
+                MinPrice: {
+                  TotalAmount: {
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      TaxValue: number;
+                    }[];
+                  };
+                  AverageAmountPerTimeUnit: {
+                    Breakdown: {
+                      items: {
+                        TaxRateCode: string;
+                        NetValue: number;
+                        TaxValue: number;
+                      }[];
+                    };
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      Value: number;
+                    }[];
+                  };
+                  AverageAmountPerFullTimeUnit: {
+                    Breakdown: {
+                      items: {
+                        TaxRateCode: string;
+                        NetValue: number;
+                        TaxValue: number;
+                      }[];
+                    };
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      Value: number;
+                    }[];
+                  };
+                  AverageServiceItemAmountPerTimeUnit: {
+                    Breakdown: {
+                      items: {
+                        TaxRateCode: string;
+                        NetValue: number;
+                        TaxValue: number;
+                      }[];
+                    };
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      Value: number;
+                    }[];
+                  };
+                  AverageServiceItemAmountPerFullTimeUnit: {
+                    Breakdown: {
+                      items: {
+                        TaxRateCode: string;
+                        NetValue: number;
+                        TaxValue: number;
+                      }[];
+                    };
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      Value: number;
+                    }[];
+                  };
+                };
+                MaxPrice: {
+                  TotalAmount: {
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      TaxValue: number;
+                    }[];
+                  };
+                  AverageAmountPerTimeUnit: {
+                    Breakdown: {
+                      items: {
+                        TaxRateCode: string;
+                        NetValue: number;
+                        TaxValue: number;
+                      }[];
+                    };
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      Value: number;
+                    }[];
+                  };
+                  AverageAmountPerFullTimeUnit: {
+                    Breakdown: {
+                      items: {
+                        TaxRateCode: string;
+                        NetValue: number;
+                        TaxValue: number;
+                      }[];
+                    };
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      Value: number;
+                    }[];
+                  };
+                  AverageServiceItemAmountPerTimeUnit: {
+                    Breakdown: {
+                      items: {
+                        TaxRateCode: string;
+                        NetValue: number;
+                        TaxValue: number;
+                      }[];
+                    };
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      Value: number;
+                    }[];
+                  };
+                  AverageServiceItemAmountPerFullTimeUnit: {
+                    Breakdown: {
+                      items: {
+                        TaxRateCode: string;
+                        NetValue: number;
+                        TaxValue: number;
+                      }[];
+                    };
+                    Currency: string;
+                    GrossValue: number;
+                    NetValue: number;
+                    TaxValues: {
+                      TaxRateCode: string;
+                      Value: number;
+                    }[];
+                  };
+                };
+              }[];
+            }[];
+          }[];
+          ViolatedRestrictions: null;
+        };
+      }[];
+    };
+    halfboard: {
+      nightlyPricing: [
+        {
+          date: string;
+          hotel: string;
+          pricing: {
+            RateGroups: [
+              {
+                Id: string;
+                Ordering: number;
+                SettlementAction: string;
+                SettlementCurrencyCode: string;
+                SettlementFlatValue: null | number;
+                SettlementMaximumNights: null | number;
+                SettlementMaximumTimeUnits: null | number;
+                SettlementOffset: string;
+                SettlementTrigger: string;
+                SettlementType: string;
+                SettlementValue: number;
+              },
+            ];
+            Rates: [
+              {
+                Id: string;
+                RateGroupId: string;
+                Ordering: number;
+                CurrencyCode: string;
+                Description: any;
+                Name: any;
+                IsPrivate: false;
+              },
+            ];
+            CategoryPrices: [
+              {
+                CategoryId: string;
+                OccupancyPrices: [
+                  {
+                    Occupancies: [
+                      { AgeCategoryId: string; PersonCount: number },
+                    ];
+                    RateGroupPrices: [
+                      {
+                        MinRateId: string;
+                        MinPrice: {
+                          TotalAmount: {
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                TaxValue: number;
+                              },
+                            ];
+                          };
+                          AverageAmountPerTimeUnit: {
+                            Breakdown: {
+                              items: [
+                                {
+                                  TaxRateCode: string;
+                                  NetValue: number;
+                                  TaxValue: number;
+                                },
+                              ];
+                            };
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                Value: number;
+                              },
+                            ];
+                          };
+                          AverageAmountPerFullTimeUnit: {
+                            Breakdown: {
+                              items: [
+                                {
+                                  TaxRateCode: string;
+                                  NetValue: number;
+                                  TaxValue: number;
+                                },
+                              ];
+                            };
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                Value: number;
+                              },
+                            ];
+                          };
+                          AverageServiceItemAmountPerTimeUnit: {
+                            Breakdown: {
+                              items: [
+                                {
+                                  TaxRateCode: string;
+                                  NetValue: number;
+                                  TaxValue: number;
+                                },
+                              ];
+                            };
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                Value: number;
+                              },
+                            ];
+                          };
+                          AverageServiceItemAmountPerFullTimeUnit: {
+                            Breakdown: {
+                              items: [
+                                {
+                                  TaxRateCode: string;
+                                  NetValue: number;
+                                  TaxValue: number;
+                                },
+                              ];
+                            };
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                Value: number;
+                              },
+                            ];
+                          };
+                        };
+                        MaxPrice: {
+                          TotalAmount: {
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                TaxValue: number;
+                              },
+                            ];
+                          };
+                          AverageAmountPerTimeUnit: {
+                            Breakdown: {
+                              items: [
+                                {
+                                  TaxRateCode: string;
+                                  NetValue: number;
+                                  TaxValue: number;
+                                },
+                              ];
+                            };
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                Value: number;
+                              },
+                            ];
+                          };
+                          AverageAmountPerFullTimeUnit: {
+                            Breakdown: {
+                              items: [
+                                {
+                                  TaxRateCode: string;
+                                  NetValue: number;
+                                  TaxValue: number;
+                                },
+                              ];
+                            };
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                Value: number;
+                              },
+                            ];
+                          };
+                          AverageServiceItemAmountPerTimeUnit: {
+                            Breakdown: {
+                              items: [
+                                {
+                                  TaxRateCode: string;
+                                  NetValue: number;
+                                  TaxValue: number;
+                                },
+                              ];
+                            };
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                Value: number;
+                              },
+                            ];
+                          };
+                          AverageServiceItemAmountPerFullTimeUnit: {
+                            Breakdown: {
+                              items: [
+                                {
+                                  TaxRateCode: string;
+                                  NetValue: number;
+                                  TaxValue: number;
+                                },
+                              ];
+                            };
+                            Currency: string;
+                            GrossValue: number;
+                            NetValue: number;
+                            TaxValues: [
+                              {
+                                TaxRateCode: string;
+                                Value: number;
+                              },
+                            ];
+                          };
+                        };
+                      },
+                    ];
+                  },
+                ];
+              },
+            ];
+            ViolatedRestrictions: null;
+          };
+        },
+      ];
+    };
+  };
 }
 
 interface BookingSummaryProps {
-  selectedArrangement: any; // from /availability/ (with optionalProducts mapping already attached)
+  selectedArrangement: any;
   totalPrice: number;
+  boardOption: any;
+  optionalProducts: any;
   onBack: () => void;
   onBookingSuccess: (reservationData: any) => void;
 }
@@ -34,22 +477,22 @@ interface BookingSummaryProps {
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
   selectedArrangement,
   totalPrice,
+  boardOption,
+  optionalProducts,
   onBack,
   onBookingSuccess,
 }) => {
   const [bookingData, setBookingData] = useState<BookingData>({
-    dates: selectedArrangement.nights,
-    optionalExtras: {
-      lunchPackage: false,
-      bicycleRental: false,
-    },
-    mealPlan: selectedArrangement.boardOption,
+    reservations: selectedArrangement.night_details,
+    pricing_data: selectedArrangement.pricing_data,
+    optionalExtras: optionalProducts,
+    mealPlan: boardOption,
     total: totalPrice,
   });
 
   return (
-    <main className="min-h-screen w-full bg-gray-50 pb-32">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+    <main className="min-h-screen w-4/5 bg-gray-50 pb-32">
+      <div className="  px-4 sm:px-6 lg:px-8 pt-8">
         <div className="mb-8">
           <img
             src="https://placehold.co/200x60?text=Hotel+Chain+Logo"
@@ -57,7 +500,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
             className="h-12 mb-4"
           />
           <h1 className="text-3xl font-semibold text-[#2C4A3C] mb-6">
-            Complete Your Booking
+            Voltooi uw boeking
           </h1>
         </div>
         <div className="flex flex-col lg:flex-row gap-8">
