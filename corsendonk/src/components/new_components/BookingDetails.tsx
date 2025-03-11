@@ -3,6 +3,95 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
 import { RoomDetailModal } from "./RoomDetailModal";
+import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
+
+function getPriceForSingleRoom(
+  nightlyPricing: any,
+  hotel: string,
+  boardType: string,
+  room: any,
+  reservation: any,
+  travelMode: string,
+): number {
+  const nightlyArr = nightlyPricing?.nightlyPricing || [];
+  const foundEntry = nightlyArr.find(
+    (entry: any) => entry.date === reservation.date,
+  );
+  if (!foundEntry) return 0;
+  console.log(foundEntry);
+  if (!foundEntry?.pricing.CategoryPrices) return 0;
+  const cat = foundEntry.pricing.CategoryPrices.find(
+    (cp: any) => cp.CategoryId === room.category_id,
+  );
+  if (!cat) return 0;
+  const occupantAdults = room.occupant_countAdults || 0;
+  const occupantChildren = room.occupant_countChildren || 0;
+  const occupantTotal = occupantAdults + occupantChildren;
+
+  const occupantArray: any[] = [];
+  if (occupantAdults > 0) {
+    occupantArray.push({
+      AgeCategoryId: ageCategoryMapping[hotel]?.adult,
+      PersonCount: occupantAdults,
+    });
+  }
+  if (occupantChildren > 0) {
+    occupantArray.push({
+      AgeCategoryId: ageCategoryMapping[hotel]?.child,
+      PersonCount: occupantChildren,
+    });
+  }
+
+  let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
+    if (op.Occupancies.length !== occupantArray.length) return false;
+    const sorted1 = [...op.Occupancies].sort((a, b) =>
+      (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || ""),
+    );
+    const sorted2 = occupantArray.sort((a, b) =>
+      (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || ""),
+    );
+    for (let i = 0; i < sorted1.length; i++) {
+      if (
+        sorted1[i].AgeCategoryId !== sorted2[i].AgeCategoryId ||
+        sorted1[i].PersonCount !== sorted2[i].PersonCount
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+  if (!occupantPriceEntry) {
+    occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
+      const sum = op.Occupancies.reduce(
+        (acc: number, x: any) => acc + x.PersonCount,
+        0,
+      );
+      return sum === occupantTotal;
+    });
+  }
+  if (!occupantPriceEntry) return 0;
+
+  const rateId = getNightlyRateId(hotel, boardType, travelMode);
+  const rPrice = occupantPriceEntry.RateGroupPrices.find(
+    (rgp: any) => rgp.MinRateId === rateId,
+  );
+  if (!rPrice) return 0;
+
+  const val = rPrice.MinPrice?.TotalAmount?.GrossValue;
+  if (typeof val === "number") return val;
+  return 0;
+}
+
+function getNightlyRateId(
+  hotel: string,
+  boardType: string,
+  travelMode: string,
+) {
+  let mode = travelMode;
+  if (mode !== "walking" && mode !== "cycling") mode = "walking";
+  return BoardMapping[hotel]?.[mode]?.[boardType] || "";
+}
+
 export function BookingDetails({ bookingData }) {
   const [selectedRoom, setSelectedRoom] = useState<null | {
     type: string;
@@ -52,7 +141,17 @@ export function BookingDetails({ bookingData }) {
                         <Info className="w-4 h-4" />
                       </button>
                     </div>
-                    <span className="font-medium">€{room.price}</span>
+                    <span className="font-medium">
+                      €
+                      {getPriceForSingleRoom(
+                        bookingData.pricing_data[bookingData.mealPlan],
+                        reservation.hotel,
+                        bookingData.mealPlan,
+                        room,
+                        reservation,
+                        bookingData.travelMode,
+                      )}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Users className="w-4 h-4" />
@@ -90,13 +189,6 @@ export function BookingDetails({ bookingData }) {
           <span className="text-2xl font-semibold">€{bookingData.total}</span>
         </div>
       </div>
-      {/* bruh? */}
-      {/* {selectedRoom && (
-        <RoomDetailModal
-          room={selectedRoom}
-          onClose={() => setSelectedRoom(null)}
-        />
-      )} */}
     </div>
   );
 }

@@ -14,6 +14,7 @@ export interface BookingFormData {
 }
 
 export interface finalReservationData {
+  travelMode: "walking" | "cycling";
   optionalProducts: {
     lunch: boolean;
     bicycleRent: boolean;
@@ -448,12 +449,14 @@ const Index = () => {
     totalPrice: number,
     optionalProducts: any,
     boardOption: any,
+    travelMode: "walking" | "cycling",
   ) => {
     setFinalReservationData({
       selectedArrangement,
       pricingData,
       optionalProducts,
       boardOption,
+      travelMode,
     });
     setTotalPrice(totalPrice);
     setCurrentStep(3);
@@ -481,9 +484,11 @@ const Index = () => {
         {currentStep == 3 && (
           <BookingSummary
             selectedArrangement={finalReservationData.selectedArrangement}
+            pricingData={finalReservationData.pricingData}
             totalPrice={totalPrice}
             boardOption={finalReservationData.boardOption}
             optionalProducts={finalReservationData.optionalProducts}
+            travelMode={finalReservationData.travelMode}
             onBack={() => setCurrentStep(2)}
             onBookingSuccess={handleBookingSuccess}
           />

@@ -467,24 +467,28 @@ interface BookingData {
 
 interface BookingSummaryProps {
   selectedArrangement: any;
+  pricingData: any;
   totalPrice: number;
   boardOption: any;
   optionalProducts: any;
+  travelMode: "walking" | "cycling";
   onBack: () => void;
   onBookingSuccess: (reservationData: any) => void;
 }
 
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
   selectedArrangement,
+  pricingData,
   totalPrice,
   boardOption,
   optionalProducts,
+  travelMode,
   onBack,
   onBookingSuccess,
 }) => {
   const [bookingData, setBookingData] = useState<BookingData>({
     reservations: selectedArrangement.night_details,
-    pricing_data: selectedArrangement.pricing_data,
+    pricing_data: pricingData,
     optionalExtras: optionalProducts,
     mealPlan: boardOption,
     total: totalPrice,

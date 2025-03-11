@@ -71,6 +71,7 @@ interface RoomPickerProps {
     totalPrice: number,
     optionalProducts: any,
     boardOption: any,
+    travelMode: "walking" | "cycling",
   ) => void;
   onBack: () => void;
 }
@@ -450,6 +451,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       totalPrice,
       selectedOptionalProducts,
       selectedBoardOption,
+      travelMode,
     );
   };
 
@@ -702,7 +704,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           alt="Loading Logo"
           className="h-12 mb-4 animate-pulse"
         />
-        <p className="text-lg text-gray-700">Eventjes Gedult Aub</p>
+        <p className="text-lg text-gray-700">Eventjes Geduld Aub</p>
       </div>
     );
 
