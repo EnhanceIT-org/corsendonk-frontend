@@ -15,9 +15,12 @@ import {
   Footprints,
   User,
   Info,
+  ArrowLeft
 } from "lucide-react";
 import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
 import { PricingSummary } from "./PricingSummary";
+import { Breadcrumb } from "./Breadcrumb";
+
 
 // Define product names used in pricing lookups.
 const productNames = {
@@ -350,6 +353,16 @@ function distributeGuestsEvenly(
     totalPlaced += occupantWanted[i];
   }
   return totalPlaced;
+}
+
+function formatDutchDate(dateString: string) {
+  const raw = format(new Date(dateString), "EEEE, d MMMM", { locale: nl });
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+function capitalizeFirstLetter(str: string) {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 export const RoomPicker: React.FC<RoomPickerProps> = ({
@@ -717,26 +730,25 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       data-prototypeid="2"
     >
       <div className="max-w-7xl px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="mb-8">
-          <button
-            onClick={onBack}
-            className="mb-4 px-4 py-2 rounded-lg border border-[#2C4A3C] text-[#2C4A3C] hover:bg-[#2C4A3C]/10 transition-colors"
-          >
-            Terug
-          </button>
-          <img
-            src="https://www.jobhotel.be/_images_upload/jobhot_15616303455d1496894303b.png"
-            alt="Hotel Chain Logo"
-            className="h-12 mb-4"
+        <Breadcrumb
+            currentStep={2}
+            title="Uw Boeking"
+            onNavigate={(step) => {
+              // If user clicks step 1 crumb => call onBack()
+              if (step === 1) {
+                onBack();
+              }
+            }}
           />
-          <h1 className="text-3xl font-semibold text-[#2C4A3C] mb-6">
-            Uw Boeking
-          </h1>
-          <MealPlanToggle
-            selected={selectedBoardOption}
-            onChange={handleBoardToggle}
-          />
-        </div>
+
+      <div className="mb-8 text-left">
+        
+        <MealPlanToggle
+          selected={selectedBoardOption}
+          onChange={handleBoardToggle}
+        />
+      </div>
+
 
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
           {selectedArrangement.night_details.map(
@@ -749,15 +761,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                     {/* Date header */}
                     <div className="border-b pb-4 mb-6">
                       <h2 className="text-xl font-medium text-[#2C4A3C]">
-                        {format(new Date(night.date), "EEE, MMM d", {
-                          locale: nl,
-                        })}
+                        {formatDutchDate(night.date)}
                       </h2>
                     </div>
                     {/* Hotel info */}
                     <div className="mb-6">
                       <h3 className="text-lg font-medium text-[#2C4A3C]">
-                        {night.hotel}
+                        {capitalizeFirstLetter(night.hotel)}
                       </h3>
                     </div>
                     {/* Room selection */}

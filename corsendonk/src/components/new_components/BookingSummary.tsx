@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import { format } from "date-fns";
 import { PersonalInformationForm } from "./PersonalInformationForm";
 import { BookingDetails } from "./BookingDetails";
+import { ArrowLeft } from "lucide-react";
+import { Breadcrumb } from "./Breadcrumb";
+
+
+
 interface BookingData {
   reservations: {
     date: string;
@@ -497,16 +502,24 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   return (
     <main className="min-h-screen w-4/5 bg-gray-50 pb-32">
       <div className="  px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="mb-8">
-          <img
-            src="https://placehold.co/200x60?text=Hotel+Chain+Logo"
-            alt="Hotel Chain Logo"
-            className="h-12 mb-4"
+        <Breadcrumb
+            currentStep={3}
+            title="Voltooi uw boeking"
+            onNavigate={(step) => {
+              if (step === 2) {
+                // user clicked "Kamerselectie" => go to step 2
+                onBack();
+              } else if (step === 1) {
+                // user clicked "Arrangement" => jump all the way to step 1
+                // But you only have onBack() => which sets step=2
+                // So if you want step=1, you can do:
+                // onBack(); onBack();  OR
+                // pass a new callback from Index to do setCurrentStep(1).
+              }
+            }}
           />
-          <h1 className="text-3xl font-semibold text-[#2C4A3C] mb-6">
-            Voltooi uw boeking
-          </h1>
-        </div>
+      
+
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
             <BookingDetails bookingData={bookingData} />

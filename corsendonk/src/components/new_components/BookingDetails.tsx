@@ -101,6 +101,17 @@ function calculateTotalHumans(bookingData): number {
   return total;
 }
 
+function formatDutchDate(dateString: string) {
+  const raw = format(new Date(dateString), "EEEE, d MMMM", { locale: nl });
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+function capitalizeFirstLetter(str: string) {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+
 export function BookingDetails({ bookingData }) {
   const [selectedRoom, setSelectedRoom] = useState<null | {
     type: string;
@@ -119,11 +130,9 @@ export function BookingDetails({ bookingData }) {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="font-medium text-[#2C4A3C]">
-                  {format(new Date(reservation.date), "EEE, MMM d", {
-                    locale: nl,
-                  })}
+                  {formatDutchDate(reservation.date)}
                 </h3>
-                <p className="text-sm text-gray-500">{reservation.hotel}</p>
+                <p className="text-sm text-gray-500">{capitalizeFirstLetter(reservation.hotel)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Coffee className="w-5 h-5 text-[#2C4A3C]" />

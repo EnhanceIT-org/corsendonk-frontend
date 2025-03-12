@@ -103,6 +103,14 @@ function getPriceForSingleRoom(
   return 0;
 }
 
+function formatDutchDate(dateString: string) {
+  const raw = format(new Date(dateString), "EEEE, d MMMM", { locale: nl });
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+
+
+
 function getNightlyRateId(
   hotel: string,
   boardType: string, // "HB" or "B&B"
@@ -266,7 +274,7 @@ export function DateColumn({
       {/* Date header */}
       <div className="border-b pb-4 mb-6">
         <h2 className="text-xl font-medium text-[#2C4A3C]">
-          {format(new Date(date), "EEE, MMM d", { locale: nl })}
+          {formatDutchDate(date)}
         </h2>
       </div>
       {/* Hotel info */}
