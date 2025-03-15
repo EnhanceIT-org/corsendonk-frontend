@@ -821,19 +821,24 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               </select>
                               <div className="flex justify-between text-sm text-gray-500">
                                 <span>
-                                  {getPriceForSingleRoom(
-                                    pricingData[selectedBoardOption]?.nightlyPricing.find(
-                                      (x: any) =>
-                                        x.date === night.date &&
-                                        x.hotel === night.hotel,
-                                    )?.pricing,
-                                    night.hotel,
-                                    selectedBoardOption,
-                                    travelMode,
-                                    room,
-                                    room.occupant_countChildren || 0,
-                                    room.occupant_countAdults || 0,
-                                  ) || "Prijs niet beschikbaar"}
+                                  {(() => {
+                                    const price = getPriceForSingleRoom(
+                                      pricingData[selectedBoardOption]?.nightlyPricing.find(
+                                        (x: any) =>
+                                          x.date === night.date &&
+                                          x.hotel === night.hotel,
+                                      )?.pricing,
+                                      night.hotel,
+                                      selectedBoardOption,
+                                      travelMode,
+                                      room,
+                                      room.occupant_countChildren || 0,
+                                      room.occupant_countAdults || 0,
+                                    );
+                                    return price > 0
+                                      ? `€${price}`
+                                      : "Prijs niet beschikbaar";
+                                  })()}
                                 </span>
                               </div>
                             </div>
