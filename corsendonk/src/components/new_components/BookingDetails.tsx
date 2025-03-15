@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+// components/new_components/BookingDetails.tsx
+import React from "react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
-import { RoomDetailModal } from "./RoomDetailModal";
 import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
 
 function getPriceForSingleRoom(
@@ -18,7 +18,6 @@ function getPriceForSingleRoom(
     (entry: any) => entry.date === reservation.date,
   );
   if (!foundEntry) return 0;
-  console.log(foundEntry);
   if (!foundEntry?.pricing.CategoryPrices) return 0;
   const cat = foundEntry.pricing.CategoryPrices.find(
     (cp: any) => cp.CategoryId === room.category_id,
@@ -27,7 +26,6 @@ function getPriceForSingleRoom(
   const occupantAdults = room.occupant_countAdults || 0;
   const occupantChildren = room.occupant_countChildren || 0;
   const occupantTotal = occupantAdults + occupantChildren;
-
   const occupantArray: any[] = [];
   if (occupantAdults > 0) {
     occupantArray.push({
@@ -41,7 +39,6 @@ function getPriceForSingleRoom(
       PersonCount: occupantChildren,
     });
   }
-
   let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
     if (op.Occupancies.length !== occupantArray.length) return false;
     const sorted1 = [...op.Occupancies].sort((a, b) =>
@@ -70,13 +67,11 @@ function getPriceForSingleRoom(
     });
   }
   if (!occupantPriceEntry) return 0;
-
   const rateId = getNightlyRateId(hotel, boardType, travelMode);
   const rPrice = occupantPriceEntry.RateGroupPrices.find(
     (rgp: any) => rgp.MinRateId === rateId,
   );
   if (!rPrice) return 0;
-
   const val = rPrice.MinPrice?.TotalAmount?.GrossValue;
   if (typeof val === "number") return val;
   return 0;
@@ -111,13 +106,13 @@ function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// UPDATED: Added new prop onShowRoomDetail and removed local selectedRoom state.
+interface BookingDetailsProps {
+  bookingData: any;
+  onShowRoomDetail: (room: any) => void;
+}
 
-export function BookingDetails({ bookingData }) {
-  const [selectedRoom, setSelectedRoom] = useState<null | {
-    type: string;
-    hotelName: string;
-  }>(null);
-
+export function BookingDetails({ bookingData, onShowRoomDetail }: BookingDetailsProps) {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
@@ -150,10 +145,7 @@ export function BookingDetails({ bookingData }) {
                       <button
                         className="text-[#2C4A3C] hover:text-[#2C4A3C]/80"
                         onClick={() =>
-                          setSelectedRoom({
-                            type: room.category_name,
-                            hotelName: room.hotel,
-                          })
+                          onShowRoomDetail({ ...room, hotel: reservation.hotel })
                         }
                       >
                         <Info className="w-4 h-4" />

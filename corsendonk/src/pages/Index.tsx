@@ -429,6 +429,7 @@ export interface finalReservationData {
       }[];
     };
   };
+  rawConfig: any;
 }
 
 const Index = () => {
@@ -450,6 +451,7 @@ const Index = () => {
     optionalProducts: any,
     boardOption: any,
     travelMode: "walking" | "cycling",
+    rawConfig: any,
   ) => {
     setFinalReservationData({
       selectedArrangement,
@@ -457,6 +459,7 @@ const Index = () => {
       optionalProducts,
       boardOption,
       travelMode,
+      rawConfig, // NEW
     });
     setTotalPrice(totalPrice);
     setCurrentStep(3);
@@ -489,6 +492,7 @@ const Index = () => {
             boardOption={finalReservationData.boardOption}
             optionalProducts={finalReservationData.optionalProducts}
             travelMode={finalReservationData.travelMode}
+            rawConfig={finalReservationData.rawConfig} // NEW
             onBack={() => setCurrentStep(2)}
             onBookingSuccess={handleBookingSuccess}
           />

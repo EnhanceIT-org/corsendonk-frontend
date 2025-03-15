@@ -4,6 +4,7 @@ import { PersonalInformationForm } from "./PersonalInformationForm";
 import { BookingDetails } from "./BookingDetails";
 import { ArrowLeft } from "lucide-react";
 import { Breadcrumb } from "./Breadcrumb";
+import { RoomDetailModal } from "./RoomDetailModal";
 
 
 
@@ -477,6 +478,7 @@ interface BookingSummaryProps {
   boardOption: any;
   optionalProducts: any;
   travelMode: "walking" | "cycling";
+  rawConfig: any;
   onBack: () => void;
   onBookingSuccess: (reservationData: any) => void;
 }
@@ -490,6 +492,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   travelMode,
   onBack,
   onBookingSuccess,
+  rawConfig,
 }) => {
   const [bookingData, setBookingData] = useState<BookingData>({
     reservations: selectedArrangement.night_details,
@@ -499,30 +502,31 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
     total: totalPrice,
   });
 
+  const [showRoomDetailModal, setShowRoomDetailModal] = useState(false);
+  const [modalRoomData, setModalRoomData] = useState<any>(null);
+
   return (
     <main className="min-h-screen w-4/5 bg-gray-50 pb-32">
-      <div className="  px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="px-4 sm:px-6 lg:px-8 pt-8">
         <Breadcrumb
-            currentStep={3}
-            title="Voltooi uw boeking"
-            onNavigate={(step) => {
-              if (step === 2) {
-                // user clicked "Kamerselectie" => go to step 2
-                onBack();
-              } else if (step === 1) {
-                // user clicked "Arrangement" => jump all the way to step 1
-                // But you only have onBack() => which sets step=2
-                // So if you want step=1, you can do:
-                // onBack(); onBack();  OR
-                // pass a new callback from Index to do setCurrentStep(1).
-              }
-            }}
-          />
-      
-
+          currentStep={3}
+          title="Voltooi uw boeking"
+          onNavigate={(step) => {
+            if (step === 2) {
+              onBack();
+            }
+          }}
+        />
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
-            <BookingDetails bookingData={bookingData} />
+            {/* Pass onShowRoomDetail callback to BookingDetails */}
+            <BookingDetails
+              bookingData={bookingData}
+              onShowRoomDetail={(room) => {
+                setModalRoomData(room);
+                setShowRoomDetailModal(true);
+              }}
+            />
           </div>
           <div className="lg:w-[400px]">
             <PersonalInformationForm
@@ -532,6 +536,13 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           </div>
         </div>
       </div>
+      {showRoomDetailModal && modalRoomData && (
+        <RoomDetailModal
+          room={modalRoomData}
+          rawConfig={rawConfig}
+          onClose={() => setShowRoomDetailModal(false)}
+        />
+      )}
     </main>
   );
 };
