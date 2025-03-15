@@ -480,6 +480,8 @@ interface BookingSummaryProps {
   travelMode: "walking" | "cycling";
   rawConfig: any;
   onBack: () => void;
+  onBackToStep2: () => void;
+  onBackToStep1: () => void;
   onBookingSuccess: (reservationData: any) => void;
 }
 
@@ -491,6 +493,8 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   optionalProducts,
   travelMode,
   onBack,
+  onBackToStep1,
+  onBackToStep2,
   onBookingSuccess,
   rawConfig,
 }) => {
@@ -505,6 +509,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   const [showRoomDetailModal, setShowRoomDetailModal] = useState(false);
   const [modalRoomData, setModalRoomData] = useState<any>(null);
 
+
   return (
     <main className="min-h-screen w-4/5 bg-gray-50 pb-32">
       <div className="px-4 sm:px-6 lg:px-8 pt-8">
@@ -512,11 +517,14 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           currentStep={3}
           title="Voltooi uw boeking"
           onNavigate={(step) => {
-            if (step === 2) {
-              onBack();
+            if (step === 1) {
+              onBackToStep1();  // Navigate to step 1
+            } else if (step === 2) {
+              onBackToStep2();  // Navigate to step 2
             }
           }}
         />
+
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
             {/* Pass onShowRoomDetail callback to BookingDetails */}

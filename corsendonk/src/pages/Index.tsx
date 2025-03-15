@@ -495,6 +495,9 @@ const Index = () => {
             rawConfig={finalReservationData.rawConfig} // NEW
             onBack={() => setCurrentStep(2)}
             onBookingSuccess={handleBookingSuccess}
+            onBackToStep2={() => setCurrentStep(2)}
+            onBackToStep1={() => setCurrentStep(1)}  // Make sure this line exists!
+            
           />
         )}
       </main>
