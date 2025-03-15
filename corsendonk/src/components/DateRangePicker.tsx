@@ -43,7 +43,8 @@ export function DateRangePicker({ onChange, arrangementLength }: DateRangePicker
             variant="outline"
             className={cn(
               "w-full justify-start text-left font-normal border-[#2C4A3C] hover:border-[#2C4A3C] focus:outline-none focus:ring-[#2C4A3C] focus:ring-offset-0 focus:ring-2",
-              !range && "text-muted-foreground"
+              !range && "text-muted-foreground",
+              "group" // Add group class for targeting child elements
             )}
           >
             {/* Ensure the CalendarIcon remains black */}
@@ -57,7 +58,7 @@ export function DateRangePicker({ onChange, arrangementLength }: DateRangePicker
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0 border-[#2C4A3C]" align="start">
           <Calendar
             initialFocus
             mode="single"
@@ -65,6 +66,7 @@ export function DateRangePicker({ onChange, arrangementLength }: DateRangePicker
             selected={range.from}
             onSelect={handleDateSelect}
             numberOfMonths={2}
+            className="custom-calendar" 
           />
         </PopoverContent>
       </Popover>
