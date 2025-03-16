@@ -5,34 +5,38 @@ import { CalendarIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { DateRange } from "react-day-picker";
 
 interface DateRangePickerProps {
-  onChange: (range: DateRange) => void;
+  onChange: (range: { from: Date; to: Date }) => void;
   arrangementLength: number; // expected to be 3 or 4
 }
 
 export function DateRangePicker({ onChange, arrangementLength }: DateRangePickerProps) {
-  const [range, setRange] = useState<DateRange>({
-    from: new Date(),
-    to: addDays(new Date(), arrangementLength - 1),
-  });
+  // Use a single date for selection.
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // Update the end date when arrangementLength changes.
+  // Compute the full range based on the selected date and arrangementLength.
+  const computedRange = {
+    from: selectedDate,
+    to: addDays(selectedDate, arrangementLength - 1),
+  };
+
+  // Notify parent on changes.
   useEffect(() => {
-    if (range.from) {
-      const newRange = { from: range.from, to: addDays(range.from, arrangementLength - 1) };
-      setRange(newRange);
-      onChange(newRange);
-    }
-  }, [arrangementLength]);
+    onChange(computedRange);
+  }, [computedRange, onChange]);
 
-  const handleDateSelect = (selectedDate: Date | null) => {
-    if (selectedDate) {
-      const newRange = { from: selectedDate, to: addDays(selectedDate, arrangementLength - 1) };
-      setRange(newRange);
-      onChange(newRange);
+  // Handle selecting a new start date.
+  const handleDateSelect = (date: Date | null) => {
+    if (date) {
+      setSelectedDate(date);
     }
+  };
+
+  // Define a custom modifier to highlight all days within the computed range.
+  const modifiers = {
+    stayRange: (date: Date) =>
+      date >= computedRange.from && date <= computedRange.to,
   };
 
   return (
@@ -43,30 +47,24 @@ export function DateRangePicker({ onChange, arrangementLength }: DateRangePicker
             variant="outline"
             className={cn(
               "w-full justify-start text-left font-normal border-[#2C4A3C] hover:border-[#2C4A3C] focus:outline-none focus:ring-[#2C4A3C] focus:ring-offset-0 focus:ring-2",
-              !range && "text-muted-foreground",
-              "group" // Add group class for targeting child elements
+              "group"
             )}
           >
-            {/* Ensure the CalendarIcon remains black */}
             <CalendarIcon className="mr-2 h-4 w-4 text-black" />
-            {range?.from ? (
-              <>
-                {format(range.from, "LLL dd, y")} - {format(range.to!, "LLL dd, y")}
-              </>
-            ) : (
-              <span>Kies een startdatum</span>
-            )}
+            {format(computedRange.from, "LLL dd, y")} -{" "}
+            {format(computedRange.to, "LLL dd, y")}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 border-[#2C4A3C]" align="start">
           <Calendar
             initialFocus
-            mode="single"
-            defaultMonth={range.from}
-            selected={range.from}
+            mode="single" // Keep single mode for clickable dates.
+            defaultMonth={computedRange.from}
+            selected={selectedDate}
             onSelect={handleDateSelect}
             numberOfMonths={2}
-            className="custom-calendar" 
+            modifiers={modifiers} // Pass the custom modifier for styling.
+            className="custom-calendar"
           />
         </PopoverContent>
       </Popover>
