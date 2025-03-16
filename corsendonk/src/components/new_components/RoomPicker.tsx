@@ -15,11 +15,14 @@ import {
   Footprints,
   User,
   Info,
-  ArrowLeft
+  ArrowLeft,
+  XCircle,
 } from "lucide-react";
 import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
 import { PricingSummary } from "./PricingSummary";
 import { Breadcrumb } from "./Breadcrumb";
+
+
 
 // Define product names used in pricing lookups.
 const productNames = {
@@ -471,19 +474,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       setError(null);
       try {
         const configRes = await fetchWithBaseUrl(
-          `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangementLength}`,
+          `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangementLength}`
         );
         if (!configRes.ok) throw new Error("Failed to fetch configuration");
         const configData = await configRes.json();
         setRawConfig(configData.data.hotels);
-
+  
         const payload = {
           startDate: formattedStartDatePOST,
           length: arrangementLength,
           guests: { adults, children },
           amountOfRooms: rooms,
         };
-
+  
         const [availBreakfastRes, availHalfBoardRes] = await Promise.all([
           axios.post("http://localhost:8000/reservations/availability/", {
             ...payload,
@@ -496,11 +499,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         ]);
         const availBreakfast = availBreakfastRes.data.data;
         const availHalfBoard = availHalfBoardRes.data.data;
+  
+        // NEW: Check if both responses indicate no feasible arrangements.
+        if (availBreakfast.error && availHalfBoard.error) {
+          setError("Geen arrangementen gevonden, probeer andere data of verhoog het aantal kamers");
+          setLoading(false);
+          return;
+        }
+  
         setArrangements({
           breakfast: availBreakfast.optimal_sequence,
           halfboard: availHalfBoard.optimal_sequence,
         });
-
+  
         const [pricingBreakfastRes, pricingHalfBoardRes] = await Promise.all([
           axios.post("http://localhost:8000/reservations/pricing/", {
             selectedArrangement: availBreakfast.optimal_sequence,
@@ -526,15 +537,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       }
     };
     fetchData();
-  }, [
-    bookingData,
-    formattedStartDateGET,
-    formattedStartDatePOST,
-    arrangementLength,
-    adults,
-    children,
-    rooms,
-  ]);
+  }, [bookingData, formattedStartDateGET, formattedStartDatePOST, arrangementLength, adults, children, rooms]);
+  
 
   useEffect(() => {
     if (!selectedArrangement || defaultDistributed) return;
@@ -709,7 +713,38 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       </div>
     );
 
-  if (error) return <div>Error: {error}</div>;
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen">
+          <div className="bg-white rounded-lg shadow-sm p-6 text-center max-w-md mx-auto">
+            {/* Big error icon (no close behavior) */}
+            <div className="flex justify-center mb-4">
+              <XCircle className="text-red-500 w-12 h-12" />
+            </div>
+    
+            {/* Main error heading */}
+            <h2 className="text-xl font-semibold text-[#2C4A3C] mb-4">
+              Geen arrangementen gevonden
+            </h2>
+    
+            {/* Extra explanation text */}
+            <p className="text-gray-600 mb-4">
+              Probeer andere data of verhoog het aantal kamers
+            </p>
+    
+            {/* Button to go back */}
+            <button
+              onClick={onBack}
+              className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
+            >
+              Terug naar arrangement formulier
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    
   if (!selectedArrangement) return <div>Geen Mogelijkheden Gevonden</div>;
 
   return (
