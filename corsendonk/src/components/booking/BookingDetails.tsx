@@ -112,7 +112,10 @@ interface BookingDetailsProps {
   onShowRoomDetail: (room: any) => void;
 }
 
-export function BookingDetails({ bookingData, onShowRoomDetail }: BookingDetailsProps) {
+export function BookingDetails({
+  bookingData,
+  onShowRoomDetail,
+}: BookingDetailsProps) {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
@@ -127,7 +130,9 @@ export function BookingDetails({ bookingData, onShowRoomDetail }: BookingDetails
                 <h3 className="font-medium text-[#2C4A3C]">
                   {formatDutchDate(reservation.date)}
                 </h3>
-                <p className="text-sm text-gray-500">{capitalizeFirstLetter(reservation.hotel)}</p>
+                <p className="text-sm text-gray-500">
+                  {capitalizeFirstLetter(reservation.hotel)}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <Coffee className="w-5 h-5 text-[#2C4A3C]" />
@@ -145,7 +150,10 @@ export function BookingDetails({ bookingData, onShowRoomDetail }: BookingDetails
                       <button
                         className="text-[#2C4A3C] hover:text-[#2C4A3C]/80"
                         onClick={() =>
-                          onShowRoomDetail({ ...room, hotel: reservation.hotel })
+                          onShowRoomDetail({
+                            ...room,
+                            hotel: reservation.hotel,
+                          })
                         }
                       >
                         <Info className="w-4 h-4" />
@@ -178,6 +186,7 @@ export function BookingDetails({ bookingData, onShowRoomDetail }: BookingDetails
       </div>
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-4">Extras</h2>
+
         {bookingData.optionalExtras.lunch && (
           <div className="flex justify-between items-center mb-2">
             <span>Lunch</span>
@@ -189,6 +198,7 @@ export function BookingDetails({ bookingData, onShowRoomDetail }: BookingDetails
             </span>
           </div>
         )}
+
         {bookingData.optionalExtras.bicycleRent && (
           <div className="flex justify-between items-center">
             <span>Bicycle Rental</span>
@@ -200,6 +210,13 @@ export function BookingDetails({ bookingData, onShowRoomDetail }: BookingDetails
             </span>
           </div>
         )}
+
+        {!bookingData.optionalExtras.lunch &&
+          !bookingData.optionalExtras.bicycleRent && (
+            <div className="text-gray-500 italic">
+              Geen extra's geselecteerd
+            </div>
+          )}
       </div>
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center">

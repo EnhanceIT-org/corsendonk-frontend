@@ -22,8 +22,6 @@ import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
 import { PricingSummary } from "./PricingSummary";
 import { Breadcrumb } from "./Breadcrumb";
 
-
-
 // Define product names used in pricing lookups.
 const productNames = {
   breakfast: "Breakfast (Package)",
@@ -77,7 +75,7 @@ interface RoomPickerProps {
     optionalProducts: any,
     boardOption: any,
     travelMode: "walking" | "cycling",
-    rawConfig: any // NEW: added rawConfig as 7th parameter
+    rawConfig: any, // NEW: added rawConfig as 7th parameter
   ) => void;
   onBack: () => void;
 }
@@ -464,7 +462,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       selectedOptionalProducts,
       selectedBoardOption,
       travelMode,
-      rawConfig  // pass rawConfig as 7th argument
+      rawConfig, // pass rawConfig as 7th argument
     );
   };
 
@@ -474,19 +472,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       setError(null);
       try {
         const configRes = await fetchWithBaseUrl(
-          `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangementLength}`
+          `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangementLength}`,
         );
         if (!configRes.ok) throw new Error("Failed to fetch configuration");
         const configData = await configRes.json();
         setRawConfig(configData.data.hotels);
-  
+
         const payload = {
           startDate: formattedStartDatePOST,
           length: arrangementLength,
           guests: { adults, children },
           amountOfRooms: rooms,
         };
-  
+
         const [availBreakfastRes, availHalfBoardRes] = await Promise.all([
           axios.post("http://localhost:8000/reservations/availability/", {
             ...payload,
@@ -499,19 +497,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         ]);
         const availBreakfast = availBreakfastRes.data.data;
         const availHalfBoard = availHalfBoardRes.data.data;
-  
+
         // NEW: Check if both responses indicate no feasible arrangements.
         if (availBreakfast.error && availHalfBoard.error) {
-          setError("Geen arrangementen gevonden, probeer andere data of verhoog het aantal kamers");
+          setError("Geen beschikbare kamers gevonden, probeer andere data");
           setLoading(false);
           return;
         }
-  
+
         setArrangements({
           breakfast: availBreakfast.optimal_sequence,
           halfboard: availHalfBoard.optimal_sequence,
         });
-  
+
         const [pricingBreakfastRes, pricingHalfBoardRes] = await Promise.all([
           axios.post("http://localhost:8000/reservations/pricing/", {
             selectedArrangement: availBreakfast.optimal_sequence,
@@ -537,8 +535,15 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       }
     };
     fetchData();
-  }, [bookingData, formattedStartDateGET, formattedStartDatePOST, arrangementLength, adults, children, rooms]);
-  
+  }, [
+    bookingData,
+    formattedStartDateGET,
+    formattedStartDatePOST,
+    arrangementLength,
+    adults,
+    children,
+    rooms,
+  ]);
 
   useEffect(() => {
     if (!selectedArrangement || defaultDistributed) return;
@@ -713,38 +718,37 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       </div>
     );
 
-    if (error) {
-      return (
-        <div className="flex flex-col items-center justify-center h-screen">
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center max-w-md mx-auto">
-            {/* Big error icon (no close behavior) */}
-            <div className="flex justify-center mb-4">
-              <XCircle className="text-red-500 w-12 h-12" />
-            </div>
-    
-            {/* Main error heading */}
-            <h2 className="text-xl font-semibold text-[#2C4A3C] mb-4">
-              Geen arrangementen gevonden
-            </h2>
-    
-            {/* Extra explanation text */}
-            <p className="text-gray-600 mb-4">
-              Probeer andere data of verhoog het aantal kamers
-            </p>
-    
-            {/* Button to go back */}
-            <button
-              onClick={onBack}
-              className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
-            >
-              Terug naar arrangement formulier
-            </button>
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="bg-white rounded-lg shadow-sm p-6 text-center max-w-md mx-auto">
+          {/* Big error icon (no close behavior) */}
+          <div className="flex justify-center mb-4">
+            <XCircle className="text-red-500 w-12 h-12" />
           </div>
+
+          {/* Main error heading */}
+          <h2 className="text-xl font-semibold text-[#2C4A3C] mb-4">
+            Geen arrangementen gevonden
+          </h2>
+
+          {/* Extra explanation text */}
+          <p className="text-gray-600 mb-4">
+            Probeer andere data of verhoog het aantal kamers
+          </p>
+
+          {/* Button to go back */}
+          <button
+            onClick={onBack}
+            className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
+          >
+            Terug naar arrangement formulier
+          </button>
         </div>
-      );
-    }
-    
-    
+      </div>
+    );
+  }
+
   if (!selectedArrangement) return <div>Geen Mogelijkheden Gevonden</div>;
 
   return (
@@ -815,7 +819,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 value={room.category_name}
                                 onChange={(e) => {
                                   const newChosenRooms = [
-                                    ...selectedArrangement.night_details[nightIdx].chosen_rooms,
+                                    ...selectedArrangement.night_details[
+                                      nightIdx
+                                    ].chosen_rooms,
                                   ];
                                   const option = night.room_options.find(
                                     (r: any) =>
@@ -835,7 +841,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                         nightIdx,
                                       ),
                                       {
-                                        ...selectedArrangement.night_details[nightIdx],
+                                        ...selectedArrangement.night_details[
+                                          nightIdx
+                                        ],
                                         chosen_rooms: newChosenRooms,
                                       },
                                       ...selectedArrangement.night_details.slice(
@@ -858,7 +866,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 <span>
                                   {(() => {
                                     const price = getPriceForSingleRoom(
-                                      pricingData[selectedBoardOption]?.nightlyPricing.find(
+                                      pricingData[
+                                        selectedBoardOption
+                                      ]?.nightlyPricing.find(
                                         (x: any) =>
                                           x.date === night.date &&
                                           x.hotel === night.hotel,
@@ -885,13 +895,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     <button
                                       onClick={() => {
                                         const newChosenRooms = [
-                                          ...selectedArrangement.night_details[nightIdx].chosen_rooms,
+                                          ...selectedArrangement.night_details[
+                                            nightIdx
+                                          ].chosen_rooms,
                                         ];
                                         newChosenRooms[index] = {
                                           ...newChosenRooms[index],
                                           occupant_countAdults: Math.max(
                                             0,
-                                            (newChosenRooms[index].occupant_countAdults || 0) - 1,
+                                            (newChosenRooms[index]
+                                              .occupant_countAdults || 0) - 1,
                                           ),
                                         };
                                         setSelectedArrangement({
@@ -902,7 +915,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                               nightIdx,
                                             ),
                                             {
-                                              ...selectedArrangement.night_details[nightIdx],
+                                              ...selectedArrangement
+                                                .night_details[nightIdx],
                                               chosen_rooms: newChosenRooms,
                                             },
                                             ...selectedArrangement.night_details.slice(
@@ -921,15 +935,25 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     <button
                                       onClick={() => {
                                         const newChosenRooms = [
-                                          ...selectedArrangement.night_details[nightIdx].chosen_rooms,
+                                          ...selectedArrangement.night_details[
+                                            nightIdx
+                                          ].chosen_rooms,
                                         ];
-                                        const currentRoom = newChosenRooms[index];
-                                        const currentAdults = currentRoom.occupant_countAdults || 0;
-                                        const currentChildren = currentRoom.occupant_countChildren || 0;
-                                        if (currentAdults + currentChildren + 1 <= currentRoom.bed_capacity) {
+                                        const currentRoom =
+                                          newChosenRooms[index];
+                                        const currentAdults =
+                                          currentRoom.occupant_countAdults || 0;
+                                        const currentChildren =
+                                          currentRoom.occupant_countChildren ||
+                                          0;
+                                        if (
+                                          currentAdults + currentChildren + 1 <=
+                                          currentRoom.bed_capacity
+                                        ) {
                                           newChosenRooms[index] = {
                                             ...currentRoom,
-                                            occupant_countAdults: currentAdults + 1,
+                                            occupant_countAdults:
+                                              currentAdults + 1,
                                           };
                                           setSelectedArrangement({
                                             ...selectedArrangement,
@@ -939,7 +963,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                                 nightIdx,
                                               ),
                                               {
-                                                ...selectedArrangement.night_details[nightIdx],
+                                                ...selectedArrangement
+                                                  .night_details[nightIdx],
                                                 chosen_rooms: newChosenRooms,
                                               },
                                               ...selectedArrangement.night_details.slice(
@@ -961,13 +986,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     <button
                                       onClick={() => {
                                         const newChosenRooms = [
-                                          ...selectedArrangement.night_details[nightIdx].chosen_rooms,
+                                          ...selectedArrangement.night_details[
+                                            nightIdx
+                                          ].chosen_rooms,
                                         ];
                                         newChosenRooms[index] = {
                                           ...newChosenRooms[index],
                                           occupant_countChildren: Math.max(
                                             0,
-                                            (newChosenRooms[index].occupant_countChildren || 0) - 1,
+                                            (newChosenRooms[index]
+                                              .occupant_countChildren || 0) - 1,
                                           ),
                                         };
                                         setSelectedArrangement({
@@ -978,7 +1006,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                               nightIdx,
                                             ),
                                             {
-                                              ...selectedArrangement.night_details[nightIdx],
+                                              ...selectedArrangement
+                                                .night_details[nightIdx],
                                               chosen_rooms: newChosenRooms,
                                             },
                                             ...selectedArrangement.night_details.slice(
@@ -997,15 +1026,25 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     <button
                                       onClick={() => {
                                         const newChosenRooms = [
-                                          ...selectedArrangement.night_details[nightIdx].chosen_rooms,
+                                          ...selectedArrangement.night_details[
+                                            nightIdx
+                                          ].chosen_rooms,
                                         ];
-                                        const currentRoom = newChosenRooms[index];
-                                        const currentAdults = currentRoom.occupant_countAdults || 0;
-                                        const currentChildren = currentRoom.occupant_countChildren || 0;
-                                        if (currentAdults + currentChildren + 1 <= currentRoom.bed_capacity) {
+                                        const currentRoom =
+                                          newChosenRooms[index];
+                                        const currentAdults =
+                                          currentRoom.occupant_countAdults || 0;
+                                        const currentChildren =
+                                          currentRoom.occupant_countChildren ||
+                                          0;
+                                        if (
+                                          currentAdults + currentChildren + 1 <=
+                                          currentRoom.bed_capacity
+                                        ) {
                                           newChosenRooms[index] = {
                                             ...currentRoom,
-                                            occupant_countChildren: currentChildren + 1,
+                                            occupant_countChildren:
+                                              currentChildren + 1,
                                           };
                                           setSelectedArrangement({
                                             ...selectedArrangement,
@@ -1015,7 +1054,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                                 nightIdx,
                                               ),
                                               {
-                                                ...selectedArrangement.night_details[nightIdx],
+                                                ...selectedArrangement
+                                                  .night_details[nightIdx],
                                                 chosen_rooms: newChosenRooms,
                                               },
                                               ...selectedArrangement.night_details.slice(
@@ -1044,7 +1084,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               )}
                               {sumNightChildren(night) < children && (
                                 <p>
-                                  {children - sumNightChildren(night)} kind(eren) niet toegewezen!
+                                  {children - sumNightChildren(night)}{" "}
+                                  kind(eren) niet toegewezen!
                                 </p>
                               )}
                             </div>

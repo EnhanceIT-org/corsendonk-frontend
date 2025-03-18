@@ -108,9 +108,6 @@ function formatDutchDate(dateString: string) {
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
-
-
-
 function getNightlyRateId(
   hotel: string,
   boardType: string, // "HB" or "B&B"

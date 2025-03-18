@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { ArrangementForm } from "@/components/new_components/ArrangementForm";
-import { RoomPicker } from "@/components/new_components/RoomPicker";
-import { BookingSummary } from "@/components/new_components/BookingSummary";
+import { ArrangementForm } from "@/components/booking/ArrangementForm";
+import { RoomPicker } from "@/components/booking/RoomPicker";
+import { BookingSummary } from "@/components/booking/BookingSummary";
 
 export interface BookingFormData {
   startDate: string; // formatted as DD-MM-YYYY
@@ -496,8 +496,7 @@ const Index = () => {
             onBack={() => setCurrentStep(2)}
             onBookingSuccess={handleBookingSuccess}
             onBackToStep2={() => setCurrentStep(2)}
-            onBackToStep1={() => setCurrentStep(1)}  // Make sure this line exists!
-            
+            onBackToStep1={() => setCurrentStep(1)} // Make sure this line exists!
           />
         )}
       </main>

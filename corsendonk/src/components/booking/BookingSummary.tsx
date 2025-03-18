@@ -1,12 +1,8 @@
 import React, { useState } from "react";
-import { format } from "date-fns";
 import { PersonalInformationForm } from "./PersonalInformationForm";
 import { BookingDetails } from "./BookingDetails";
-import { ArrowLeft } from "lucide-react";
 import { Breadcrumb } from "./Breadcrumb";
 import { RoomDetailModal } from "./RoomDetailModal";
-
-
 
 interface BookingData {
   reservations: {
@@ -509,7 +505,6 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   const [showRoomDetailModal, setShowRoomDetailModal] = useState(false);
   const [modalRoomData, setModalRoomData] = useState<any>(null);
 
-
   return (
     <main className="min-h-screen w-4/5 bg-gray-50 pb-32">
       <div className="px-4 sm:px-6 lg:px-8 pt-8">
@@ -518,9 +513,9 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           title="Voltooi uw boeking"
           onNavigate={(step) => {
             if (step === 1) {
-              onBackToStep1();  // Navigate to step 1
+              onBackToStep1(); // Navigate to step 1
             } else if (step === 2) {
-              onBackToStep2();  // Navigate to step 2
+              onBackToStep2(); // Navigate to step 2
             }
           }}
         />

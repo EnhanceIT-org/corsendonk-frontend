@@ -93,7 +93,7 @@ export function RoomDetailModal({
           </div>
 
           {/* Image grid */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 gap-4 mb-6">
             {imageUrls.length > 0 ? (
               imageUrls.map((url: string, idx: number) => (
                 <img
@@ -116,17 +116,17 @@ export function RoomDetailModal({
           {/* Room details below images */}
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium mb-2 text-[#2C4A3C]">Room Features</h4>
+              <h4 className="font-medium mb-2 text-[#2C4A3C]">Kamer Details</h4>
               <ul className="list-disc list-inside text-gray-600 space-y-1">
                 <li>King-size bed</li>
-                <li>City view</li>
+                <li>Uitzicht op de stad</li>
                 <li>Free Wi-Fi</li>
                 <li>Air conditioning</li>
                 <li>Mini bar</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-medium mb-2 text-[#2C4A3C]">Room Size</h4>
+              <h4 className="font-medium mb-2 text-[#2C4A3C]">Kamer Grootte</h4>
               <p className="text-gray-600">35 m²</p>
             </div>
           </div>

@@ -10,8 +10,7 @@ import {
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { DateRangePicker } from "@/components/DateRangePicker";
-import { Breadcrumb } from "@/components/new_components/Breadcrumb";
-
+import { Breadcrumb } from "@/components/booking/Breadcrumb";
 
 interface ArrangementFormData {
   arrangementLength: 3 | 4;
@@ -61,13 +60,12 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
   return (
     <main className="min-h-screen w-full bg-gray-50 pb-32" data-prototypeid="2">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-      <Breadcrumb currentStep={1} title="Plan uw arrangement" />
-
+        <Breadcrumb currentStep={1} title="Plan uw verblijf" />
 
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-8">
           <div>
             <h2 className="text-lg font-semibold mb-3">
-              Selecteer Arrangement lengte
+              Selecteer hoe lang uw verblijf zal duren
             </h2>
             <select
               className="w-full max-w-[200px] border border-gray-200 rounded-lg px-4 py-2.5 appearance-none bg-white hover:border-[#2C4A3C] transition-colors focus:outline-none focus:border-[#2C4A3C] cursor-pointer"

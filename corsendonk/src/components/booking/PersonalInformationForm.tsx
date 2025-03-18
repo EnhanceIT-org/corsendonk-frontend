@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import validator from "validator";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import countries from "i18n-iso-countries";
 import nlLocale from "i18n-iso-countries/langs/nl.json";
-
 
 export function PersonalInformationForm({ bookingData, travelMode }) {
   const [formData, setFormData] = useState({
@@ -199,7 +203,17 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   countries.registerLocale(nlLocale);
 
   // Define common nationalities in Dutch
-  const commonNationalities = ["België", "Nederland", "Duitsland", "Frankrijk", "Verenigd Koninkrijk", "Verenigde Staten", "Canada", "Spanje", "Italië"];
+  const commonNationalities = [
+    "België",
+    "Nederland",
+    "Duitsland",
+    "Frankrijk",
+    "Verenigd Koninkrijk",
+    "Verenigde Staten",
+    "Canada",
+    "Spanje",
+    "Italië",
+  ];
 
   // Get all country names in Dutch
   const allCountriesObj = countries.getNames("nl");
@@ -208,7 +222,9 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   const allCountries = Object.values(allCountriesObj);
 
   // Filter out the common ones from the full list
-  const remainingCountries = allCountries.filter((country) => !commonNationalities.includes(country));
+  const remainingCountries = allCountries.filter(
+    (country) => !commonNationalities.includes(country),
+  );
 
   // Combine common ones at the top + sorted remaining countries
   const nationalities = [...commonNationalities, ...remainingCountries.sort()];
@@ -220,19 +236,20 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           Reservering succesvol!
         </h2>
         <p className="mb-4">Uw boeking is bevestigd.</p>
-  
+
         {/* Flex container for buttons */}
         <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-        
           <button
             onClick={() => (window.location.href = "/")}
             className="w-full sm:w-auto bg-[#2C4A3C] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
             Terug naar homepagina
           </button>
-  
+
           <button
-            onClick={() => (window.location.href = "https://www.corsendonkhotels.com")}
+            onClick={() =>
+              (window.location.href = "https://www.corsendonkhotels.com")
+            }
             className="w-full sm:w-auto bg-[#2C4A3C] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
             Terug naar corsendonk homepagina
@@ -241,8 +258,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
       </div>
     );
   }
-  
-  
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -477,13 +492,11 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             ))}
           </select>
 
-
           {errors.nationality && (
             <p className="mt-1 text-sm text-red-600">{errors.nationality}</p>
           )}
         </div>
 
-        
         <div className="mt-4">
           <label
             htmlFor="notes"
@@ -492,13 +505,21 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             Extra Notities
             <Tooltip>
               <TooltipTrigger asChild>
-                <button type="button" className="ml-1 text-gray-400 hover:text-gray-600">
+                <button
+                  type="button"
+                  className="ml-1 text-gray-400 hover:text-gray-600"
+                >
                   <Info className="w-4 h-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right" align="center" className="max-w-xs">
+              <TooltipContent
+                side="right"
+                align="center"
+                className="max-w-xs z-50 bg-white shadow-lg"
+              >
                 <p className="text-sm text-gray-500">
-                  U kunt hier extra opmerkingen of speciale verzoeken invoeren, of vermelden indien u lid bent van een vereniging.
+                  U kunt hier extra opmerkingen of speciale verzoeken invoeren,
+                  of vermelden indien u lid bent van een vereniging.
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -511,9 +532,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             placeholder="Voer hier extra notities in"
             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C] focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none shadow-none"
           />
-
-
-
         </div>
 
         <div className="mt-2 text-sm text-gray-500">
