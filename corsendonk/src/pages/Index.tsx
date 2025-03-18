@@ -475,7 +475,18 @@ const Index = () => {
       <main className="container py-8">
         {/* Progress Timeline */}
         {currentStep === 1 && (
-          <ArrangementForm onContinue={handleFormContinue} />
+          <ArrangementForm
+            onContinue={handleFormContinue}
+            bookingData={{
+              arrangementLength: bookingData?.arrangementLength,
+              startDate: bookingData?.startDate,
+              adults: bookingData?.adults,
+              children: bookingData?.children,
+              rooms: bookingData?.rooms,
+              travelMode: bookingData?.travelMode,
+              boardOption: bookingData?.boardOption,
+            }}
+          />
         )}
         {currentStep === 2 && (
           <RoomPicker

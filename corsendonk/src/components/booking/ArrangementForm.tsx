@@ -24,19 +24,40 @@ interface ArrangementFormData {
 
 interface ArrangementFormProps {
   onContinue: (data: ArrangementFormData) => void;
+  bookingData: {
+    arrangementLength: number;
+    startDate: string;
+    adults: number;
+    children: number;
+    rooms: number;
+    travelMode: "walking" | "cycling";
+    boardOption: "breakfast" | "halfboard";
+  };
 }
 
 export const ArrangementForm: React.FC<ArrangementFormProps> = ({
   onContinue,
+  bookingData,
 }) => {
   const [formData, setFormData] = useState<ArrangementFormData>({
-    arrangementLength: 3,
-    startDate: format(new Date(), "yyyy-MM-dd"),
-    adults: 2,
-    children: 0,
-    rooms: 1,
-    travelMode: "walking",
-    boardOption: "breakfast",
+    arrangementLength:
+      bookingData.arrangementLength === 3 || bookingData.arrangementLength === 4
+        ? bookingData.arrangementLength
+        : 3,
+    startDate: bookingData.startDate || format(new Date(), "yyyy-MM-dd"),
+    adults: bookingData.adults >= 0 ? bookingData.adults : 2,
+    children: bookingData.children >= 0 ? bookingData.children : 0,
+    rooms: bookingData.rooms > 0 ? bookingData.rooms : 1,
+    travelMode:
+      bookingData.travelMode === "walking" ||
+      bookingData.travelMode === "cycling"
+        ? bookingData.travelMode
+        : "walking",
+    boardOption:
+      bookingData.boardOption === "breakfast" ||
+      bookingData.boardOption === "halfboard"
+        ? bookingData.boardOption
+        : "breakfast",
   });
 
   const handleIncrement = (field: "adults" | "children" | "rooms") => {
