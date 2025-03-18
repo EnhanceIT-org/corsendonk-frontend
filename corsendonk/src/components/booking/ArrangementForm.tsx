@@ -8,7 +8,6 @@ import {
   Footprints,
 } from "lucide-react";
 import { format } from "date-fns";
-import { nl } from "date-fns/locale";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { Breadcrumb } from "@/components/booking/Breadcrumb";
 
