@@ -714,11 +714,11 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
   if (loading)
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <img
-          src="https://www.jobhotel.be/_images_upload/jobhot_15616303455d1496894303b.png"
+          src="/public/corsendonk_green_png.png"
           alt="Loading Logo"
-          className="h-12 mb-4 animate-pulse"
+          className="w-auto max-w-[180px] md:max-w-[220px] h-auto mb-6 animate-pulse"
         />
         <p className="text-lg text-gray-700">Eventjes Geduld Aub</p>
       </div>
