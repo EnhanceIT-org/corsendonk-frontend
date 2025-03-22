@@ -465,6 +465,7 @@ interface BookingData {
       ];
     };
   };
+  arrangementLength: number;
 }
 
 interface BookingSummaryProps {
@@ -494,12 +495,15 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   onBookingSuccess,
   rawConfig,
 }) => {
+  const arrangementLength = selectedArrangement.night_details.length + 1; // 2 nights = 3 days, 3 nights = 4 days
+
   const [bookingData, setBookingData] = useState<BookingData>({
     reservations: selectedArrangement.night_details,
     pricing_data: pricingData,
     optionalExtras: optionalProducts,
     mealPlan: boardOption,
     total: totalPrice,
+    arrangementLength, // Added
   });
 
   const [showRoomDetailModal, setShowRoomDetailModal] = useState(false);

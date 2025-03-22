@@ -84,11 +84,13 @@ function getNightlyRateId(
   hotel: string,
   boardType: string, // "HB" or "B&B"
   travelMode: string,
+  arrangementLength: number,
 ) {
   const board = boardType === "HB" ? "halfboard" : "breakfast";
   let mode = travelMode;
   if (mode !== "walking" && mode !== "cycling") mode = "walking";
-  return BoardMapping[hotel]?.[mode]?.[board] || "";
+  const lengthKey = arrangementLength === 3 ? "3D" : "4D";
+  return BoardMapping[hotel]?.[mode]?.[lengthKey]?.[board] || "";
 }
 
 function getPriceForNight(
@@ -99,6 +101,7 @@ function getPriceForNight(
   travelMode: string,
   pricingData: any,
   room: any,
+  arrangementLength: number, // Added parameter
 ): string {
   if (!pricingData) return "N/A";
   const dataKey = boardType === "HB" ? "halfboard" : "breakfast";
@@ -159,7 +162,7 @@ function getPriceForNight(
   }
   if (!occupantPriceEntry) return "N/A";
 
-  const rateId = getNightlyRateId(hotelKey, boardType, travelMode);
+  const rateId = getNightlyRateId(hotelKey, boardType, travelMode, arrangementLength);
   const rPrice = occupantPriceEntry.RateGroupPrices.find(
     (rgp: any) => rgp.MinRateId === rateId,
   );
@@ -178,6 +181,7 @@ function getPriceForSingleRoom(
   room: any,
   children: number,
   adults: number,
+  arrangementLength: number, // Added parameter
 ): number {
   if (!nightlyPricing?.CategoryPrices) return 0;
   const cat = nightlyPricing.CategoryPrices.find(
@@ -229,7 +233,7 @@ function getPriceForSingleRoom(
   }
   if (!occupantPriceEntry) return 0;
 
-  const rateId = getNightlyRateId(hotel, boardType, travelMode);
+  const rateId = getNightlyRateId(hotel, boardType, travelMode, arrangementLength);
   const rPrice = occupantPriceEntry.RateGroupPrices.find(
     (rgp: any) => rgp.MinRateId === rateId,
   );
@@ -589,6 +593,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             room,
             room.occupant_countChildren || 0,
             room.occupant_countAdults || 0,
+            arrangementLength,
           );
         }
         return chosenRooms.reduce((acc: number, room: any) => {
@@ -602,12 +607,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
               room,
               room.occupant_countChildren || 0,
               room.occupant_countAdults || 0,
+              arrangementLength,
             )
           );
         }, 0);
       }),
     );
-  }, [selectedArrangement, pricingData, travelMode]);
+  }, [selectedArrangement, pricingData, travelMode, arrangementLength]);
 
   useEffect(() => {
     setTotalPrice(
@@ -879,6 +885,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                       room,
                                       room.occupant_countChildren || 0,
                                       room.occupant_countAdults || 0,
+                                      arrangementLength,
                                     );
                                     return price > 0
                                       ? `€${price}`

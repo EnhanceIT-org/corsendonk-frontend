@@ -12,6 +12,7 @@ function getPriceForSingleRoom(
   room: any,
   reservation: any,
   travelMode: string,
+  arrangementLength: number, // Added parameter
 ): number {
   const nightlyArr = nightlyPricing?.nightlyPricing || [];
   const foundEntry = nightlyArr.find(
@@ -67,7 +68,7 @@ function getPriceForSingleRoom(
     });
   }
   if (!occupantPriceEntry) return 0;
-  const rateId = getNightlyRateId(hotel, boardType, travelMode);
+  const rateId = getNightlyRateId(hotel, boardType, travelMode, arrangementLength);
   const rPrice = occupantPriceEntry.RateGroupPrices.find(
     (rgp: any) => rgp.MinRateId === rateId,
   );
@@ -76,15 +77,16 @@ function getPriceForSingleRoom(
   if (typeof val === "number") return val;
   return 0;
 }
-
 function getNightlyRateId(
   hotel: string,
   boardType: string,
   travelMode: string,
+  arrangementLength: number, // Added parameter
 ) {
   let mode = travelMode;
   if (mode !== "walking" && mode !== "cycling") mode = "walking";
-  return BoardMapping[hotel]?.[mode]?.[boardType] || "";
+  const lengthKey = arrangementLength === 3 ? "3D" : "4D";
+  return BoardMapping[hotel]?.[mode]?.[lengthKey]?.[boardType] || "";
 }
 
 function calculateTotalHumans(bookingData): number {
@@ -108,7 +110,7 @@ function capitalizeFirstLetter(str: string) {
 
 // UPDATED: Added new prop onShowRoomDetail and removed local selectedRoom state.
 interface BookingDetailsProps {
-  bookingData: any;
+  bookingData: any; // Ensure this includes arrangementLength
   onShowRoomDetail: (room: any) => void;
 }
 
@@ -168,6 +170,7 @@ export function BookingDetails({
                         room,
                         reservation,
                         bookingData.travelMode,
+                        bookingData.arrangementLength,
                       )}
                     </span>
                   </div>
