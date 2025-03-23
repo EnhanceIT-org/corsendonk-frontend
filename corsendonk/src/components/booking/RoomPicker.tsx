@@ -93,6 +93,37 @@ function getNightlyRateId(
   return BoardMapping[hotel]?.[mode]?.[lengthKey]?.[board] || "";
 }
 
+function getProductChargingMethodFn(
+  hotelKey: string,
+  productName: string,
+  config: any
+): string | null {
+  // Safeguards
+  if (
+    !config ||
+    !config[hotelKey] ||
+    !config[hotelKey].rawConfig ||
+    !config[hotelKey].rawConfig.Configurations ||
+    config[hotelKey].rawConfig.Configurations.length === 0
+  ) {
+    return null;
+  }
+
+  const raw = config[hotelKey].rawConfig;
+  // Where you originally found Enterprise.Products in your getProductPriceFn
+  const products = raw.Configurations[0].Enterprise.Products || [];
+
+  // Find the product by matching its "Name" to productName
+  const product = products.find(
+    (p: any) => p.Name["en-GB"] === productName
+  );
+  if (!product) return null;
+
+  // Return the charging field, e.g. "Once", "PerPerson", "PerPersonNight"
+  return product.Charging || null;
+}
+
+
 function getPriceForNight(
   hotelKey: string,
   date: string,
@@ -258,53 +289,88 @@ function calculateTotalPrice(
   getProductPriceFn: (
     hotelKey: string,
     productName: string,
-    config: any,
+    config: any
   ) => number,
-  pricesPerNight: number[],
+  pricesPerNight: number[]
 ): number {
   if (!arrangement?.night_details) return 0;
+
+  // 1) Start total with the sum of all room-night prices.
   let total = 0;
   for (const price of pricesPerNight) {
     total += price;
   }
+
+  // 2) Build a simple lookup of "which optional product names are actually selected?"
+  //    Example: from { lunch: true, bicycleRent: false, bicycleTransport: true }
+  //    get an array [ "Lunch package", "Bicycle transport cost" ].
+  const activeOptionalProductNames = Object.keys(selectedOptionalProducts)
+    .filter((key) => selectedOptionalProducts[key]) // only those set to true
+    .map((key) => productNames[key]); // map to the actual "Name" used in the config
+
+  // 3) Keep track of which (hotel, productName) combos we've already processed
+  //    so we don't double-count them if "Once" or "PerPerson" should only be charged once per hotel.
+  const processedOnce = new Set<string>();
+  const processedPerPerson = new Set<string>();
+
+  // 4) Loop over each night in the arrangement to add optional product costs
   for (const night of arrangement.night_details) {
-    const boardKey = night.board_type === "HB" ? "halfboard" : "breakfast";
-    const nightlyArr = pricingDataObj[boardKey]?.nightlyPricing || [];
-    const foundEntry = nightlyArr.find(
-      (x: any) => x.date === night.date && x.hotel === night.hotel,
-    );
-    if (!foundEntry) continue;
     const assignedAdults = sumNightAdultsFn(night);
     const assignedChildren = sumNightChildrenFn(night);
-    if (selectedOptionalProducts.lunch) {
-      const lunchPrice = getProductPriceFn(
+
+    // For each *active* optional product, figure out how to apply its cost:
+    for (const optProductName of activeOptionalProductNames) {
+      // (A) get the price (already implemented in your code)
+      const productPrice = getProductPriceFn(night.hotel, optProductName, config);
+      // (B) get the charging method (new helper)
+      const chargingMethod = getProductChargingMethodFn(
         night.hotel,
-        productNames.lunch,
-        config,
+        optProductName,
+        config
       );
-      total += lunchPrice * (assignedAdults + assignedChildren);
-    }
-    if (travelMode === "cycling") {
-      if (selectedOptionalProducts.bicycleRent) {
-        const rentPrice = getProductPriceFn(
-          night.hotel,
-          productNames.bicycleRent,
-          config,
-        );
-        total += rentPrice * (assignedAdults + assignedChildren);
+
+      if (!chargingMethod) {
+        // If no charging method is found (or not in [Once, PerPerson, PerPersonNight]), skip
+        continue;
       }
-      if (selectedOptionalProducts.bicycleTransport) {
-        const transportPrice = getProductPriceFn(
-          night.hotel,
-          productNames.bicycleTransport,
-          config,
-        );
-        total += transportPrice;
+
+      // Create a unique key for "(hotel)-(product)" to handle 'Once' & 'PerPerson'
+      const hotelProductKey = `${night.hotel}-${optProductName}`;
+
+      switch (chargingMethod) {
+        case "Once":
+          // Only add once per hotel, ignoring # of nights / # of people
+          if (!processedOnce.has(hotelProductKey)) {
+            total += productPrice;
+            processedOnce.add(hotelProductKey);
+          }
+          break;
+
+        case "PerPerson":
+          // Add once per hotel, but multiplied by (adults + children)
+          if (!processedPerPerson.has(hotelProductKey)) {
+            total += productPrice * (assignedAdults + assignedChildren);
+            processedPerPerson.add(hotelProductKey);
+          }
+          break;
+
+        case "PerPersonNight":
+          // Add for *each night* in that hotel, for all assigned adults+children
+          total += productPrice * (assignedAdults + assignedChildren);
+          break;
+
+        default:
+          // If the charging method is something unknown, skip or handle it gracefully
+          break;
       }
     }
   }
+
   return total;
 }
+
+
+
 
 const sumNightAdults = (night: any) =>
   night.chosen_rooms.reduce(
