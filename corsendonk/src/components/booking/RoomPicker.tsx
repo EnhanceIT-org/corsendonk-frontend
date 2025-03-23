@@ -1166,6 +1166,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           travelMode={travelMode}
           selectedOptionalProducts={selectedOptionalProducts}
           setSelectedOptionalProducts={setSelectedOptionalProducts}
+          rawConfig={rawConfig}
+          getProductPriceFn={getProductPriceFn}
+          getProductChargingMethodFn={getProductChargingMethodFn}
         />
 
         <PricingSummary
