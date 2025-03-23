@@ -18,6 +18,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     lastName: "",
     phone: "",
     nationality: "België",
+    paymentMethod: "kredietkaart", // New field for payment method
     creditCardName: "",
     creditCard: "",
     cvc: "",
@@ -56,6 +57,13 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
       [name]: value,
     }));
     clearError(name);
+  };
+
+  const handlePaymentMethodChange = (method) => {
+    setFormData((prev) => ({
+      ...prev,
+      paymentMethod: method,
+    }));
   };
 
   const handleCreditCardChange = (e) => {
@@ -110,40 +118,43 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
       isValid = false;
     }
 
-    if (!validator.isCreditCard(formData.creditCard)) {
-      newErrors.creditCard = "Kredietkaart nummer is niet geldig";
-      isValid = false;
-    }
-
-    if (!/^\d{3,4}$/.test(formData.cvc)) {
-      newErrors.cvc = "CVC moet 3 of 4 cijfers bevatten";
-      isValid = false;
-    }
-
-    if (!/^\d{2}\/\d{2}$/.test(formData.expiry)) {
-      newErrors.expiry = "Gebruik formaat MM/JJ";
-      isValid = false;
-    } else {
-      const [month, year] = formData.expiry.split("/").map(Number);
-      const currentDate = new Date();
-      const fullYear = 2000 + year;
-
-      const expiryDate = new Date(fullYear, month, 0);
-      expiryDate.setHours(23, 59, 59, 999);
-
-      const maxDate = new Date(currentDate);
-      maxDate.setFullYear(maxDate.getFullYear() + 5);
-
-      if (month < 1 || month > 12) {
-        newErrors.expiry = "Maand moet tussen 01 en 12 liggen";
+    // Only validate credit card fields if kredietkaart payment method is selected
+    if (formData.paymentMethod === "kredietkaart") {
+      if (!validator.isCreditCard(formData.creditCard)) {
+        newErrors.creditCard = "Kredietkaart nummer is niet geldig";
         isValid = false;
-      } else if (expiryDate <= currentDate) {
-        newErrors.expiry = "Kaart is verlopen";
+      }
+
+      if (!/^\d{3,4}$/.test(formData.cvc)) {
+        newErrors.cvc = "CVC moet 3 of 4 cijfers bevatten";
         isValid = false;
-      } else if (expiryDate > maxDate) {
-        newErrors.expiry =
-          "Vervaldatum mag niet meer dan 5 jaar in de toekomst liggen";
+      }
+
+      if (!/^\d{2}\/\d{2}$/.test(formData.expiry)) {
+        newErrors.expiry = "Gebruik formaat MM/JJ";
         isValid = false;
+      } else {
+        const [month, year] = formData.expiry.split("/").map(Number);
+        const currentDate = new Date();
+        const fullYear = 2000 + year;
+
+        const expiryDate = new Date(fullYear, month, 0);
+        expiryDate.setHours(23, 59, 59, 999);
+
+        const maxDate = new Date(currentDate);
+        maxDate.setFullYear(maxDate.getFullYear() + 5);
+
+        if (month < 1 || month > 12) {
+          newErrors.expiry = "Maand moet tussen 01 en 12 liggen";
+          isValid = false;
+        } else if (expiryDate <= currentDate) {
+          newErrors.expiry = "Kaart is verlopen";
+          isValid = false;
+        } else if (expiryDate > maxDate) {
+          newErrors.expiry =
+            "Vervaldatum mag niet meer dan 5 jaar in de toekomst liggen";
+          isValid = false;
+        }
       }
     }
 
@@ -369,109 +380,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
         <div>
           <label
-            htmlFor="creditCardName"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Naam van de kaarthouder <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            id="creditCardName"
-            name="creditCardName"
-            required
-            className={`w-full border ${
-              errors.creditCardName ? "border-red-500" : "border-gray-200"
-            } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
-            value={formData.creditCardName}
-            onChange={handleChange}
-            aria-invalid={errors.creditCardName ? "true" : "false"}
-          />
-          {errors.creditCardName && (
-            <p className="mt-1 text-sm text-red-600">{errors.creditCardName}</p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="creditCard"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Kredietkaart nummer <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            id="creditCard"
-            name="creditCard"
-            required
-            placeholder="XXXX XXXX XXXX XXXX"
-            className={`w-full border ${
-              errors.creditCard ? "border-red-500" : "border-gray-200"
-            } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
-            value={formData.creditCard}
-            onChange={handleCreditCardChange}
-            aria-invalid={errors.creditCard ? "true" : "false"}
-            maxLength={19}
-          />
-          {errors.creditCard && (
-            <p className="mt-1 text-sm text-red-600">{errors.creditCard}</p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="expiry"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Vervaldatum (MM/JJ) <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="text"
-              id="expiry"
-              name="expiry"
-              required
-              placeholder="MM/JJ"
-              className={`w-full border ${
-                errors.expiry ? "border-red-500" : "border-gray-200"
-              } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
-              value={formData.expiry}
-              onChange={handleExpiryChange}
-              aria-invalid={errors.expiry ? "true" : "false"}
-              maxLength={5}
-            />
-            {errors.expiry && (
-              <p className="mt-1 text-sm text-red-600">{errors.expiry}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="cvc"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              CVC/CVV <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="text"
-              id="cvc"
-              name="cvc"
-              required
-              placeholder="3 of 4 cijfers"
-              className={`w-full border ${
-                errors.cvc ? "border-red-500" : "border-gray-200"
-              } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
-              value={formData.cvc}
-              onChange={handleChange}
-              aria-invalid={errors.cvc ? "true" : "false"}
-              maxLength={4}
-            />
-            {errors.cvc && (
-              <p className="mt-1 text-sm text-red-600">{errors.cvc}</p>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <label
             htmlFor="nationality"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
@@ -491,11 +399,159 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               </option>
             ))}
           </select>
-
           {errors.nationality && (
             <p className="mt-1 text-sm text-red-600">{errors.nationality}</p>
           )}
         </div>
+
+        {/* Payment Method Toggle */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Betaalmethode <span className="text-red-600">*</span>
+          </label>
+          <div className="flex rounded-md overflow-hidden border border-gray-200">
+            <button
+              type="button"
+              onClick={() => handlePaymentMethodChange("kredietkaart")}
+              className={`flex-1 py-2.5 px-4 font-medium text-sm transition-colors ${
+                formData.paymentMethod === "kredietkaart"
+                  ? "bg-[#2C4A3C] text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Kredietkaart
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePaymentMethodChange("bankoverschrijving")}
+              className={`flex-1 py-2.5 px-4 font-medium text-sm transition-colors ${
+                formData.paymentMethod === "bankoverschrijving"
+                  ? "bg-[#2C4A3C] text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Bankoverschrijving
+            </button>
+          </div>
+        </div>
+
+        {/* Conditional rendering for payment method details */}
+        {formData.paymentMethod === "kredietkaart" ? (
+          <>
+            <div>
+              <label
+                htmlFor="creditCardName"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Naam van de kaarthouder <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="text"
+                id="creditCardName"
+                name="creditCardName"
+                required
+                className={`w-full border ${
+                  errors.creditCardName ? "border-red-500" : "border-gray-200"
+                } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
+                value={formData.creditCardName}
+                onChange={handleChange}
+                aria-invalid={errors.creditCardName ? "true" : "false"}
+              />
+              {errors.creditCardName && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.creditCardName}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="creditCard"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Kredietkaart nummer <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="text"
+                id="creditCard"
+                name="creditCard"
+                required
+                placeholder="XXXX XXXX XXXX XXXX"
+                className={`w-full border ${
+                  errors.creditCard ? "border-red-500" : "border-gray-200"
+                } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
+                value={formData.creditCard}
+                onChange={handleCreditCardChange}
+                aria-invalid={errors.creditCard ? "true" : "false"}
+                maxLength={19}
+              />
+              {errors.creditCard && (
+                <p className="mt-1 text-sm text-red-600">{errors.creditCard}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="expiry"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Vervaldatum (MM/JJ) <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="expiry"
+                  name="expiry"
+                  required
+                  placeholder="MM/JJ"
+                  className={`w-full border ${
+                    errors.expiry ? "border-red-500" : "border-gray-200"
+                  } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
+                  value={formData.expiry}
+                  onChange={handleExpiryChange}
+                  aria-invalid={errors.expiry ? "true" : "false"}
+                  maxLength={5}
+                />
+                {errors.expiry && (
+                  <p className="mt-1 text-sm text-red-600">{errors.expiry}</p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="cvc"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  CVC/CVV <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="cvc"
+                  name="cvc"
+                  required
+                  placeholder="3 of 4 cijfers"
+                  className={`w-full border ${
+                    errors.cvc ? "border-red-500" : "border-gray-200"
+                  } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
+                  value={formData.cvc}
+                  onChange={handleChange}
+                  aria-invalid={errors.cvc ? "true" : "false"}
+                  maxLength={4}
+                />
+                {errors.cvc && (
+                  <p className="mt-1 text-sm text-red-600">{errors.cvc}</p>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-sm text-gray-700">
+              U ontvangt een bevestingsmail met ons rekeningnummer, we vragen
+              een betaling binnen de 5 dagen na het maken van de reservering om
+              de reservatie te bevestigen.
+            </p>
+          </div>
+        )}
 
         <div className="mt-4">
           <label
@@ -503,26 +559,28 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             className="block text-sm font-medium text-gray-700 mb-1 flex items-center"
           >
             Extra Notities
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="ml-1 text-gray-400 hover:text-gray-600"
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="ml-1 text-gray-400 hover:text-gray-600"
+                  >
+                    <Info className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  align="center"
+                  className="max-w-xs z-50 bg-white shadow-lg"
                 >
-                  <Info className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent
-                side="right"
-                align="center"
-                className="max-w-xs z-50 bg-white shadow-lg"
-              >
-                <p className="text-sm text-gray-500">
-                  U kunt hier extra opmerkingen of speciale verzoeken invoeren,
-                  of vermelden indien u lid bent van een vereniging.
-                </p>
-              </TooltipContent>
-            </Tooltip>
+                  <p className="text-sm text-gray-500">
+                    U kunt hier extra opmerkingen of speciale verzoeken invoeren,
+                    of vermelden indien u lid bent van een vereniging.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </label>
           <Textarea
             id="notes"
