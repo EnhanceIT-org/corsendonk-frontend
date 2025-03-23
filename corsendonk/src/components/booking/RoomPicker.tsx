@@ -18,18 +18,18 @@ import {
   ArrowLeft,
   XCircle,
 } from "lucide-react";
-import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
+import { ageCategoryMapping, BoardMapping, PRODUCT_NAMES, OPTIONAL_PRODUCT_IDS } from "@/mappings/mappings";
 import { PricingSummary } from "./PricingSummary";
 import { Breadcrumb } from "./Breadcrumb";
 
 // Define product names used in pricing lookups.
-const productNames = {
-  breakfast: "Breakfast (Package)",
-  lunch: "Lunch package",
-  koffernabreng: "Koffernabreng",
-  bicycleRent: "Bicylce renting",
-  bicycleTransport: "Bicycle transport cost",
-};
+// const productNames = {
+//   breakfast: "Breakfast (Package)",
+//   lunch: "Lunch package",
+//   koffernabreng: "Koffernabreng",
+//   bicycleRent: "Bicylce renting",
+//   bicycleTransport: "Bicycle transport cost",
+// };
 
 interface selectedArrangementInterface {
   night_details: {
@@ -305,8 +305,8 @@ function calculateTotalPrice(
   //    Example: from { lunch: true, bicycleRent: false, bicycleTransport: true }
   //    get an array [ "Lunch package", "Bicycle transport cost" ].
   const activeOptionalProductNames = Object.keys(selectedOptionalProducts)
-    .filter((key) => selectedOptionalProducts[key]) // only those set to true
-    .map((key) => productNames[key]); // map to the actual "Name" used in the config
+    .filter((key) => selectedOptionalProducts[key])
+    .map((key) => PRODUCT_NAMES[key]);  // <-- now uses the imported mapping
 
   // 3) Keep track of which (hotel, productName) combos we've already processed
   //    so we don't double-count them if "Once" or "PerPerson" should only be charged once per hotel.
@@ -752,31 +752,34 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     return { name: "Unknown", imageUrl: null };
   };
 
-  const computeOptionalProductsMapping = (): Record<string, string[]> => {
+  function computeOptionalProductsMapping(): Record<string, string[]> {
     const mapping: Record<string, string[]> = {
       hotel1: [],
       hotel2: [],
       hotel3: [],
     };
+  
     if (selectedOptionalProducts.lunch) {
-      mapping["hotel1"].push("d78fcc90-f92a-4547-aba2-b27c0143c1ad");
-      mapping["hotel2"].push("bf9c20d3-10d1-4e96-b42b-b27c0144c79f");
-      mapping["hotel3"].push("96c6bc09-6ebd-4a67-9924-b27c0145acf1");
+      mapping.hotel1.push(OPTIONAL_PRODUCT_IDS.lunch.hotel1);
+      mapping.hotel2.push(OPTIONAL_PRODUCT_IDS.lunch.hotel2);
+      mapping.hotel3.push(OPTIONAL_PRODUCT_IDS.lunch.hotel3);
     }
+  
     if (travelMode === "cycling") {
       if (selectedOptionalProducts.bicycleRent) {
-        mapping["hotel1"].push("59b38a23-15a4-461d-bea6-b27c0143f0e9");
-        mapping["hotel2"].push("ecc8e7d4-2a49-4326-a3b1-b27c0144f4bf");
-        mapping["hotel3"].push("177ea362-600e-436b-b909-b27c01458da2");
+        mapping.hotel1.push(OPTIONAL_PRODUCT_IDS.bicycleRent.hotel1);
+        mapping.hotel2.push(OPTIONAL_PRODUCT_IDS.bicycleRent.hotel2);
+        mapping.hotel3.push(OPTIONAL_PRODUCT_IDS.bicycleRent.hotel3);
       }
       if (selectedOptionalProducts.bicycleTransport) {
-        mapping["hotel1"].push("3dc76cb4-d72f-46b5-8cff-b27c014415ca");
-        mapping["hotel2"].push("e1365138-e07e-4e5b-9222-b27c0145279f");
-        mapping["hotel3"].push("91038565-d3dc-448d-9a04-b27c014559a2");
+        mapping.hotel1.push(OPTIONAL_PRODUCT_IDS.bicycleTransport.hotel1);
+        mapping.hotel2.push(OPTIONAL_PRODUCT_IDS.bicycleTransport.hotel2);
+        mapping.hotel3.push(OPTIONAL_PRODUCT_IDS.bicycleTransport.hotel3);
       }
     }
+  
     return mapping;
-  };
+  }
 
   if (loading)
     return (

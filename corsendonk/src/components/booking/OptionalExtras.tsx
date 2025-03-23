@@ -1,5 +1,5 @@
 import React from "react";
-
+import { PRODUCT_NAMES } from "@/mappings/mappings";
 function chargingMethodToDutch(method: string): string {
   switch (method) {
     case "Once":
@@ -53,7 +53,7 @@ export const OptionalExtras: React.FC<OptionalExtrasProps> = ({
   const hotelKey = "hotel1"; //opnieuw voor productie, hoe displayen we product prijs als ze verschillen per hotel? Gewoon totaal?
 
   // 1) For lunch
-  const lunchProductName = "Lunch package";
+  const lunchProductName = PRODUCT_NAMES.lunch;
   const lunchPrice = getProductPriceFn(hotelKey, lunchProductName, rawConfig);
   const lunchCharging = getProductChargingMethodFn(
     hotelKey,
@@ -62,7 +62,7 @@ export const OptionalExtras: React.FC<OptionalExtrasProps> = ({
   );
 
   // 2) For bicycleRent
-  const bicycleRentProductName = "Bicylce renting";
+  const bicycleRentProductName = PRODUCT_NAMES.bicycleRent;
   const bicycleRentPrice = getProductPriceFn(
     hotelKey,
     bicycleRentProductName,
@@ -75,7 +75,7 @@ export const OptionalExtras: React.FC<OptionalExtrasProps> = ({
   );
 
   // 3) For bicycleTransport (if you want to show it in UI similarly)
-  const bicycleTransportProductName = "Bicycle transport cost";
+  const bicycleTransportProductName = PRODUCT_NAMES.bicycleTransport;
   const bicycleTransportPrice = getProductPriceFn(
     hotelKey,
     bicycleTransportProductName,

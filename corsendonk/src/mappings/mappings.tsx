@@ -84,3 +84,46 @@ export const BoardMapping: any = {
     },
   },
 };
+
+
+/**
+ * Centralized product names so we only edit them here.
+ * Keys match how we store 'selectedOptionalProducts' in code (e.g. lunch, bicycleRent, etc.).
+ * You can add or rename as needed.
+ */
+export const PRODUCT_NAMES = {
+  // Board types
+  breakfast: "Breakfast (Package)",
+
+  // Optional extras
+  lunch: "Lunch package",
+  koffernabreng: "Koffernabreng",
+  bicycleRent: "Bicylce renting",           // wrong spelling on purpose
+  bicycleTransport: "Bicycle transport cost",
+};
+
+/**
+ * Centralized IDs (if each product has a unique ID per hotel).
+ * This is used in computeOptionalProductsMapping or anywhere we push product IDs.
+ */
+export const OPTIONAL_PRODUCT_IDS: Record<
+  string,
+  { hotel1: string; hotel2: string; hotel3: string }
+> = {
+  lunch: {
+    hotel1: "d78fcc90-f92a-4547-aba2-b27c0143c1ad",
+    hotel2: "bf9c20d3-10d1-4e96-b42b-b27c0144c79f",
+    hotel3: "96c6bc09-6ebd-4a67-9924-b27c0145acf1",
+  },
+  bicycleRent: {
+    hotel1: "59b38a23-15a4-461d-bea6-b27c0143f0e9",
+    hotel2: "ecc8e7d4-2a49-4326-a3b1-b27c0144f4bf",
+    hotel3: "177ea362-600e-436b-b909-b27c01458da2",
+  },
+  bicycleTransport: {
+    hotel1: "3dc76cb4-d72f-46b5-8cff-b27c014415ca",
+    hotel2: "e1365138-e07e-4e5b-9222-b27c0145279f",
+    hotel3: "91038565-d3dc-448d-9a04-b27c014559a2",
+  },
+  // Add more as needed...
+};
