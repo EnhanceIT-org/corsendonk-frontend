@@ -176,17 +176,20 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:8000/reservations/book/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/reservations/book/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...bookingData,
+            travelMode,
+            personalInformation: formData,
+          }),
         },
-        body: JSON.stringify({
-          ...bookingData,
-          travelMode,
-          personalInformation: formData,
-        }),
-      });
+      );
 
       if (response.ok) {
         setSubmissionSuccess(true);
@@ -575,8 +578,8 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                   className="max-w-xs z-50 bg-white shadow-lg"
                 >
                   <p className="text-sm text-gray-500">
-                    U kunt hier extra opmerkingen of speciale verzoeken invoeren,
-                    of vermelden indien u lid bent van een vereniging.
+                    U kunt hier extra opmerkingen of speciale verzoeken
+                    invoeren, of vermelden indien u lid bent van een vereniging.
                   </p>
                 </TooltipContent>
               </Tooltip>
