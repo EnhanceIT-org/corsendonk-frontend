@@ -40,3 +40,178 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Add these styles to your App.css file */
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Add these styles to your global CSS or App.css */
+
+/* Calendar Green Theme Overrides */
+.custom-calendar button[aria-selected="true"] {
+  background-color: #2C4A3C !important;
+  color: white !important;
+}
+
+/* Day hover states */
+.custom-calendar button:hover:not([disabled]) {
+  background-color: rgba(44, 74, 60, 0.15) !important;
+  color: inherit !important;
+}
+
+/* Day selection and focus states */
+.custom-calendar .rdp-day_selected, 
+.custom-calendar .rdp-day_selected:focus, 
+.custom-calendar .rdp-day_selected:hover {
+  background-color: #2C4A3C !important;
+  color: white !important;
+}
+
+.custom-calendar .rdp-button:focus, 
+.custom-calendar .rdp-button:active {
+  border-color: #2C4A3C !important;
+  background-color: rgba(44, 74, 60, 0.2) !important;
+}
+
+/* Override all buttons with aria-selected attribute */
+button[aria-selected="true"] {
+  background-color: #2C4A3C !important;
+  color: white !important;
+}
+
+button.rdp-day_today {
+  background-color: rgba(44, 74, 60, 0.2) !important;
+}
+
+.rdp-day_range_middle {
+  background-color: rgba(44, 74, 60, 0.2) !important;
+}
+
+.rdp-day_range_end, .rdp-day_range_start {
+  background-color: #2C4A3C !important;
+  color: white !important;
+}
+
+/* Override hover states for all calendar days */
+.rdp-button:hover:not([disabled]) {
+  background-color: rgba(44, 74, 60, 0.15) !important;
+}
+
+/* Primary button styles (for the date picker bar at the top) */
+/* Target the button that contains the date display */
+[role="button"].bg-blue-500,
+[role="button"].bg-blue-600,
+button.bg-blue-500,
+button.bg-blue-600 {
+  background-color: #2C4A3C !important;
+}
+
+/* Target all blue styled elements */
+.bg-blue-500, .bg-blue-600, .bg-primary {
+  background-color: #2C4A3C !important;
+}
+
+.text-primary-foreground {
+  color: white !important;
+}
+
+/* Target the specific date display button at the top */
+[class*="DatePicker"] button,
+[class*="datepicker"] button,
+.date-picker-button,
+button:has(svg) + span {
+  background-color: #2C4A3C !important;
+}
+
+/* Override any blue background in the UI */
+.bg-blue-100, .bg-blue-200, .bg-blue-300, .bg-blue-400, .bg-blue-500, 
+.bg-blue-600, .bg-blue-700, .bg-blue-800, .bg-blue-900 {
+  background-color: #2C4A3C !important;
+}
+
+/* Target the specific blue date picker bar shown in your screenshots */
+.calendar-button,
+[class*="date-range"],
+button:has(.calendar-icon),
+button:has([class*="calendar"]) {
+  background-color: #2C4A3C !important;
+}
+
+/* Target specifically the blue bar in your second screenshot */
+button.bg-blue-500,
+button.bg-blue-600,
+button.text-white,
+button.bg-primary {
+  background-color: #2C4A3C !important;
+}
+
+/* For nested components */
+div:has(> button.bg-blue-500),
+div:has(> button.bg-blue-600) {
+  background-color: #2C4A3C !important;
+}
+
+/* Target the specific blue date range bar */
+div[class*="flex"] > button.bg-blue-500,
+div[class*="flex"] > button.bg-blue-600,
+div[class*="relative"] > button.bg-blue-500,
+div[class*="relative"] > button.bg-blue-600 {
+  background-color: #2C4A3C !important;
+}
+
+/* Target the top date bar in your screenshots */
+[class*="dates"] button,
+[class*="date-picker"] button,
+[class*="calendar"] button {
+  background-color: #2C4A3C !important;
+}
+
+/* Override any inline styles that might be applied */
+button[style*="background-color: rgb(59, 130, 246)"],
+button[style*="background-color: #3b82f6"],
+button[style*="background-color: rgb(37, 99, 235)"],
+button[style*="background-color: #2563eb"] {
+  background-color: #2C4A3C !important;
+}
+

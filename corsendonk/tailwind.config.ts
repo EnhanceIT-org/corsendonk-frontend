@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 
 export default {
   darkMode: ["class"],
@@ -25,7 +27,7 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#1e4d91",
+          DEFAULT: "#2C4A3C", // Changed from #1e4d91 to your green color
           foreground: "#ffffff",
         },
         secondary: {
@@ -33,7 +35,7 @@ export default {
           foreground: "#0f172a",
         },
         accent: {
-          DEFAULT: "#3b82f6",
+          DEFAULT: "#2C4A3C", // Changed from #3b82f6 (blue) to your green color
           foreground: "#ffffff",
         },
         muted: {
