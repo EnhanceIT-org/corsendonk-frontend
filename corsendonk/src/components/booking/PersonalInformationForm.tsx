@@ -246,10 +246,29 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   if (submissionSuccess) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+        {/* <span style={{ fontSize: "48px", color: "green" }}>✔</span> */}
+        <div className="mb-4 flex justify-center items-center">
+          {/* SVG icon */}
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="green"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.59L19 8L10 17Z" />
+          </svg>
+        </div>
         <h2 className="text-xl font-semibold text-green-600 mb-4">
           Reservering succesvol!
         </h2>
-        <p className="mb-4">Uw boeking is bevestigd.</p>
+        <p className="mb-4 text-lg">
+          <strong>Bedankt voor uw reservering!</strong>
+        </p>
+        <p className="mb-4">Uw boeking is succesvol bevestigd.</p>
+        <p className="mb-4">
+          U ontvangt spoedig een e-mail met alle nodige informatie.
+        </p>
 
         {/* Flex container for buttons */}
         <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -266,7 +285,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             }
             className="w-full sm:w-auto bg-[#2C4A3C] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            Terug naar corsendonk homepagina
+            Terug naar Corsendonk homepagina
           </button>
         </div>
       </div>
