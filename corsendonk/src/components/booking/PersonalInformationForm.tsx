@@ -412,7 +412,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Betaalmethode <span className="text-red-600">*</span>
           </label>
-          <div className="flex rounded-md overflow-hidden border border-gray-200">
+          <div className="flex sm:flex-row flex-col rounded-md overflow-hidden border border-gray-200">
             <button
               type="button"
               onClick={() => handlePaymentMethodChange("kredietkaart")}

@@ -120,9 +120,9 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-semibold mb-4">Aantal Gasten</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between max-w-[300px]">
-                <span>Volwassenen</span>
+            <div className="space-y-4 align-start">
+              <div className="flex sm:flex-row flex-col sm:items-center justify-between items-start max-w-[300px]">
+                <span className="sm:mb-0 mb-1">Volwassenen</span>
                 <div className="flex items-center">
                   <button
                     onClick={() => handleDecrement("adults")}
@@ -139,8 +139,8 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                   </button>
                 </div>
               </div>
-              <div className="flex items-center justify-between max-w-[300px]">
-                <span>Kinderen</span>
+              <div className="flex sm:flex-row flex-col sm:items-center items-start justify-between max-w-[300px]">
+                <span className="sm:mb-0 mb-1">Kinderen</span>
                 <div className="flex items-center">
                   <button
                     onClick={() => handleDecrement("children")}
@@ -184,7 +184,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             <h2 className="text-lg font-semibold mb-4">
               Voorkeur verplaatsing
             </h2>
-            <div className="flex gap-4">
+            <div className="gap-4 flex flex-col sm:flex-row">
               <button
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
                   formData.travelMode === "walking"
@@ -221,7 +221,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-semibold mb-4">Maaltijden</h2>
-            <div className="flex gap-4">
+            <div className="gap-4 flex flex-col sm:flex-row">
               <button
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
                   formData.boardOption === "breakfast"
