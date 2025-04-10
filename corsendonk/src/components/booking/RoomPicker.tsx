@@ -12,11 +12,8 @@ import {
   UtensilsCrossed,
   Plus,
   Minus,
-  Bike,
-  Footprints,
   User,
   Info,
-  ArrowLeft,
   XCircle,
 } from "lucide-react";
 import {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import validator from "validator";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -18,10 +18,8 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     lastName: "",
     phone: "",
     nationality: "België",
-    paymentMethod: "kredietkaart", // New field for payment method
+    paymentMethod: "kredietkaart",
     creditCardName: "",
-    creditCard: "",
-    cvc: "",
     expiry: "",
     notes: "",
   });
@@ -41,6 +39,111 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [transactionId, setTransactionId] = useState(null);
+
+  // Datatrans secure fields
+  const [isReady, setIsReady] = useState(false);
+  const secureFieldsRef = useRef(null);
+  const cardNumberPlaceholderRef = useRef(null);
+  const cvvPlaceholderRef = useRef(null);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src =
+      "https://pay.sandbox.datatrans.com/upp/payment/js/secure-fields-2.0.0.js";
+    script.async = true;
+
+    script.onload = () => {
+      setIsReady(true);
+    };
+
+    document.body.appendChild(script);
+
+    // Cleanup function
+    return () => {
+      if (script.parentNode) {
+        document.body.removeChild(script);
+      }
+      if (secureFieldsRef.current) {
+        secureFieldsRef.current.destroy();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      isReady &&
+      cardNumberPlaceholderRef.current &&
+      cvvPlaceholderRef.current
+    ) {
+      try {
+        const SecureFields = window.SecureFields;
+        secureFieldsRef.current = new SecureFields();
+
+        // Style configuration to match your design
+        const styles = {
+          base: {
+            fontSize: "16px",
+            color: "#333",
+            fontFamily: "system-ui, -apple-system, sans-serif",
+            padding: "8px 0",
+          },
+          ":focus": {
+            outline: "none",
+          },
+          "::placeholder": {
+            color: "#9ca3af",
+          },
+        };
+
+        //FOr corsendonk this value should be used: 3000013748
+        secureFieldsRef.current.initTokenize(
+          "1100007006",
+          {
+            cardNumber: cardNumberPlaceholderRef.current.id.toString(),
+            cvv: cvvPlaceholderRef.current.id.toString(),
+          },
+          {
+            styles: styles,
+          },
+        );
+
+        // Handle success event
+        secureFieldsRef.current.on("success", (data) => {
+          if (data.transactionId) {
+            console.log("Transaction ID:", data.transactionId);
+            setTransactionId(data.transactionId);
+            // Continue with form submission after getting transaction ID
+            submitFormData(data.transactionId);
+          }
+        });
+
+        // Handle error event
+        secureFieldsRef.current.on("error", (error) => {
+          console.error("Datatrans error:", error);
+          const newErrors = { ...errors };
+
+          if (error.field === "cardNumber") {
+            newErrors.creditCard = "Ongeldig kredietkaart nummer";
+          } else if (error.field === "cvv") {
+            newErrors.cvc = "Ongeldige CVC/CVV";
+          } else {
+            newErrors.general = `Betalingsfout: ${error.message}`;
+          }
+
+          setErrors(newErrors);
+          setIsSubmitting(false);
+        });
+      } catch (error) {
+        console.error("Error initializing Datatrans:", error);
+        setErrors((prev) => ({
+          ...prev,
+          general:
+            "Er is een fout opgetreden bij het initialiseren van de betaalmethode.",
+        }));
+      }
+    }
+  }, [isReady]);
 
   const clearError = (fieldName) => {
     setErrors((prev) => ({
@@ -66,14 +169,14 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     }));
   };
 
-  const handleCreditCardChange = (e) => {
-    const value = e.target.value.replace(/\s/g, "");
-    setFormData((prev) => ({
-      ...prev,
-      creditCard: value,
-    }));
-    clearError("creditCard");
-  };
+  // const handleCreditCardChange = (e) => {
+  //   const value = e.target.value.replace(/\s/g, "");
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     creditCard: value,
+  //   }));
+  //   clearError("creditCard");
+  // };
 
   const handleExpiryChange = (e) => {
     let value = e.target.value;
@@ -120,13 +223,8 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
     // Only validate credit card fields if kredietkaart payment method is selected
     if (formData.paymentMethod === "kredietkaart") {
-      if (!validator.isCreditCard(formData.creditCard)) {
-        newErrors.creditCard = "Kredietkaart nummer is niet geldig";
-        isValid = false;
-      }
-
-      if (!/^\d{3,4}$/.test(formData.cvc)) {
-        newErrors.cvc = "CVC moet 3 of 4 cijfers bevatten";
+      if (formData.creditCardName.trim().length < 3) {
+        newErrors.creditCardName = "Voer de naam van de kaarthouder in";
         isValid = false;
       }
 
@@ -162,19 +260,67 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     return isValid;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
 
-    if (!validateForm()) {
-      setErrors((prev) => ({
-        ...prev,
-        general: "Er zijn fouten in het formulier. Controleer alle velden.",
-      }));
-      return;
-    }
+  //   if (secureFieldsRef.current) {
+  //     const [month, year] = formData.expiry.split("/").map(Number);
+  //     secureFieldsRef.current.submit({
+  //       expm: parseInt(month.toString(), 10),
+  //       expy: parseInt('20' + year, 10),
+  //       usage: "SIMPLE"
+  //     });
+  //   }
 
-    setIsSubmitting(true);
+  //   if (!validateForm()) {
+  //     setErrors((prev) => ({
+  //       ...prev,
+  //       general: "Er zijn fouten in het formulier. Controleer alle velden.",
+  //     }));
+  //     return;
+  //   }
 
+  //   setIsSubmitting(true);
+
+  //   try {
+  //     const response = await fetch(
+  //       `${import.meta.env.VITE_API_URL}/reservations/book/`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           ...bookingData,
+  //           travelMode,
+  //           personalInformation: formData,
+  //         }),
+  //       },
+  //     );
+
+  //     if (response.ok) {
+  //       setSubmissionSuccess(true);
+  //       console.log("Booking successful!");
+  //     } else {
+  //       const errorData = await response.json();
+  //       setErrors((prev) => ({
+  //         ...prev,
+  //         general:
+  //           errorData.message || "Er is een fout opgetreden bij het boeken.",
+  //       }));
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     setErrors((prev) => ({
+  //       ...prev,
+  //       general: "Er is een fout opgetreden. Probeer het later opnieuw.",
+  //     }));
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
+  const submitFormData = async (paymentTransactionId) => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/reservations/book/`,
@@ -187,6 +333,10 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             ...bookingData,
             travelMode,
             personalInformation: formData,
+            paymentInfo: {
+              method: formData.paymentMethod,
+              transactionId: paymentTransactionId,
+            },
           }),
         },
       );
@@ -210,6 +360,54 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
       }));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      setErrors((prev) => ({
+        ...prev,
+        general: "Er zijn fouten in het formulier. Controleer alle velden.",
+      }));
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    if (formData.paymentMethod === "kredietkaart") {
+      // For credit card payment, process through Datatrans
+      if (secureFieldsRef.current) {
+        const [month, year] = formData.expiry.split("/").map(Number);
+
+        try {
+          secureFieldsRef.current.submit({
+            expm: month,
+            expy: 2000 + year,
+            usage: "SIMPLE",
+          });
+          // The rest will be handled by the success callback
+        } catch (error) {
+          console.error("Error submitting secure fields:", error);
+          setErrors((prev) => ({
+            ...prev,
+            general:
+              "Er is een fout opgetreden bij de verwerking van de betaling.",
+          }));
+          setIsSubmitting(false);
+        }
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          general:
+            "Betaalsysteem is niet geïnitialiseerd. Vernieuw de pagina en probeer opnieuw.",
+        }));
+        setIsSubmitting(false);
+      }
+    } else {
+      // For bank transfer, submit directly
+      submitFormData(null);
     }
   };
 
@@ -241,14 +439,15 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   );
 
   // Combine common ones at the top + sorted remaining countries
-  const nationalities = [...commonNationalities, ...remainingCountries.sort()];
+  const sortedRemainingCountries = remainingCountries
+    .slice()
+    .sort((a, b) => a.localeCompare(b));
+  const nationalities = [...commonNationalities, ...sortedRemainingCountries];
 
   if (submissionSuccess) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-        {/* <span style={{ fontSize: "48px", color: "green" }}>✔</span> */}
         <div className="mb-4 flex justify-center items-center">
-          {/* SVG icon */}
           <svg
             width="48"
             height="48"
@@ -425,7 +624,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             <p className="mt-1 text-sm text-red-600">{errors.nationality}</p>
           )}
         </div>
-
         {/* Payment Method Toggle */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -460,6 +658,12 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         {/* Conditional rendering for payment method details */}
         {formData.paymentMethod === "kredietkaart" ? (
           <>
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <p className="text-sm text-gray-700">
+                De kredietkaart wordt enkel gebruikt als garantie of bij
+                laattijdige annulering of niet opdagen.
+              </p>
+            </div>
             <div>
               <label
                 htmlFor="creditCardName"
@@ -486,7 +690,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               )}
             </div>
 
-            <div>
+            {/* <div>
               <label
                 htmlFor="creditCard"
                 className="block text-sm font-medium text-gray-700 mb-1"
@@ -496,17 +700,36 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               <input
                 type="text"
                 id="creditCard"
+                ref={cardNumberPlaceholderRef}
                 name="creditCard"
                 required
                 placeholder="XXXX XXXX XXXX XXXX"
-                className={`w-full border ${
-                  errors.creditCard ? "border-red-500" : "border-gray-200"
-                } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
+                className={`w-full border ${errors.creditCard ? "border-red-500" : "border-gray-200"
+                  } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
                 value={formData.creditCard}
                 onChange={handleCreditCardChange}
                 aria-invalid={errors.creditCard ? "true" : "false"}
                 maxLength={19}
               />
+              {errors.creditCard && (
+                <p className="mt-1 text-sm text-red-600">{errors.creditCard}</p>
+              )}
+            </div> */}
+            <div>
+              <label
+                htmlFor="creditCard"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Kredietkaart nummer <span className="text-red-600">*</span>
+              </label>
+              <div
+                id="creditCard"
+                ref={cardNumberPlaceholderRef}
+                className={`w-full border ${
+                  errors.creditCard ? "border-red-500" : "border-gray-200"
+                } rounded-lg px-4 py-2.5 focus:outline-none`}
+                style={{ minHeight: "42px" }}
+              ></div>
               {errors.creditCard && (
                 <p className="mt-1 text-sm text-red-600">{errors.creditCard}</p>
               )}
@@ -538,7 +761,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                   <p className="mt-1 text-sm text-red-600">{errors.expiry}</p>
                 )}
               </div>
-              <div>
+              {/* <div>
                 <label
                   htmlFor="cvc"
                   className="block text-sm font-medium text-gray-700 mb-1"
@@ -548,17 +771,36 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                 <input
                   type="text"
                   id="cvc"
+                  ref={cvvPlaceholderRef}
                   name="cvc"
                   required
                   placeholder="3 of 4 cijfers"
-                  className={`w-full border ${
-                    errors.cvc ? "border-red-500" : "border-gray-200"
-                  } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
+                  className={`w-full border ${errors.cvc ? "border-red-500" : "border-gray-200"
+                    } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
                   value={formData.cvc}
                   onChange={handleChange}
                   aria-invalid={errors.cvc ? "true" : "false"}
                   maxLength={4}
                 />
+                {errors.cvc && (
+                  <p className="mt-1 text-sm text-red-600">{errors.cvc}</p>
+                )}
+              </div> */}
+              <div>
+                <label
+                  htmlFor="cvc"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  CVC/CVV <span className="text-red-600">*</span>
+                </label>
+                <div
+                  id="cvc"
+                  ref={cvvPlaceholderRef}
+                  className={`w-full border ${
+                    errors.cvc ? "border-red-500" : "border-gray-200"
+                  } rounded-lg px-4 py-2.5 focus:outline-none`}
+                  style={{ minHeight: "42px" }}
+                ></div>
                 {errors.cvc && (
                   <p className="mt-1 text-sm text-red-600">{errors.cvc}</p>
                 )}
