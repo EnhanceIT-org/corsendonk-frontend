@@ -3,6 +3,7 @@
 
 
 //DONE
+
 export const ageCategoryMapping: Record<
   string,
   { adult: string; child: string }
@@ -13,15 +14,17 @@ export const ageCategoryMapping: Record<
       },
       hotel2: {
         adult: "30a5e937-e0ec-4888-946a-ae4a00d4dad6", // Adults (No age limit)
-        child: "25ce1bd7-d5e7-4e5f-a617-af5500bf631c", // Child 6-12 years
+        child: "30a5e937-e0ec-4888-946a-ae4a00d4dad6", // Child 6-12 years not found in response so same as adult for now
       },
       hotel3: {
         adult: "e3bc5a6c-366e-4fd8-9273-ade400cf5657", // Adults (No age limit)
-        child: "1707052e-2fbc-443d-a9a7-af6600bdc199", // Child 6-12 years
+        child: "e3bc5a6c-366e-4fd8-9273-ade400cf5657", // Child 6-12 years not found in response so same as adult for now
       },
 };
 
-//DONE
+//these are the acutal rate id's we need
+// pricing lijkt te kloppen voor breakfast rates, maar switchen naar halfboard verandert de prijs niet wat nie klopt
+
 export const BoardMapping: any = {
     hotel1: {
       walking: {
@@ -74,7 +77,7 @@ export const BoardMapping: any = {
           breakfast: "019b1226-6a66-446a-aab2-b2b80092e066", // Walking package Breakfast 3D
         },
         "4D": {
-          halfboard: "629f0a44-7a26-41cb-8561-b29200b86f94", // Walking package Half Board 4D
+          halfboard: "629f0a44-7a26-41cb-8561-b29200b86f94", // Walking package Half Board 4D not found but correct
           breakfast: "151fe402-8ac3-4c0b-a85d-b29200b95fee", // Walking package Breakfast 4D
         },
       },
@@ -84,11 +87,17 @@ export const BoardMapping: any = {
           breakfast: "d2235280-7807-4a75-82b1-b2b80091bf3c", // Cycling package Breakfast 3D
         },
         "4D": {
-          halfboard: "07a69e53-df3a-420b-b0a8-b29200b38d28", // Cycling package Half Board 4D
+          halfboard: "07a69e53-df3a-420b-b0a8-b29200b38d28", // Cycling package Half Board 4D not found but correct
           breakfast: "17c0be28-0560-4df2-97d1-b29200b8f8d3", // Cycling package Breakfast 4D
         },
       },
     },
+  };
+
+  export const HOTEL_NAME_MAPPING: { [key: string]: string } = {
+    hotel1: "Priorij",
+    hotel2: "Hooge Heyde",
+    hotel3: "Turnova",
   };
 
 
@@ -98,7 +107,7 @@ export const BoardMapping: any = {
  * You can add or rename as needed.
  */
 
-//TO DO
+//TO DO probleem hier is dat private products niet in getconfig voorkomen, waar onze code in zoekt
 export const PRODUCT_NAMES = {
   // Board types
   breakfast: "Breakfast (Package)",
@@ -115,25 +124,25 @@ export const PRODUCT_NAMES = {
  * This is used in computeOptionalProductsMapping or anywhere we push product IDs.
  */
 
-//TO DO
+//TO DO, voorlopig openbaar product id genomen
 export const OPTIONAL_PRODUCT_IDS: Record<
   string,
   { hotel1: string; hotel2: string; hotel3: string }
 > = {
   lunch: {
-    hotel1: "d78fcc90-f92a-4547-aba2-b27c0143c1ad",
-    hotel2: "bf9c20d3-10d1-4e96-b42b-b27c0144c79f",
-    hotel3: "96c6bc09-6ebd-4a67-9924-b27c0145acf1",
+    hotel1: "4cebf34e-a051-44c5-a7f1-adf300979c5f", //3 course dinner for now
+    hotel2: "5d99485f-3079-4152-b3fd-ae5b00f4bb4c", //3 course dinner for now
+    hotel3: "e0de7f10-9bc1-4dc5-b1e0-aaa700e8eb9f", // Early check-in for now
   },
   bicycleRent: {
-    hotel1: "59b38a23-15a4-461d-bea6-b27c0143f0e9",
-    hotel2: "ecc8e7d4-2a49-4326-a3b1-b27c0144f4bf",
-    hotel3: "177ea362-600e-436b-b909-b27c01458da2",
+    hotel1: "4cebf34e-a051-44c5-a7f1-adf300979c5f", //3 course dinner for now
+    hotel2: "5d99485f-3079-4152-b3fd-ae5b00f4bb4c", //3 course dinner for now
+    hotel3: "e0de7f10-9bc1-4dc5-b1e0-aaa700e8eb9f", // Early check-in for now
   },
   bicycleTransport: {
-    hotel1: "3dc76cb4-d72f-46b5-8cff-b27c014415ca",
-    hotel2: "e1365138-e07e-4e5b-9222-b27c0145279f",
-    hotel3: "91038565-d3dc-448d-9a04-b27c014559a2",
+    hotel1: "4cebf34e-a051-44c5-a7f1-adf300979c5f", //3 course dinner for now
+    hotel2: "5d99485f-3079-4152-b3fd-ae5b00f4bb4c", //3 course dinner for now
+    hotel3: "e0de7f10-9bc1-4dc5-b1e0-aaa700e8eb9f", // Early check-in for now
   },
   // Add more as needed...
 };

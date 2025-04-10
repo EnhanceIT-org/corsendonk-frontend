@@ -102,6 +102,12 @@ export const PRODUCT_NAMES = {
   bicycleTransport: "Bicycle transport cost",
 };
 
+export const HOTEL_NAME_MAPPING: { [key: string]: string } = {
+  hotel1: "Priorij",
+  hotel2: "Hooge Heyde",
+  hotel3: "Turnova",
+};
+
 /**
  * Centralized IDs (if each product has a unique ID per hotel).
  * This is used in computeOptionalProductsMapping or anywhere we push product IDs.

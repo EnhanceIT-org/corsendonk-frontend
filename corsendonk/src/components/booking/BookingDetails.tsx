@@ -3,7 +3,7 @@ import React from "react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
-import { ageCategoryMapping, BoardMapping } from "@/mappings/mappings";
+import { ageCategoryMapping, BoardMapping, HOTEL_NAME_MAPPING} from "@/mappings/mappings";
 
 function getPriceForSingleRoom(
   nightlyPricing: any,
@@ -114,6 +114,10 @@ interface BookingDetailsProps {
   onShowRoomDetail: (room: any) => void;
 }
 
+function getHotelDisplayName(hotelKey: string): string {
+  return HOTEL_NAME_MAPPING[hotelKey] || hotelKey; // Use mapping, fallback to key if not found
+}
+
 export function BookingDetails({
   bookingData,
   onShowRoomDetail,
@@ -133,7 +137,7 @@ export function BookingDetails({
                   {formatDutchDate(reservation.date)}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  {capitalizeFirstLetter(reservation.hotel)}
+                  {getHotelDisplayName(reservation.hotel)}
                 </p>
               </div>
               <div className="flex items-center gap-2">

@@ -2,27 +2,40 @@
 import * as devMappings from './mappings.dev';
 import * as prodMappings from './mappings.prod';
 
-// Read the specific mapping variable, default to 'development' if not set
-// Vite automatically exposes vars prefixed with VITE_
 const mappingEnv = import.meta.env.VITE_MAPPING_ENV || 'development';
 
-console.log(`Using mappings for environment: ${mappingEnv}`); // Add for debugging
+// Keep this log - confirms Vite is reading the env var at build time
+console.log(`[mappings.ts] Using mappings for environment: ${mappingEnv}`);
 
 const useProductionMappings = mappingEnv === 'production';
 
 // --- Conditional exports ---
-export const ageCategoryMapping = useProductionMappings
-  ? prodMappings.ageCategoryMapping
-  : devMappings.ageCategoryMapping;
 
-export const BoardMapping = useProductionMappings
-  ? prodMappings.BoardMapping
-  : devMappings.BoardMapping;
+let ageCategoryMappingExport, BoardMappingExport, PRODUCT_NAMES_EXPORT, OPTIONAL_PRODUCT_IDS_EXPORT, HOTEL_NAME_MAPPING_EXPORT;
 
-export const PRODUCT_NAMES = useProductionMappings
-  ? prodMappings.PRODUCT_NAMES
-  : devMappings.PRODUCT_NAMES;
+if (useProductionMappings) {
+  console.log('[mappings.ts] Exporting PRODUCTION mappings'); // <-- ADD THIS
+  ageCategoryMappingExport = prodMappings.ageCategoryMapping;
+  BoardMappingExport = prodMappings.BoardMapping;
+  PRODUCT_NAMES_EXPORT = prodMappings.PRODUCT_NAMES;
+  OPTIONAL_PRODUCT_IDS_EXPORT = prodMappings.OPTIONAL_PRODUCT_IDS;
+  HOTEL_NAME_MAPPING_EXPORT = prodMappings.HOTEL_NAME_MAPPING;
+} else {
+  console.log('[mappings.ts] Exporting DEVELOPMENT mappings'); // <-- ADD THIS
+  ageCategoryMappingExport = devMappings.ageCategoryMapping;
+  BoardMappingExport = devMappings.BoardMapping;
+  PRODUCT_NAMES_EXPORT = devMappings.PRODUCT_NAMES;
+  OPTIONAL_PRODUCT_IDS_EXPORT = devMappings.OPTIONAL_PRODUCT_IDS;
+  HOTEL_NAME_MAPPING_EXPORT = devMappings.HOTEL_NAME_MAPPING;
+}
 
-export const OPTIONAL_PRODUCT_IDS = useProductionMappings
-  ? prodMappings.OPTIONAL_PRODUCT_IDS
-  : devMappings.OPTIONAL_PRODUCT_IDS;
+export const ageCategoryMapping = ageCategoryMappingExport;
+export const BoardMapping = BoardMappingExport;
+export const PRODUCT_NAMES = PRODUCT_NAMES_EXPORT;
+export const OPTIONAL_PRODUCT_IDS = OPTIONAL_PRODUCT_IDS_EXPORT;
+export const HOTEL_NAME_MAPPING = HOTEL_NAME_MAPPING_EXPORT;
+
+// ADD Log the actual exported objects (optional, but helpful)
+console.log('[mappings.ts] Exported BoardMapping:', JSON.stringify(BoardMapping, null, 2));
+console.log('[mappings.ts] Exported PRODUCT_NAMES:', JSON.stringify(PRODUCT_NAMES, null, 2));
+console.log('[mappings.ts] Exported ageCategoryMapping:', JSON.stringify(ageCategoryMapping, null, 2));
