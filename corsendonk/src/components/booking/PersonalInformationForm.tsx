@@ -169,15 +169,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     }));
   };
 
-  // const handleCreditCardChange = (e) => {
-  //   const value = e.target.value.replace(/\s/g, "");
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     creditCard: value,
-  //   }));
-  //   clearError("creditCard");
-  // };
-
   const handleExpiryChange = (e) => {
     let value = e.target.value;
 
@@ -259,66 +250,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     setErrors(newErrors);
     return isValid;
   };
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   if (secureFieldsRef.current) {
-  //     const [month, year] = formData.expiry.split("/").map(Number);
-  //     secureFieldsRef.current.submit({
-  //       expm: parseInt(month.toString(), 10),
-  //       expy: parseInt('20' + year, 10),
-  //       usage: "SIMPLE"
-  //     });
-  //   }
-
-  //   if (!validateForm()) {
-  //     setErrors((prev) => ({
-  //       ...prev,
-  //       general: "Er zijn fouten in het formulier. Controleer alle velden.",
-  //     }));
-  //     return;
-  //   }
-
-  //   setIsSubmitting(true);
-
-  //   try {
-  //     const response = await fetch(
-  //       `${import.meta.env.VITE_API_URL}/reservations/book/`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify({
-  //           ...bookingData,
-  //           travelMode,
-  //           personalInformation: formData,
-  //         }),
-  //       },
-  //     );
-
-  //     if (response.ok) {
-  //       setSubmissionSuccess(true);
-  //       console.log("Booking successful!");
-  //     } else {
-  //       const errorData = await response.json();
-  //       setErrors((prev) => ({
-  //         ...prev,
-  //         general:
-  //           errorData.message || "Er is een fout opgetreden bij het boeken.",
-  //       }));
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     setErrors((prev) => ({
-  //       ...prev,
-  //       general: "Er is een fout opgetreden. Probeer het later opnieuw.",
-  //     }));
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
 
   const submitFormData = async (paymentTransactionId) => {
     try {
@@ -689,32 +620,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                 </p>
               )}
             </div>
-
-            {/* <div>
-              <label
-                htmlFor="creditCard"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Kredietkaart nummer <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="text"
-                id="creditCard"
-                ref={cardNumberPlaceholderRef}
-                name="creditCard"
-                required
-                placeholder="XXXX XXXX XXXX XXXX"
-                className={`w-full border ${errors.creditCard ? "border-red-500" : "border-gray-200"
-                  } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
-                value={formData.creditCard}
-                onChange={handleCreditCardChange}
-                aria-invalid={errors.creditCard ? "true" : "false"}
-                maxLength={19}
-              />
-              {errors.creditCard && (
-                <p className="mt-1 text-sm text-red-600">{errors.creditCard}</p>
-              )}
-            </div> */}
             <div>
               <label
                 htmlFor="creditCard"
@@ -728,7 +633,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                 className={`w-full border ${
                   errors.creditCard ? "border-red-500" : "border-gray-200"
                 } rounded-lg px-4 py-2.5 focus:outline-none`}
-                style={{ minHeight: "42px" }}
+                style={{ height: "42px" }}
               ></div>
               {errors.creditCard && (
                 <p className="mt-1 text-sm text-red-600">{errors.creditCard}</p>
@@ -761,31 +666,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                   <p className="mt-1 text-sm text-red-600">{errors.expiry}</p>
                 )}
               </div>
-              {/* <div>
-                <label
-                  htmlFor="cvc"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  CVC/CVV <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="cvc"
-                  ref={cvvPlaceholderRef}
-                  name="cvc"
-                  required
-                  placeholder="3 of 4 cijfers"
-                  className={`w-full border ${errors.cvc ? "border-red-500" : "border-gray-200"
-                    } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
-                  value={formData.cvc}
-                  onChange={handleChange}
-                  aria-invalid={errors.cvc ? "true" : "false"}
-                  maxLength={4}
-                />
-                {errors.cvc && (
-                  <p className="mt-1 text-sm text-red-600">{errors.cvc}</p>
-                )}
-              </div> */}
               <div>
                 <label
                   htmlFor="cvc"
@@ -799,7 +679,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                   className={`w-full border ${
                     errors.cvc ? "border-red-500" : "border-gray-200"
                   } rounded-lg px-4 py-2.5 focus:outline-none`}
-                  style={{ minHeight: "42px" }}
+                  style={{ height: "42px" }}
                 ></div>
                 {errors.cvc && (
                   <p className="mt-1 text-sm text-red-600">{errors.cvc}</p>
