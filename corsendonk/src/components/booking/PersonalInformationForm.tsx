@@ -78,6 +78,15 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     ) {
       try {
         const SecureFields = window.SecureFields;
+        if (!SecureFields) {
+          console.error("SecureFields library not loaded");
+          setErrors((prev) => ({
+            ...prev,
+            general:
+              "Betaalsysteem kon niet worden geladen. Vernieuw de pagina en probeer opnieuw.",
+          }));
+          return;
+        }
         secureFieldsRef.current = new SecureFields();
 
         // Style configuration to match your design
@@ -96,9 +105,10 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           },
         };
 
-        //FOr corsendonk this value should be used: 3000013748
+        //FOr corsendonk this value should be used: 3000013748 also url needs to change then without sandbox
         secureFieldsRef.current.initTokenize(
           "1100007006",
+          // "3000013748",
           {
             cardNumber: cardNumberPlaceholderRef.current.id.toString(),
             cvv: cvvPlaceholderRef.current.id.toString(),
@@ -108,13 +118,40 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           },
         );
 
+        secureFieldsRef.current.on("validate", function (event) {
+          // put a red border around the fields if they are not valid
+          secureFieldsRef.current.setStyle(
+            "cardNumber.invalid",
+            "border: 1px solid #f00",
+          );
+          secureFieldsRef.current.setStyle(
+            "cvv.invalid",
+            "border: 1px solid #f00",
+          );
+        });
+
+        secureFieldsRef.current.on("ready", function () {
+          // setting a placeholder for the cardNumber field
+          secureFieldsRef.current.setPlaceholder("cardNumber", "Kaartnummer");
+
+          // setting a placeholder for the CVV field
+          secureFieldsRef.current.setPlaceholder("cvv", "CVV/CVC");
+        });
+
         // Handle success event
         secureFieldsRef.current.on("success", (data) => {
+          console.log("Datatrans success:", data);
           if (data.transactionId) {
             console.log("Transaction ID:", data.transactionId);
             setTransactionId(data.transactionId);
             // Continue with form submission after getting transaction ID
             submitFormData(data.transactionId);
+          } else {
+            setErrors((prev) => ({
+              ...prev,
+              general:
+                "Er is een fout opgetreden bij het verwerken van de kredietkaart.",
+            }));
           }
         });
 
@@ -253,6 +290,12 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
   const submitFormData = async (paymentTransactionId) => {
     try {
+      const expiryParts = formData.expiry.split("/");
+      const formattedExpiry = `20${expiryParts[1]}-${expiryParts[0].padStart(
+        2,
+        "0",
+      )}`;
+      console.log(paymentTransactionId);
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/reservations/book/`,
         {
@@ -267,6 +310,8 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             paymentInfo: {
               method: formData.paymentMethod,
               transactionId: paymentTransactionId,
+              expiry: formattedExpiry,
+              holderName: formData.creditCardName,
             },
           }),
         },
@@ -297,6 +342,8 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log("Form data before validation:", formData);
+
     if (!validateForm()) {
       setErrors((prev) => ({
         ...prev,
@@ -307,17 +354,84 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
     setIsSubmitting(true);
 
+    console.log("sumbitting");
+
     if (formData.paymentMethod === "kredietkaart") {
       // For credit card payment, process through Datatrans
       if (secureFieldsRef.current) {
         const [month, year] = formData.expiry.split("/").map(Number);
-
         try {
-          secureFieldsRef.current.submit({
+          console.log("Submitting secure fields with data:", {
             expm: month,
-            expy: 2000 + year,
+            expy: year,
             usage: "SIMPLE",
           });
+          try {
+            console.log("SecureFields instance:", secureFieldsRef.current);
+            console.log(
+              "Card number element:",
+              cardNumberPlaceholderRef.current,
+            );
+            console.log("CVV element:", cvvPlaceholderRef.current);
+            console.log("Form validation status:", validateForm());
+            const submissionData = {
+              expm: month.toString().padStart(2, "0"), // Ensure two digits with leading zero if needed
+              expy: year.toString().padStart(2, "0"), // Ensure consistent format
+              usage: "SIMPLE",
+            };
+
+            console.log("Submitting secure fields with data:", submissionData);
+            setTimeout(() => {
+              console.log("Testing validation...");
+              try {
+                const validationResult = secureFieldsRef.current.validate();
+                console.log("Validation result:", validationResult);
+              } catch (error) {
+                console.error("Validation error:", error);
+              }
+            }, 1000);
+
+            setTimeout(() => {
+              try {
+                secureFieldsRef.current.submit(
+                  submissionData,
+                  function (error, result) {
+                    // This callback function will help debug issues
+                    if (error) {
+                      console.error("Datatrans callback error:", error);
+                      setErrors((prev) => ({
+                        ...prev,
+                        general: `Betaalfout: ${
+                          error.message ||
+                          "Onbekende fout bij de verwerking van de betaling."
+                        }`,
+                      }));
+                      setIsSubmitting(false);
+                    } else {
+                      console.log("Datatrans callback success:", result);
+                      // The success handler should take care of the rest
+                    }
+                  },
+                );
+              } catch (innerError) {
+                console.error("Error inside submit timeout:", innerError);
+                setErrors((prev) => ({
+                  ...prev,
+                  general:
+                    "Er is een fout opgetreden bij de verwerking van de betaling.",
+                }));
+                setIsSubmitting(false);
+              }
+            }, 100);
+          } catch (error) {
+            console.error("Error submitting secure fields:", error);
+            setErrors((prev) => ({
+              ...prev,
+              general:
+                "Er is een fout opgetreden bij de verwerking van de betaling.",
+            }));
+            setIsSubmitting(false);
+          }
           // The rest will be handled by the success callback
         } catch (error) {
           console.error("Error submitting secure fields:", error);
@@ -748,6 +862,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           className={`w-full ${
             isSubmitting ? "bg-gray-400" : "bg-[#2C4A3C] hover:bg-[#2C4A3C]/90"
           } text-white px-8 py-3 rounded-lg font-medium transition-colors mt-6 flex justify-center items-center`}
+          onClick={handleSubmit}
         >
           {isSubmitting ? "Bezig met verwerken..." : "Bevestig Reservatie"}
         </button>
