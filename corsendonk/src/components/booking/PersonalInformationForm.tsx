@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import validator from "validator";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -18,10 +18,8 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     lastName: "",
     phone: "",
     nationality: "België",
-    paymentMethod: "kredietkaart", // New field for payment method
+    paymentMethod: "kredietkaart",
     creditCardName: "",
-    creditCard: "",
-    cvc: "",
     expiry: "",
     notes: "",
   });
@@ -41,6 +39,151 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [transactionId, setTransactionId] = useState(null);
+
+  // Datatrans secure fields
+  const [isReady, setIsReady] = useState(false);
+  const secureFieldsRef = useRef(null);
+  const cardNumberPlaceholderRef = useRef(null);
+  const cvvPlaceholderRef = useRef(null);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src =
+      "https://pay.sandbox.datatrans.com/upp/payment/js/secure-fields-2.0.0.js";
+    script.async = true;
+
+    script.onload = () => {
+      setIsReady(true);
+    };
+
+    document.body.appendChild(script);
+
+    // Cleanup function
+    return () => {
+      if (script.parentNode) {
+        document.body.removeChild(script);
+      }
+      if (secureFieldsRef.current) {
+        secureFieldsRef.current.destroy();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      isReady &&
+      cardNumberPlaceholderRef.current &&
+      cvvPlaceholderRef.current
+    ) {
+      try {
+        const SecureFields = window.SecureFields;
+        if (!SecureFields) {
+          console.error("SecureFields library not loaded");
+          setErrors((prev) => ({
+            ...prev,
+            general:
+              "Betaalsysteem kon niet worden geladen. Vernieuw de pagina en probeer opnieuw.",
+          }));
+          return;
+        }
+        secureFieldsRef.current = new SecureFields();
+
+        // Style configuration to match your design
+        const styles = {
+          base: {
+            fontSize: "16px",
+            color: "#333",
+            fontFamily: "system-ui, -apple-system, sans-serif",
+            padding: "8px 0",
+          },
+          ":focus": {
+            outline: "none",
+          },
+          "::placeholder": {
+            color: "#9ca3af",
+          },
+        };
+
+        //FOr corsendonk this value should be used: 3000013748 also url needs to change then without sandbox
+        secureFieldsRef.current.initTokenize(
+          "1100007006",
+          // "3000013748",
+          {
+            cardNumber: cardNumberPlaceholderRef.current.id.toString(),
+            cvv: cvvPlaceholderRef.current.id.toString(),
+          },
+          {
+            styles: styles,
+          },
+        );
+
+        if (secureFieldsRef.current) {
+          secureFieldsRef.current.on("validate", function () {
+            // Apply a red border around invalid fields
+            secureFieldsRef.current.setStyle(
+              "cardNumber.invalid",
+              "border: 1px solid #f00",
+            );
+            secureFieldsRef.current.setStyle(
+              "cvv.invalid",
+              "border: 1px solid #f00",
+            );
+            setIsSubmitting(false);
+          });
+        }
+
+        secureFieldsRef.current.on("ready", function () {
+          // setting a placeholder for the cardNumber field
+          secureFieldsRef.current.setPlaceholder("cardNumber", "Kaartnummer");
+
+          // setting a placeholder for the CVV field
+          secureFieldsRef.current.setPlaceholder("cvv", "CVV/CVC");
+        });
+
+        // Handle success event
+        secureFieldsRef.current.on("success", (data) => {
+          if (data.transactionId) {
+            setTransactionId(data.transactionId);
+            // Continue with form submission after getting transaction ID
+            submitFormData(data.transactionId);
+          } else {
+            setErrors((prev) => ({
+              ...prev,
+              general:
+                "Er is een fout opgetreden bij het verwerken van de kredietkaart.",
+            }));
+          }
+        });
+
+        // Handle error event
+        secureFieldsRef.current.on("error", (error) => {
+          console.error("Datatrans error:", error);
+          const newErrors = { ...errors };
+
+          if (error.field === "cardNumber") {
+            newErrors.creditCard = "Ongeldig kredietkaart nummer";
+          } else if (error.field === "cvv") {
+            newErrors.cvc = "Ongeldige CVC/CVV";
+          } else {
+            newErrors.general = `Betalingsfout: ${error.message}`;
+          }
+
+          setErrors(newErrors);
+          setIsSubmitting(false);
+        });
+      } catch (error) {
+        console.error("Error initializing Datatrans:", error);
+        setErrors((prev) => ({
+          ...prev,
+          general:
+            "Er is een fout opgetreden bij het initialiseren van de betaalmethode.",
+        }));
+      }
+    }
+  }, [isReady]);
+
+  useEffect(() => {}, [secureFieldsRef]);
 
   const clearError = (fieldName) => {
     setErrors((prev) => ({
@@ -64,15 +207,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
       ...prev,
       paymentMethod: method,
     }));
-  };
-
-  const handleCreditCardChange = (e) => {
-    const value = e.target.value.replace(/\s/g, "");
-    setFormData((prev) => ({
-      ...prev,
-      creditCard: value,
-    }));
-    clearError("creditCard");
   };
 
   const handleExpiryChange = (e) => {
@@ -120,13 +254,8 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
     // Only validate credit card fields if kredietkaart payment method is selected
     if (formData.paymentMethod === "kredietkaart") {
-      if (!validator.isCreditCard(formData.creditCard)) {
-        newErrors.creditCard = "Kredietkaart nummer is niet geldig";
-        isValid = false;
-      }
-
-      if (!/^\d{3,4}$/.test(formData.cvc)) {
-        newErrors.cvc = "CVC moet 3 of 4 cijfers bevatten";
+      if (formData.creditCardName.trim().length < 3) {
+        newErrors.creditCardName = "Voer de naam van de kaarthouder in";
         isValid = false;
       }
 
@@ -162,20 +291,13 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     return isValid;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      setErrors((prev) => ({
-        ...prev,
-        general: "Er zijn fouten in het formulier. Controleer alle velden.",
-      }));
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  const submitFormData = async (paymentTransactionId) => {
     try {
+      const expiryParts = formData.expiry.split("/");
+      const formattedExpiry = `20${expiryParts[1]}-${expiryParts[0].padStart(
+        2,
+        "0",
+      )}`;
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/reservations/book/`,
         {
@@ -187,6 +309,12 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             ...bookingData,
             travelMode,
             personalInformation: formData,
+            paymentInfo: {
+              method: formData.paymentMethod,
+              transactionId: paymentTransactionId,
+              expiry: formattedExpiry,
+              holderName: formData.creditCardName,
+            },
           }),
         },
       );
@@ -209,6 +337,86 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
       }));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      setErrors((prev) => ({
+        ...prev,
+        general: "Er zijn fouten in het formulier. Controleer alle velden.",
+      }));
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    if (formData.paymentMethod === "kredietkaart") {
+      // For credit card payment, process through Datatrans
+      if (secureFieldsRef.current) {
+        const [month, year] = formData.expiry.split("/").map(Number);
+        try {
+          try {
+            const submissionData = {
+              expm: month.toString().padStart(2, "0"), // Ensure two digits with leading zero if needed
+              expy: year.toString().padStart(2, "0"), // Ensure consistent format
+              usage: "SIMPLE",
+            };
+
+            setTimeout(() => {
+              try {
+                const validationResult = secureFieldsRef.current.validate();
+                console.log("Validation result:", validationResult);
+              } catch (error) {
+                console.error("Validation error:", error);
+              }
+            }, 1000);
+
+            setTimeout(() => {
+              try {
+                secureFieldsRef.current.submit(submissionData);
+              } catch (innerError) {
+                console.error("Error inside submit timeout:", innerError);
+                setErrors((prev) => ({
+                  ...prev,
+                  general:
+                    "Er is een fout opgetreden bij de verwerking van de betaling.",
+                }));
+                setIsSubmitting(false);
+              }
+            }, 100);
+          } catch (error) {
+            console.error("Error submitting secure fields:", error);
+            setErrors((prev) => ({
+              ...prev,
+              general:
+                "Er is een fout opgetreden bij de verwerking van de betaling.",
+            }));
+            setIsSubmitting(false);
+          }
+          // The rest will be handled by the success callback
+        } catch (error) {
+          console.error("Error submitting secure fields:", error);
+          setErrors((prev) => ({
+            ...prev,
+            general:
+              "Er is een fout opgetreden bij de verwerking van de betaling.",
+          }));
+          setIsSubmitting(false);
+        }
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          general:
+            "Betaalsysteem is niet geïnitialiseerd. Vernieuw de pagina en probeer opnieuw.",
+        }));
+        setIsSubmitting(false);
+      }
+    } else {
+      // For bank transfer, submit directly
+      submitFormData(null);
     }
   };
 
@@ -240,15 +448,35 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   );
 
   // Combine common ones at the top + sorted remaining countries
-  const nationalities = [...commonNationalities, ...remainingCountries.sort()];
+  const sortedRemainingCountries = remainingCountries
+    .slice()
+    .sort((a, b) => a.localeCompare(b));
+  const nationalities = [...commonNationalities, ...sortedRemainingCountries];
 
   if (submissionSuccess) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+        <div className="mb-4 flex justify-center items-center">
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="green"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.59L19 8L10 17Z" />
+          </svg>
+        </div>
         <h2 className="text-xl font-semibold text-green-600 mb-4">
           Reservering succesvol!
         </h2>
-        <p className="mb-4">Uw boeking is bevestigd.</p>
+        <p className="mb-4 text-lg">
+          <strong>Bedankt voor uw reservering!</strong>
+        </p>
+        <p className="mb-4">Uw boeking is succesvol bevestigd.</p>
+        <p className="mb-4">
+          U ontvangt spoedig een e-mail met alle nodige informatie.
+        </p>
 
         {/* Flex container for buttons */}
         <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -265,7 +493,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             }
             className="w-full sm:w-auto bg-[#2C4A3C] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            Terug naar corsendonk homepagina
+            Terug naar Corsendonk homepagina
           </button>
         </div>
       </div>
@@ -405,7 +633,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             <p className="mt-1 text-sm text-red-600">{errors.nationality}</p>
           )}
         </div>
-
         {/* Payment Method Toggle */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -440,6 +667,12 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         {/* Conditional rendering for payment method details */}
         {formData.paymentMethod === "kredietkaart" ? (
           <>
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <p className="text-sm text-gray-700">
+                De kredietkaart wordt enkel gebruikt als garantie of bij
+                laattijdige annulering of niet opdagen.
+              </p>
+            </div>
             <div>
               <label
                 htmlFor="creditCardName"
@@ -465,7 +698,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                 </p>
               )}
             </div>
-
             <div>
               <label
                 htmlFor="creditCard"
@@ -473,20 +705,14 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               >
                 Kredietkaart nummer <span className="text-red-600">*</span>
               </label>
-              <input
-                type="text"
+              <div
                 id="creditCard"
-                name="creditCard"
-                required
-                placeholder="XXXX XXXX XXXX XXXX"
+                ref={cardNumberPlaceholderRef}
                 className={`w-full border ${
                   errors.creditCard ? "border-red-500" : "border-gray-200"
-                } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
-                value={formData.creditCard}
-                onChange={handleCreditCardChange}
-                aria-invalid={errors.creditCard ? "true" : "false"}
-                maxLength={19}
-              />
+                } rounded-lg px-4 py-2.5 focus:outline-none`}
+                style={{ height: "42px" }}
+              ></div>
               {errors.creditCard && (
                 <p className="mt-1 text-sm text-red-600">{errors.creditCard}</p>
               )}
@@ -525,20 +751,14 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                 >
                   CVC/CVV <span className="text-red-600">*</span>
                 </label>
-                <input
-                  type="text"
+                <div
                   id="cvc"
-                  name="cvc"
-                  required
-                  placeholder="3 of 4 cijfers"
+                  ref={cvvPlaceholderRef}
                   className={`w-full border ${
                     errors.cvc ? "border-red-500" : "border-gray-200"
-                  } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
-                  value={formData.cvc}
-                  onChange={handleChange}
-                  aria-invalid={errors.cvc ? "true" : "false"}
-                  maxLength={4}
-                />
+                  } rounded-lg px-4 py-2.5 focus:outline-none`}
+                  style={{ height: "42px" }}
+                ></div>
                 {errors.cvc && (
                   <p className="mt-1 text-sm text-red-600">{errors.cvc}</p>
                 )}
@@ -606,6 +826,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           className={`w-full ${
             isSubmitting ? "bg-gray-400" : "bg-[#2C4A3C] hover:bg-[#2C4A3C]/90"
           } text-white px-8 py-3 rounded-lg font-medium transition-colors mt-6 flex justify-center items-center`}
+          onClick={handleSubmit}
         >
           {isSubmitting ? "Bezig met verwerken..." : "Bevestig Reservatie"}
         </button>
