@@ -171,14 +171,28 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                   <Minus className="w-4 h-4" />
                 </button>
                 <span className="w-16 text-center">{formData.rooms}</span>
-                <button
-                  onClick={() => handleIncrement("rooms")}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+                {formData.rooms < formData.adults + formData.children && (
+                  <button
+                    onClick={() => {
+                      if (
+                        formData.rooms <
+                        formData.adults + formData.children
+                      ) {
+                        handleIncrement("rooms");
+                      }
+                    }}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
+            {formData.rooms === formData.adults + formData.children && (
+              <span className="text-sm text-gray-500">
+                Maximaal aantal kamers
+              </span>
+            )}
           </div>
           <div>
             <h2 className="text-lg font-semibold mb-4">
