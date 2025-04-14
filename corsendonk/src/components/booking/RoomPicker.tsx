@@ -1195,7 +1195,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 onChange={(e) => {
                                   const newArrangement = JSON.parse(
                                     JSON.stringify(selectedArrangement),
-                                  ); // Deep copy
+                                  );
                                   const option = night.room_options.find(
                                     (r: any) =>
                                       r.category_name === e.target.value,
@@ -1214,11 +1214,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                       category_name: option.category_name,
                                       category_id: option.category_id,
                                       bed_capacity: option.bed_capacity,
-                                      // TODO: Potentially reset/revalidate occupant counts if capacity changes significantly
                                     };
                                     setSelectedArrangement(newArrangement);
-                                    // Optional: Reset distribution flag if changing room type requires redistribution
-                                    // setDefaultDistributed(false);
                                   } else {
                                     console.error(
                                       "[RoomPicker Render] Could not find selected room option or night detail.",
@@ -1263,18 +1260,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     if (!foundEntry?.pricing) {
                                       return "Prijs niet beschikbaar";
                                     }
-                                    // Use the component's getPriceForSingleRoom
                                     const price = getPriceForSingleRoom(
                                       foundEntry.pricing,
                                       night.hotel,
-                                      night.board_type, // Use night's board type for rate lookup
+                                      night.board_type,
                                       travelMode,
                                       room,
                                       room.occupant_countChildren || 0,
                                       room.occupant_countAdults || 0,
                                       arrangementLength,
                                     );
-                                    // Price calculation logs are inside getPriceForSingleRoom
                                     return price > 0
                                       ? `€${price}`
                                       : "Prijs niet beschikbaar";
@@ -1282,10 +1277,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 </span>
                               </div>
                             </div>
-                            {/* Only show guest adjustments if more than 1 room is selected */}
                             {rooms > 1 && (
                               <div className="mt-2 space-y-2">
-                                {/* Only show adult adjustment if there are adults */}
                                 {adults > 0 && (
                                   <div className="flex items-center gap-2">
                                     <span className="w-24">Volwassenen:</span>
@@ -1317,7 +1310,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                         );
                                       }}
                                       className="p-1 hover:bg-gray-100 rounded"
-                                      // Disable if count is 0
                                       disabled={
                                         (room.occupant_countAdults || 0) === 0
                                       }
@@ -1329,12 +1321,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     </span>
                                     <button
                                       onClick={() => {
-                                        // ADDED LOG
-                                        console.log(
-                                          `[RoomPicker Render] Incrementing adults for Room ${
-                                            index + 1
-                                          }, Night ${nightIdx}`,
-                                        );
                                         setSelectedArrangement(
                                           (currentArrangement) => {
                                             if (!currentArrangement)
@@ -1358,11 +1344,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                               const currentChildrenInRoom =
                                                 targetRoom.occupant_countChildren ||
                                                 0;
-                                              // Use the accurate sum from the helper function for the night
                                               const totalAdultsAssignedThisNight =
                                                 sumNightAdults(targetNight);
 
-                                              // Check room capacity AND total adult limit for the whole booking
                                               if (
                                                 currentAdultsInRoom +
                                                   currentChildrenInRoom +
@@ -1373,16 +1357,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                               ) {
                                                 targetRoom.occupant_countAdults =
                                                   currentAdultsInRoom + 1;
-                                              } else {
-                                                // ADDED LOG
-                                                console.warn(
-                                                  `[RoomPicker Render] Cannot increment adults. Room Cap: ${
-                                                    targetRoom.bed_capacity
-                                                  }, Current Occ: ${
-                                                    currentAdultsInRoom +
-                                                    currentChildrenInRoom
-                                                  }, Total Adults Assigned Night: ${totalAdultsAssignedThisNight}, Max Adults Booking: ${adults}`,
-                                                );
                                               }
                                             }
                                             return newArrangement;
@@ -1390,7 +1364,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                         );
                                       }}
                                       className="p-1 hover:bg-gray-100 rounded"
-                                      // Disable if room is full or all adults for the booking are assigned to this night
                                       disabled={
                                         (room.occupant_countAdults || 0) +
                                           (room.occupant_countChildren || 0) >=
@@ -1402,7 +1375,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     </button>
                                   </div>
                                 )}
-                                {/* Only show child adjustment if there are children */}
                                 {children > 0 && (
                                   <div className="flex items-center gap-2">
                                     <span className="w-24">Kinderen:</span>
@@ -1434,7 +1406,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                         );
                                       }}
                                       className="p-1 hover:bg-gray-100 rounded"
-                                      // Disable if count is 0
                                       disabled={
                                         (room.occupant_countChildren || 0) === 0
                                       }
@@ -1469,11 +1440,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                               const currentChildrenInRoom =
                                                 targetRoom.occupant_countChildren ||
                                                 0;
-                                              // Use the accurate sum from the helper function for the night
                                               const totalChildrenAssignedThisNight =
                                                 sumNightChildren(targetNight);
 
-                                              // Check room capacity AND total children limit for the whole booking
                                               if (
                                                 currentAdultsInRoom +
                                                   currentChildrenInRoom +
@@ -1484,16 +1453,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                               ) {
                                                 targetRoom.occupant_countChildren =
                                                   currentChildrenInRoom + 1;
-                                              } else {
-                                                // ADDED LOG
-                                                console.warn(
-                                                  `[RoomPicker Render] Cannot increment children. Room Cap: ${
-                                                    targetRoom.bed_capacity
-                                                  }, Current Occ: ${
-                                                    currentAdultsInRoom +
-                                                    currentChildrenInRoom
-                                                  }, Total Children Assigned Night: ${totalChildrenAssignedThisNight}, Max Children Booking: ${children}`,
-                                                );
                                               }
                                             }
                                             return newArrangement;
@@ -1501,7 +1460,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                         );
                                       }}
                                       className="p-1 hover:bg-gray-100 rounded"
-                                      // Disable if room is full or all children for the booking are assigned to this night
                                       disabled={
                                         (room.occupant_countAdults || 0) +
                                           (room.occupant_countChildren || 0) >=
@@ -1516,7 +1474,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               </div>
                             )}
                           </div>
-                          {/* Show warning only if multiple rooms AND not all guests are assigned */}
                           {rooms > 1 &&
                             (currentAssignedAdults < adults ||
                               currentAssignedChildren < children) && (
@@ -1533,6 +1490,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     kind(eren) niet toegewezen!
                                   </p>
                                 )}
+                              </div>
+                            )}
+                          {rooms > 1 &&
+                            room.occupant_countAdults === 0 &&
+                            room.occupant_countChildren === 0 && (
+                              <div className="mt-2 text-sm text-red-600">
+                                Geen gasten toegewezen aan deze kamer!
                               </div>
                             )}
                         </div>
