@@ -30,6 +30,7 @@ import {
 // --- End mapping imports ---
 import { PricingSummary } from "./PricingSummary";
 import { Breadcrumb } from "./Breadcrumb";
+import { log } from "console";
 
 interface selectedArrangementInterface {
   night_details: {
@@ -80,7 +81,6 @@ interface RoomPickerProps {
   onBack: () => void;
 }
 
-
 // --- START: Define sumNightAdults and sumNightChildren ---
 const sumNightAdults = (night: any) =>
   night.chosen_rooms.reduce(
@@ -106,17 +106,12 @@ function getNightlyRateId(
   travelMode: string,
   arrangementLength: number,
 ) {
-  // ADDED LOG
-  console.log(`[getNightlyRateId] Args: hotel=${hotel}, boardType=${boardType}, travelMode=${travelMode}, length=${arrangementLength}`);
-
   const board = boardType === "HB" ? "halfboard" : "breakfast";
   let mode = travelMode;
   if (mode !== "walking" && mode !== "cycling") mode = "walking";
   const lengthKey = arrangementLength === 3 ? "3D" : "4D";
   const rateId = BoardMapping[hotel]?.[mode]?.[lengthKey]?.[board] || "";
 
-  // ADDED LOG
-  console.log(`[getNightlyRateId] Result: Mapping Key Path: [${hotel}][${mode}][${lengthKey}][${board}], Found RateId: "${rateId}"`);
   return rateId;
 }
 
@@ -126,9 +121,6 @@ function getProductChargingMethodFn(
   productName: string,
   config: any,
 ): string | null {
-  // ADDED LOG
-  console.log(`[getProductChargingMethodFn] Args: hotelKey=${hotelKey}, productName="${productName}"`);
-
   // Safeguards
   if (
     !config ||
@@ -138,27 +130,29 @@ function getProductChargingMethodFn(
     config[hotelKey].rawConfig.Configurations.length === 0
   ) {
     // ADDED LOG
-    console.warn(`[getProductChargingMethodFn] Invalid config structure for hotel ${hotelKey}.`);
+    console.warn(
+      `[getProductChargingMethodFn] Invalid config structure for hotel ${hotelKey}.`,
+    );
     return null;
   }
 
   const raw = config[hotelKey].rawConfig;
   const products = raw.Configurations[0].Enterprise?.Products || [];
 
-   // ADDED LOG (Optional: uncomment if needed, can be verbose)
-   // console.log(`[getProductChargingMethodFn] Searching products in hotel ${hotelKey}:`, products.map((p: any) => p.Name?.['en-GB']));
+  // ADDED LOG (Optional: uncomment if needed, can be verbose)
+  // console.log(`[getProductChargingMethodFn] Searching products in hotel ${hotelKey}:`, products.map((p: any) => p.Name?.['en-GB']));
 
   // Find the product by matching its "Name" to productName
   const product = products.find((p: any) => p.Name?.["en-GB"] === productName);
 
   if (!product) {
-     // ADDED LOG
-     console.warn(`[getProductChargingMethodFn] Product "${productName}" not found in hotel ${hotelKey}.`);
-     return null;
+    // ADDED LOG
+    //  console.warn(`[getProductChargingMethodFn] Product "${productName}" not found in hotel ${hotelKey}.`);
+    return null;
   }
 
   // ADDED LOG
-  console.log(`[getProductChargingMethodFn] Found product "${productName}". Charging: ${product.Charging}`);
+  // console.log(`[getProductChargingMethodFn] Found product "${productName}". Charging: ${product.Charging}`);
   return product.Charging || null;
 }
 
@@ -181,19 +175,11 @@ function calculateTotalPrice(
   ) => number,
   pricesPerNight: number[],
 ): number {
-   // ADDED LOG
-   console.log('[calculateTotalPrice] Args:', {
-    nights: arrangement?.night_details?.length,
-    travelMode,
-    guests: { adults, children },
-    rooms,
-    selectedOptionalProducts,
-    pricesPerNight,
-  });
-
   if (!arrangement?.night_details) {
     // ADDED LOG
-    console.warn('[calculateTotalPrice] No night_details in arrangement. Returning 0.');
+    console.warn(
+      "[calculateTotalPrice] No night_details in arrangement. Returning 0.",
+    );
     return 0;
   }
 
@@ -202,15 +188,10 @@ function calculateTotalPrice(
   for (const price of pricesPerNight) {
     total += price;
   }
-  // ADDED LOG
-  console.log(`[calculateTotalPrice] Initial total from pricesPerNight: ${total}`);
 
-  // 2) Build active optional product names lookup
   const activeOptionalProductNames = Object.keys(selectedOptionalProducts)
     .filter((key) => selectedOptionalProducts[key])
     .map((key) => PRODUCT_NAMES[key]); // Use the central mapping
-  // ADDED LOG
-  console.log('[calculateTotalPrice] Active optional product names:', activeOptionalProductNames);
 
   // 3) Keep track for 'Once' and 'PerPerson'
   const processedOnce = new Set<string>();
@@ -220,18 +201,26 @@ function calculateTotalPrice(
   for (const night of arrangement.night_details) {
     const assignedAdults = sumNightAdultsFn(night); // Use the passed function
     const assignedChildren = sumNightChildrenFn(night); // Use the passed function
-    // ADDED LOG
-    console.log(`[calculateTotalPrice] Processing Night: ${night.date} (${night.hotel}), Guests: ${assignedAdults}A, ${assignedChildren}C`);
 
     for (const optProductName of activeOptionalProductNames) {
       // Get price and charging method (these functions should log internally)
-      const productPrice = getProductPriceFn( night.hotel, optProductName, config );
-      const chargingMethod = getProductChargingMethodFn( night.hotel, optProductName, config );
+      const productPrice = getProductPriceFn(
+        night.hotel,
+        optProductName,
+        config,
+      );
+      const chargingMethod = getProductChargingMethodFn(
+        night.hotel,
+        optProductName,
+        config,
+      );
 
       if (!chargingMethod) {
-         // ADDED LOG
-         console.warn(`  - Product "${optProductName}": No charging method found. Skipping.`);
-         continue;
+        // ADDED LOG
+        console.warn(
+          `  - Product "${optProductName}": No charging method found. Skipping.`,
+        );
+        continue;
       }
 
       const hotelProductKey = `${night.hotel}-${optProductName}`;
@@ -244,23 +233,27 @@ function calculateTotalPrice(
             total += addedCost;
             processedOnce.add(hotelProductKey);
             // ADDED LOG
-            console.log(`  - Product "${optProductName}": Added ${addedCost} (Once)`);
+            console.log(
+              `  - Product "${optProductName}": Added ${addedCost} (Once)`,
+            );
           } else {
             // ADDED LOG
-            console.log(`  - Product "${optProductName}": Skipped (Already added Once for this hotel)`);
+            console.log(
+              `  - Product "${optProductName}": Skipped (Already added Once for this hotel)`,
+            );
           }
           break;
 
         case "PerPerson":
-           if (!processedPerPerson.has(hotelProductKey)) {
-             addedCost = productPrice * (assignedAdults + assignedChildren);
-             total += addedCost;
-             processedPerPerson.add(hotelProductKey);
-             // ADDED LOG
-             console.log(`  - Product "${optProductName}": Added ${addedCost} (PerPerson: ${productPrice} * ${assignedAdults + assignedChildren})`);
+          if (!processedPerPerson.has(hotelProductKey)) {
+            addedCost = productPrice * (assignedAdults + assignedChildren);
+            total += addedCost;
+            processedPerPerson.add(hotelProductKey);
           } else {
-              // ADDED LOG
-              console.log(`  - Product "${optProductName}": Skipped (Already added PerPerson for this hotel)`);
+            // ADDED LOG
+            console.log(
+              `  - Product "${optProductName}": Skipped (Already added PerPerson for this hotel)`,
+            );
           }
           break;
 
@@ -268,22 +261,25 @@ function calculateTotalPrice(
           addedCost = productPrice * (assignedAdults + assignedChildren);
           total += addedCost;
           // ADDED LOG
-          console.log(`  - Product "${optProductName}": Added ${addedCost} (PerPersonNight: ${productPrice} * ${assignedAdults + assignedChildren})`);
+          console.log(
+            `  - Product "${optProductName}": Added ${addedCost} (PerPersonNight: ${productPrice} * ${
+              assignedAdults + assignedChildren
+            })`,
+          );
           break;
 
         default:
           // ADDED LOG
-          console.warn(`  - Product "${optProductName}": Unknown charging method "${chargingMethod}". Skipping.`);
+          console.warn(
+            `  - Product "${optProductName}": Unknown charging method "${chargingMethod}". Skipping.`,
+          );
           break;
       }
     }
   }
 
-  // ADDED LOG
-  console.log(`[calculateTotalPrice] Final calculated total: ${total}`);
   return total;
 }
-
 
 // --- Helper function: Distribute Guests ---
 // NOTE: This function mutates the chosenRooms array passed to it.
@@ -296,7 +292,11 @@ function distributeGuestsEvenly(
   if (n === 0) return 0;
 
   // ADDED LOG
-  console.log(`[distributeGuestsEvenly] Distributing ${count} ${isAdult ? 'Adults' : 'Children'} into ${n} rooms`);
+  console.log(
+    `[distributeGuestsEvenly] Distributing ${count} ${
+      isAdult ? "Adults" : "Children"
+    } into ${n} rooms`,
+  );
 
   const base = Math.floor(count / n);
   let remainder = count % n;
@@ -309,7 +309,10 @@ function distributeGuestsEvenly(
   }
 
   // ADDED LOG
-  console.log(`[distributeGuestsEvenly] Initial distribution plan:`, occupantWanted);
+  console.log(
+    `[distributeGuestsEvenly] Initial distribution plan:`,
+    occupantWanted,
+  );
 
   // Adjust based on capacity
   for (let i = 0; i < n; i++) {
@@ -322,7 +325,10 @@ function distributeGuestsEvenly(
   }
 
   // ADDED LOG
-  console.log(`[distributeGuestsEvenly] Capacity-adjusted plan:`, occupantWanted);
+  console.log(
+    `[distributeGuestsEvenly] Capacity-adjusted plan:`,
+    occupantWanted,
+  );
 
   // Apply distribution
   let totalPlaced = 0;
@@ -339,7 +345,14 @@ function distributeGuestsEvenly(
   }
 
   // ADDED LOG
-  console.log(`[distributeGuestsEvenly] Total placed: ${totalPlaced}/${count}. Final room counts:`, chosenRooms.map(r => ({ a: r.occupant_countAdults, c: r.occupant_countChildren, cap: r.bed_capacity })));
+  console.log(
+    `[distributeGuestsEvenly] Total placed: ${totalPlaced}/${count}. Final room counts:`,
+    chosenRooms.map((r) => ({
+      a: r.occupant_countAdults,
+      c: r.occupant_countChildren,
+      cap: r.bed_capacity,
+    })),
+  );
   return totalPlaced;
 }
 
@@ -405,9 +418,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     productName: string,
     config: any,
   ): number => {
-    // ADDED LOG
-    console.log(`[getProductPriceFn] Args: hotelKey=${hotelKey}, productName="${productName}"`);
-
     if (
       config &&
       config[hotelKey] &&
@@ -427,54 +437,31 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       );
 
       if (product) {
-        // ADDED LOG
-        console.log(`[getProductPriceFn] Found product "${productName}" with price: ${product.Prices["EUR"]}`);
         return product.Prices["EUR"];
-      } else {
-        // ADDED LOG
-        console.warn(`[getProductPriceFn] Product "${productName}" not found or has no EUR price in hotel ${hotelKey}.`);
       }
-    } else {
-      // ADDED LOG
-      console.warn(`[getProductPriceFn] Invalid config structure for hotel ${hotelKey}.`);
     }
-    // ADDED LOG
-    console.log(`[getProductPriceFn] Returning 0 for product "${productName}".`);
     return 0;
   };
 
-  // --- Helper function: Get Price for a Single Room/Night (defined inside component scope) ---
   function getPriceForSingleRoom(
-    nightlyPricing: any, // Specific night's pricing object
+    nightlyPricing: any,
     hotel: string,
     boardType: string, // "HB" or "B&B" based on night.board_type
     travelMode: string,
     room: any,
-    childrenCount: number, // Renamed for clarity
-    adultsCount: number,   // Renamed for clarity
-    arrangementLengthParam: number, // Renamed for clarity
+    childrenCount: number,
+    adultsCount: number,
+    arrangementLengthParam: number,
   ): number {
-    // ADDED LOG
-    console.log('[getPriceForSingleRoom] Args:', { hotel, boardType, travelMode, room_category_id: room.category_id, childrenCount, adultsCount, arrangementLengthParam });
-    // ADDED LOG (Optional: uncomment if large)
-    // console.log('[getPriceForSingleRoom] Searching nightlyPricing structure:', JSON.stringify(nightlyPricing, null, 2));
-
-
     if (!nightlyPricing?.CategoryPrices) {
-      // ADDED LOG
-      console.log('[getPriceForSingleRoom] Failed: No CategoryPrices found in nightlyPricing.');
       return 0;
     }
     const cat = nightlyPricing.CategoryPrices.find(
       (cp: any) => cp.CategoryId === room.category_id,
     );
     if (!cat) {
-      // ADDED LOG
-      console.log(`[getPriceForSingleRoom] Failed: CategoryPrice not found for CategoryId: ${room.category_id}`);
       return 0;
     }
-    // ADDED LOG
-    console.log(`[getPriceForSingleRoom] Found CategoryPrice for ${room.category_id}`); // Removed data object log for brevity
 
     const occupantTotal = adultsCount + childrenCount;
     const occupantArray: any[] = [];
@@ -482,19 +469,22 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     const childAgeCatId = ageCategoryMapping[hotel]?.child;
 
     if (adultsCount > 0) {
-      occupantArray.push({ AgeCategoryId: adultAgeCatId, PersonCount: adultsCount });
+      occupantArray.push({
+        AgeCategoryId: adultAgeCatId,
+        PersonCount: adultsCount,
+      });
     }
     if (childrenCount > 0) {
-      occupantArray.push({ AgeCategoryId: childAgeCatId, PersonCount: childrenCount });
+      occupantArray.push({
+        AgeCategoryId: childAgeCatId,
+        PersonCount: childrenCount,
+      });
     }
-    // ADDED LOG
-    console.log('[getPriceForSingleRoom] Constructed occupantArray for lookup:', occupantArray);
-    // ADDED LOG (Optional: uncomment if needed)
-    // console.log('[getPriceForSingleRoom] Available OccupancyPrices:', cat.OccupancyPrices);
 
-    // --- Occupancy Price Lookup Logic ---
     let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
-      if (!op.Occupancies || op.Occupancies.length !== occupantArray.length) return false;
+      if (!op.Occupancies || op.Occupancies.length !== occupantArray.length) {
+        return false;
+      }
       const sortedApiOccupancies = [...op.Occupancies].sort((a, b) =>
         (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || ""),
       );
@@ -503,8 +493,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       );
       for (let i = 0; i < sortedApiOccupancies.length; i++) {
         if (
-          sortedApiOccupancies[i].AgeCategoryId !== sortedTargetOccupancies[i].AgeCategoryId ||
-          sortedApiOccupancies[i].PersonCount !== sortedTargetOccupancies[i].PersonCount
+          sortedApiOccupancies[i].AgeCategoryId !==
+            sortedTargetOccupancies[i].AgeCategoryId ||
+          sortedApiOccupancies[i].PersonCount !==
+            sortedTargetOccupancies[i].PersonCount
         ) {
           return false;
         }
@@ -512,58 +504,41 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       return true;
     });
 
-    if (occupantPriceEntry) {
-      // ADDED LOG
-      console.log('[getPriceForSingleRoom] Found matching OccupancyPrice (exact match)'); // Removed data object log
-    } else {
-      // ADDED LOG
-      console.log('[getPriceForSingleRoom] No exact OccupancyPrice match found. Trying fallback (total occupancy).');
+    if (!occupantPriceEntry) {
       occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
-         const sum = op.Occupancies.reduce( (acc: number, x: any) => acc + x.PersonCount, 0, );
-         return sum === occupantTotal;
+        const sum = op.Occupancies.reduce(
+          (acc: number, x: any) => acc + x.PersonCount,
+          0,
+        );
+        return sum === occupantTotal;
       });
-      if (occupantPriceEntry) {
-         // ADDED LOG
-         console.log('[getPriceForSingleRoom] Found matching OccupancyPrice (total occupancy fallback)'); // Removed data object log
-      }
     }
-    // --- End Occupancy Price Lookup ---
 
     if (!occupantPriceEntry) {
-      // ADDED LOG
-      console.log('[getPriceForSingleRoom] Failed: No OccupancyPrice found for specified adults/children or total occupancy.');
       return 0;
     }
 
-    const rateId = getNightlyRateId( hotel, boardType, travelMode, arrangementLengthParam );
-    // ADDED LOG
-    console.log(`[getPriceForSingleRoom] Looking for RateId: ${rateId}`);
-    // ADDED LOG (Optional: uncomment if needed)
-    // console.log(`[getPriceForSingleRoom] Available RateGroupPrices:`, occupantPriceEntry.RateGroupPrices);
+    const rateId = getNightlyRateId(
+      hotel,
+      boardType,
+      travelMode,
+      arrangementLengthParam,
+    );
 
     const rPrice = occupantPriceEntry.RateGroupPrices.find(
       (rgp: any) => rgp.MinRateId === rateId,
     );
     if (!rPrice) {
-      // ADDED LOG
-      console.log(`[getPriceForSingleRoom] Failed: RateGroupPrice not found for MinRateId: ${rateId}`);
       return 0;
     }
-    // ADDED LOG
-    console.log(`[getPriceForSingleRoom] Found RateGroupPrice for ${rateId}`); // Removed data object log
 
     const val = rPrice.MinPrice?.TotalAmount?.GrossValue;
-    if (typeof val === 'number') {
-       // ADDED LOG
-       console.log(`[getPriceForSingleRoom] Success: Returning price: ${val}`);
-       return val;
+    if (typeof val === "number") {
+      return val;
     }
 
-    // ADDED LOG
-    console.log('[getPriceForSingleRoom] Failed: GrossValue not found or not a number in MinPrice.TotalAmount.');
     return 0;
   }
-  // --- End getPriceForSingleRoom ---
 
   const [pricesPerNight, setPricesPerNight] = useState<number[]>(
     Array(arrangementLength - 1).fill(0),
@@ -577,7 +552,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   // --- Action: Reserve Button ---
   const onReserve = () => {
     // ADDED LOG
-    console.log('[RoomPicker onReserve] Proceeding to next step with:', {
+    console.log("[RoomPicker onReserve] Proceeding to next step with:", {
       selectedArrangement,
       pricingData,
       totalPrice,
@@ -599,31 +574,26 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
   // --- Effect: Fetch Initial Data ---
   useEffect(() => {
-    // ADDED LOG: Log imported mappings used by this component instance
-    console.log('[RoomPicker InitEffect] Using BoardMapping:', BoardMapping);
-    console.log('[RoomPicker InitEffect] Using ageCategoryMapping:', ageCategoryMapping);
-    console.log('[RoomPicker InitEffect] Using PRODUCT_NAMES:', PRODUCT_NAMES);
-
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      // ADDED LOG
-      console.log('[RoomPicker InitEffect] Fetching data with:', { formattedStartDateGET, arrangementLength, adults, children, rooms, formattedStartDatePOST });
       try {
         const configRes = await fetchWithBaseUrl(
           `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangementLength}`,
         );
         if (!configRes.ok) {
-           // ADDED LOG
-           console.error('[RoomPicker InitEffect] Failed to fetch config response:', configRes.status, configRes.statusText);
-           throw new Error(`Failed to fetch configuration (${configRes.status})`);
+          // ADDED LOG
+          console.error(
+            "[RoomPicker InitEffect] Failed to fetch config response:",
+            configRes.status,
+            configRes.statusText,
+          );
+          throw new Error(
+            `Failed to fetch configuration (${configRes.status})`,
+          );
         }
         const configData = await configRes.json();
-        // ADDED LOG (Log the whole structure initially)
-        console.log('[RoomPicker InitEffect] Received rawConfig data:', JSON.stringify(configData, null, 2)); // Stringify for better inspection
-        // ADDED LOG (More specific)
-        console.log('[RoomPicker InitEffect] Received hotels config:', configData?.data?.hotels);
-        setRawConfig(configData.data.hotels); // Assuming structure is { data: { hotels: {...} } }
+        setRawConfig(configData.data.hotels);
 
         const payload = {
           startDate: formattedStartDatePOST,
@@ -631,8 +601,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           guests: { adults, children },
           amountOfRooms: rooms,
         };
-        // ADDED LOG
-        console.log('[RoomPicker InitEffect] Availability Payload:', payload);
 
         const [availBreakfastRes, availHalfBoardRes] = await Promise.all([
           axios.post(
@@ -645,111 +613,149 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           ),
         ]);
 
-        // ADDED LOG
-        console.log('[RoomPicker InitEffect] Received Breakfast Availability Response:', availBreakfastRes.data);
-        console.log('[RoomPicker InitEffect] Received Halfboard Availability Response:', availHalfBoardRes.data);
-
         const availBreakfast = availBreakfastRes.data.data;
         const availHalfBoard = availHalfBoardRes.data.data;
 
         // Check for errors/empty results from availability
         if (availBreakfast?.error && availHalfBoard?.error) {
-          console.error("[RoomPicker InitEffect] Both availability calls returned errors:", { breakfastError: availBreakfast.error, halfboardError: availHalfBoard.error });
-          setError(availBreakfast.error || availHalfBoard.error || "Geen beschikbare kamers gevonden, probeer andere data");
+          console.error(
+            "[RoomPicker InitEffect] Both availability calls returned errors:",
+            {
+              breakfastError: availBreakfast.error,
+              halfboardError: availHalfBoard.error,
+            },
+          );
+          setError(
+            availBreakfast.error ||
+              availHalfBoard.error ||
+              "Geen beschikbare kamers gevonden, probeer andere data",
+          );
           setLoading(false);
           return;
         }
-        if (!availBreakfast?.optimal_sequence && !availHalfBoard?.optimal_sequence) {
-          console.error("[RoomPicker InitEffect] No optimal sequences found in either availability response.");
-          setError("Geen beschikbare arrangementen gevonden voor deze selectie.");
+        if (
+          !availBreakfast?.optimal_sequence &&
+          !availHalfBoard?.optimal_sequence
+        ) {
+          console.error(
+            "[RoomPicker InitEffect] No optimal sequences found in either availability response.",
+          );
+          setError(
+            "Geen beschikbare arrangementen gevonden voor deze selectie.",
+          );
           setLoading(false);
           return;
         }
 
-        // ADDED LOG
-        console.log('[RoomPicker InitEffect] Setting arrangements state with:', {
-          breakfast: availBreakfast?.optimal_sequence,
-          halfboard: availHalfBoard?.optimal_sequence
-        });
         setArrangements({
           breakfast: availBreakfast?.optimal_sequence,
           halfboard: availHalfBoard?.optimal_sequence,
         });
 
         // Determine initial arrangement based on bookingData *after* fetching
-        const initialArrangement = bookingData.boardOption === 'breakfast'
+        const initialArrangement =
+          bookingData.boardOption === "breakfast"
             ? availBreakfast?.optimal_sequence
             : availHalfBoard?.optimal_sequence;
 
-        // ADDED LOG
-        console.log(`[RoomPicker InitEffect] Initial board option from bookingData: ${bookingData.boardOption}`);
-        console.log('[RoomPicker InitEffect] Initial selected arrangement candidate:', initialArrangement ? 'Found' : 'Not Found');
-
         if (!initialArrangement) {
-           console.warn(`[RoomPicker InitEffect] No optimal sequence available for the initial board option: ${bookingData.boardOption}. Trying the other board option.`);
-           // Try falling back to the *other* option if the preferred one is missing
-           const fallbackArrangement = bookingData.boardOption === 'breakfast'
-               ? availHalfBoard?.optimal_sequence
-               : availBreakfast?.optimal_sequence;
+          console.warn(
+            `[RoomPicker InitEffect] No optimal sequence available for the initial board option: ${bookingData.boardOption}. Trying the other board option.`,
+          );
+          // Try falling back to the *other* option if the preferred one is missing
+          const fallbackArrangement =
+            bookingData.boardOption === "breakfast"
+              ? availHalfBoard?.optimal_sequence
+              : availBreakfast?.optimal_sequence;
 
-            if (!fallbackArrangement) {
-                 console.error("[RoomPicker InitEffect] No optimal sequence found for either board option.");
-                 setError("Geen beschikbaar arrangement gevonden voor de geselecteerde opties.");
-                 setLoading(false);
-                 return;
-            } else {
-                 console.log(`[RoomPicker InitEffect] Using fallback arrangement: ${bookingData.boardOption === 'breakfast' ? 'halfboard' : 'breakfast'}`);
-                 setSelectedArrangement(fallbackArrangement);
-                 // IMPORTANT: Update the selectedBoardOption state to match the fallback!
-                 setSelectedBoardOption(bookingData.boardOption === 'breakfast' ? 'halfboard' : 'breakfast');
-            }
-
+          if (!fallbackArrangement) {
+            console.error(
+              "[RoomPicker InitEffect] No optimal sequence found for either board option.",
+            );
+            setError(
+              "Geen beschikbaar arrangement gevonden voor de geselecteerde opties.",
+            );
+            setLoading(false);
+            return;
+          } else {
+            console.log(
+              `[RoomPicker InitEffect] Using fallback arrangement: ${
+                bookingData.boardOption === "breakfast"
+                  ? "halfboard"
+                  : "breakfast"
+              }`,
+            );
+            setSelectedArrangement(fallbackArrangement);
+            // IMPORTANT: Update the selectedBoardOption state to match the fallback!
+            setSelectedBoardOption(
+              bookingData.boardOption === "breakfast"
+                ? "halfboard"
+                : "breakfast",
+            );
+          }
         } else {
-           console.log('[RoomPicker InitEffect] Setting selectedArrangement with initial candidate.');
-           setSelectedArrangement(initialArrangement);
-           // Ensure selectedBoardOption matches the initial one from bookingData
-           setSelectedBoardOption(bookingData.boardOption);
+          //  console.log('[RoomPicker InitEffect] Setting selectedArrangement with initial candidate.');
+          setSelectedArrangement(initialArrangement);
+          // Ensure selectedBoardOption matches the initial one from bookingData
+          setSelectedBoardOption(bookingData.boardOption);
         }
-
 
         // Fetch pricing data *only if* we have valid arrangements to fetch for
         const pricingPromises = [];
         if (availBreakfast?.optimal_sequence) {
-             pricingPromises.push(axios.post(`${import.meta.env.VITE_API_URL}/reservations/pricing/`, {
-                 selectedArrangement: availBreakfast.optimal_sequence,
-             }));
+          pricingPromises.push(
+            axios.post(
+              `${import.meta.env.VITE_API_URL}/reservations/pricing/`,
+              {
+                selectedArrangement: availBreakfast.optimal_sequence,
+              },
+            ),
+          );
         } else {
-             pricingPromises.push(Promise.resolve({ data: { data: null } })); // Placeholder if no breakfast arrangement
-             console.warn("[RoomPicker InitEffect] No breakfast arrangement, skipping breakfast pricing fetch.");
+          pricingPromises.push(Promise.resolve({ data: { data: null } })); // Placeholder if no breakfast arrangement
+          console.warn(
+            "[RoomPicker InitEffect] No breakfast arrangement, skipping breakfast pricing fetch.",
+          );
         }
 
         if (availHalfBoard?.optimal_sequence) {
-              pricingPromises.push(axios.post(`${import.meta.env.VITE_API_URL}/reservations/pricing/`, {
-                 selectedArrangement: availHalfBoard.optimal_sequence,
-             }));
+          pricingPromises.push(
+            axios.post(
+              `${import.meta.env.VITE_API_URL}/reservations/pricing/`,
+              {
+                selectedArrangement: availHalfBoard.optimal_sequence,
+              },
+            ),
+          );
         } else {
-             pricingPromises.push(Promise.resolve({ data: { data: null } })); // Placeholder if no halfboard arrangement
-             console.warn("[RoomPicker InitEffect] No halfboard arrangement, skipping halfboard pricing fetch.");
+          pricingPromises.push(Promise.resolve({ data: { data: null } })); // Placeholder if no halfboard arrangement
+          console.warn(
+            "[RoomPicker InitEffect] No halfboard arrangement, skipping halfboard pricing fetch.",
+          );
         }
 
-
-        const [pricingBreakfastRes, pricingHalfBoardRes] = await Promise.all(pricingPromises);
-
-        // ADDED LOG
-        console.log('[RoomPicker InitEffect] Received Breakfast Pricing Response:', pricingBreakfastRes.data);
-        console.log('[RoomPicker InitEffect] Received Halfboard Pricing Response:', pricingHalfBoardRes.data);
+        const [pricingBreakfastRes, pricingHalfBoardRes] =
+          await Promise.all(pricingPromises);
 
         setPricingData({
           breakfast: pricingBreakfastRes.data.data,
           halfboard: pricingHalfBoardRes.data.data,
         });
-
       } catch (err: any) {
         // ADDED LOG
-        console.error('[RoomPicker InitEffect] Error during data fetching:', err);
+        console.error(
+          "[RoomPicker InitEffect] Error during data fetching:",
+          err,
+        );
         if (err.response) {
-            console.error('[RoomPicker InitEffect] Error response data:', err.response.data);
-            console.error('[RoomPicker InitEffect] Error response status:', err.response.status);
+          console.error(
+            "[RoomPicker InitEffect] Error response data:",
+            err.response.data,
+          );
+          console.error(
+            "[RoomPicker InitEffect] Error response status:",
+            err.response.status,
+          );
         }
         setError(err.message || "Error fetching data");
       } finally {
@@ -757,7 +763,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       }
     };
     fetchData();
-  }, [ // Dependencies remain the same
+  }, [
+    // Dependencies remain the same
     bookingData,
     formattedStartDateGET,
     formattedStartDatePOST,
@@ -770,128 +777,156 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
   // --- Effect: Distribute Guests ---
   useEffect(() => {
-    if (!selectedArrangement || defaultDistributed || !selectedArrangement.night_details) {
-       // ADDED LOG (Optional: uncomment if needed)
-       // console.log('[RoomPicker DistributeGuestsEffect] Skipping distribution:', { hasArrangement: !!selectedArrangement, defaultDistributed, hasNightDetails: !!selectedArrangement?.night_details });
-       return;
+    if (
+      !selectedArrangement ||
+      defaultDistributed ||
+      !selectedArrangement.night_details
+    ) {
+      // ADDED LOG (Optional: uncomment if needed)
+      // console.log('[RoomPicker DistributeGuestsEffect] Skipping distribution:', { hasArrangement: !!selectedArrangement, defaultDistributed, hasNightDetails: !!selectedArrangement?.night_details });
+      return;
     }
 
     // ADDED LOG
-    console.log('[RoomPicker DistributeGuestsEffect] Running guest distribution:', { adults, children, rooms: selectedArrangement.night_details[0]?.chosen_rooms?.length });
+    console.log(
+      "[RoomPicker DistributeGuestsEffect] Running guest distribution:",
+      {
+        adults,
+        children,
+        rooms: selectedArrangement.night_details[0]?.chosen_rooms?.length,
+      },
+    );
 
     // Use functional update with deep copy to prevent race conditions/stale state
-    setSelectedArrangement(currentArrangement => {
-        if (!currentArrangement) return null; // Should not happen if guarded above, but safe check
+    setSelectedArrangement((currentArrangement) => {
+      if (!currentArrangement) return null; // Should not happen if guarded above, but safe check
 
-        const updated = JSON.parse(JSON.stringify(currentArrangement)); // Deep copy
-        let distributionApplied = false;
+      const updated = JSON.parse(JSON.stringify(currentArrangement)); // Deep copy
+      let distributionApplied = false;
 
-        updated.night_details.forEach((night: any) => {
-          const chosenRooms = night.chosen_rooms || [];
-          // Ensure occupant counts are initialized
-          chosenRooms.forEach((r: any) => {
-               r.occupant_countAdults = r.occupant_countAdults ?? 0;
-               r.occupant_countChildren = r.occupant_countChildren ?? 0;
-          });
-
-          if (chosenRooms.length === 1) {
-            console.log(`[RoomPicker DistributeGuestsEffect] Night ${night.date}: Assigning all guests to single room.`);
-            chosenRooms[0].occupant_countAdults = adults;
-            chosenRooms[0].occupant_countChildren = children;
-            distributionApplied = true;
-          } else if (chosenRooms.length >= 2) {
-            console.log(`[RoomPicker DistributeGuestsEffect] Night ${night.date}: Distributing guests among ${chosenRooms.length} rooms.`);
-            // Reset first
-            chosenRooms.forEach((r: any) => {
-              r.occupant_countAdults = 0;
-              r.occupant_countChildren = 0;
-            });
-            // distributeGuestsEvenly mutates chosenRooms inside the 'updated' copy
-            const adultsPlaced = distributeGuestsEvenly(adults, chosenRooms, true);
-            const childrenPlaced = distributeGuestsEvenly(children, chosenRooms, false);
-            // Logs are inside distributeGuestsEvenly now
-            distributionApplied = true;
-          }
+      updated.night_details.forEach((night: any) => {
+        const chosenRooms = night.chosen_rooms || [];
+        // Ensure occupant counts are initialized
+        chosenRooms.forEach((r: any) => {
+          r.occupant_countAdults = r.occupant_countAdults ?? 0;
+          r.occupant_countChildren = r.occupant_countChildren ?? 0;
         });
 
-         if (distributionApplied) {
-             // ADDED LOG
-             console.log('[RoomPicker DistributeGuestsEffect] Setting updated arrangement and marking as distributed.');
-             setDefaultDistributed(true); // Mark as distributed *after* updating state
-             return updated; // Return the updated state
-         } else {
-              // ADDED LOG
-              console.log('[RoomPicker DistributeGuestsEffect] No distribution logic applied (e.g., no rooms). Marking distributed.');
-              setDefaultDistributed(true);
-              return currentArrangement; // Return current state if no changes
-         }
-    });
+        if (chosenRooms.length === 1) {
+          console.log(
+            `[RoomPicker DistributeGuestsEffect] Night ${night.date}: Assigning all guests to single room.`,
+          );
+          chosenRooms[0].occupant_countAdults = adults;
+          chosenRooms[0].occupant_countChildren = children;
+          distributionApplied = true;
+        } else if (chosenRooms.length >= 2) {
+          console.log(
+            `[RoomPicker DistributeGuestsEffect] Night ${night.date}: Distributing guests among ${chosenRooms.length} rooms.`,
+          );
+          // Reset first
+          chosenRooms.forEach((r: any) => {
+            r.occupant_countAdults = 0;
+            r.occupant_countChildren = 0;
+          });
+          // distributeGuestsEvenly mutates chosenRooms inside the 'updated' copy
+          const adultsPlaced = distributeGuestsEvenly(
+            adults,
+            chosenRooms,
+            true,
+          );
+          const childrenPlaced = distributeGuestsEvenly(
+            children,
+            chosenRooms,
+            false,
+          );
+          // Logs are inside distributeGuestsEvenly now
+          distributionApplied = true;
+        }
+      });
 
+      if (distributionApplied) {
+        // ADDED LOG
+        console.log(
+          "[RoomPicker DistributeGuestsEffect] Setting updated arrangement and marking as distributed.",
+        );
+        setDefaultDistributed(true); // Mark as distributed *after* updating state
+        return updated; // Return the updated state
+      } else {
+        // ADDED LOG
+        console.log(
+          "[RoomPicker DistributeGuestsEffect] No distribution logic applied (e.g., no rooms). Marking distributed.",
+        );
+        setDefaultDistributed(true);
+        return currentArrangement; // Return current state if no changes
+      }
+    });
   }, [selectedArrangement, defaultDistributed, adults, children]); // Keep dependencies
 
   // --- Effect: Calculate Prices Per Night ---
   useEffect(() => {
-    if (!selectedArrangement || !pricingData || !selectedArrangement.night_details) {
-       // ADDED LOG (Optional: uncomment if needed)
-       // console.log('[RoomPicker PricesPerNightEffect] Skipping: Missing data', { hasArrangement: !!selectedArrangement, hasPricing: !!pricingData, hasDetails: !!selectedArrangement?.night_details });
-       return;
+    if (
+      !selectedArrangement ||
+      !pricingData ||
+      !selectedArrangement.night_details
+    ) {
+      // ADDED LOG (Optional: uncomment if needed)
+      // console.log('[RoomPicker PricesPerNightEffect] Skipping: Missing data', { hasArrangement: !!selectedArrangement, hasPricing: !!pricingData, hasDetails: !!selectedArrangement?.night_details });
+      return;
     }
-    // ADDED LOG
-    console.log(`[RoomPicker PricesPerNightEffect] Calculating pricesPerNight for board: ${selectedBoardOption}...`);
 
-    const newPricesPerNight = selectedArrangement.night_details.map((night: any, nightIndex: number) => {
-      const chosenRooms = night.chosen_rooms || [];
-      const boardKey = selectedBoardOption; // Use the state for the currently selected board
-      const nightlyPricingForBoard = pricingData[boardKey]?.nightlyPricing || [];
+    const newPricesPerNight = selectedArrangement.night_details.map(
+      (night: any, nightIndex: number) => {
+        const chosenRooms = night.chosen_rooms || [];
+        const boardKey = selectedBoardOption; // Use the state for the currently selected board
+        const nightlyPricingForBoard =
+          pricingData[boardKey]?.nightlyPricing || [];
 
-      const foundEntry = nightlyPricingForBoard.find(
-        (x: any) => x.date === night.date && x.hotel === night.hotel,
-      );
+        const foundEntry = nightlyPricingForBoard.find(
+          (x: any) => x.date === night.date && x.hotel === night.hotel,
+        );
 
-      // ADDED LOG
-      console.log(`[RoomPicker PricesPerNightEffect] Night ${nightIndex + 1} (${night.date}, ${night.hotel}, Board: ${boardKey}):`);
-      if (!foundEntry || !foundEntry.pricing) {
-        // ADDED LOG
-        console.warn(`  - No pricing entry found.`);
-        return 0;
-      }
+        if (!foundEntry?.pricing) {
+          // ADDED LOG
+          console.warn(`  - No pricing entry found.`);
+          return 0;
+        }
 
-      const nightTotal = chosenRooms.reduce((acc: number, room: any, roomIndex: number) => {
-         const adultsCount = room.occupant_countAdults ?? 0;
-         const childrenCount = room.occupant_countChildren ?? 0;
-         // ADDED LOG
-         console.log(`  - Room ${roomIndex + 1} (${room.category_name}): Calculating price for ${adultsCount} adults, ${childrenCount} children.`);
-         // Use the getPriceForSingleRoom defined within this component's scope
-         const roomPrice = getPriceForSingleRoom(
-           foundEntry.pricing,
-           night.hotel,
-           night.board_type, // Use the specific night's board type ('HB' or 'B&B') for rate lookup
-           travelMode,
-           room,
-           childrenCount,
-           adultsCount,
-           arrangementLength,
-         );
-          // ADDED LOG (price logging is now inside getPriceForSingleRoom)
-         // console.log(`  - Room ${roomIndex + 1} Price: ${roomPrice}`);
-         return acc + roomPrice;
-      }, 0);
+        const nightTotal = chosenRooms.reduce(
+          (acc: number, room: any, roomIndex: number) => {
+            const adultsCount = room.occupant_countAdults ?? 0;
+            const childrenCount = room.occupant_countChildren ?? 0;
 
-      // ADDED LOG
-      console.log(`  - Night Total: ${nightTotal}`);
-      return nightTotal;
-    });
+            const roomPrice = getPriceForSingleRoom(
+              foundEntry.pricing,
+              night.hotel,
+              night.board_type, // Use the specific night's board type ('HB' or 'B&B') for rate lookup
+              travelMode,
+              room,
+              childrenCount,
+              adultsCount,
+              arrangementLength,
+            );
 
-    // ADDED LOG
-    console.log('[RoomPicker PricesPerNightEffect] Setting pricesPerNight state:', newPricesPerNight);
+            return acc + roomPrice;
+          },
+          0,
+        );
+
+        return nightTotal;
+      },
+    );
+
     setPricesPerNight(newPricesPerNight);
-
-  }, [selectedArrangement, pricingData, selectedBoardOption, travelMode, arrangementLength]); // Ensure selectedBoardOption is a dependency
+  }, [
+    selectedArrangement,
+    pricingData,
+    selectedBoardOption,
+    travelMode,
+    arrangementLength,
+  ]); // Ensure selectedBoardOption is a dependency
 
   // --- Effect: Calculate Total Price ---
   useEffect(() => {
-    // ADDED LOG
-    console.log('[RoomPicker TotalPriceEffect] Calculating total price...');
     const newTotal = calculateTotalPrice(
       selectedArrangement,
       pricingData, // Pass the state variable
@@ -906,10 +941,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       getProductPriceFn, // Pass the function defined in this component
       pricesPerNight,
     );
-    // ADDED LOG
-    console.log('[RoomPicker TotalPriceEffect] Setting total price state:', newTotal);
     setTotalPrice(newTotal);
-  }, [ // Dependencies match calculateTotalPrice inputs that change
+  }, [
+    // Dependencies match calculateTotalPrice inputs that change
     pricesPerNight,
     selectedArrangement,
     pricingData,
@@ -932,19 +966,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
     const newArrangement = arrangements[option]; // Get the corresponding *fetched* arrangement
     // ADDED LOG
-    console.log(`[RoomPicker handleBoardToggle] Toggling to ${option}. Corresponding arrangement found:`, !!newArrangement);
+    console.log(
+      `[RoomPicker handleBoardToggle] Toggling to ${option}. Corresponding arrangement found:`,
+      !!newArrangement,
+    );
 
     if (newArrangement) {
-        // Don't manually update board_type here, use the fetched arrangement directly
-        setSelectedArrangement(newArrangement);
-        // Reset distribution flag so guest distribution runs for the new arrangement
-        setDefaultDistributed(false);
-         // ADDED LOG
-        console.log('[RoomPicker handleBoardToggle] Switched selectedArrangement and reset distribution flag.');
+      // Don't manually update board_type here, use the fetched arrangement directly
+      setSelectedArrangement(newArrangement);
+      // Reset distribution flag so guest distribution runs for the new arrangement
+      setDefaultDistributed(false);
     } else {
-        // ADDED LOG
-        console.warn(`[RoomPicker handleBoardToggle] No arrangement data available in state for board option: ${option}. Setting selectedArrangement to null.`);
-        setSelectedArrangement(null); // Clear arrangement if none exists for this option
+      // ADDED LOG
+      setSelectedArrangement(null); // Clear arrangement if none exists for this option
     }
   };
 
@@ -987,7 +1021,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     };
 
     // ADDED LOG
-    console.log('[computeOptionalProductsMapping] Computing mapping with selected:', selectedOptionalProducts, 'and OPTIONAL_PRODUCT_IDS:', OPTIONAL_PRODUCT_IDS);
+    console.log(
+      "[computeOptionalProductsMapping] Computing mapping with selected:",
+      selectedOptionalProducts,
+      "and OPTIONAL_PRODUCT_IDS:",
+      OPTIONAL_PRODUCT_IDS,
+    );
 
     if (selectedOptionalProducts.lunch && OPTIONAL_PRODUCT_IDS.lunch) {
       mapping.hotel1.push(OPTIONAL_PRODUCT_IDS.lunch.hotel1);
@@ -996,19 +1035,25 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     }
 
     if (travelMode === "cycling") {
-      if (selectedOptionalProducts.bicycleRent && OPTIONAL_PRODUCT_IDS.bicycleRent) {
+      if (
+        selectedOptionalProducts.bicycleRent &&
+        OPTIONAL_PRODUCT_IDS.bicycleRent
+      ) {
         mapping.hotel1.push(OPTIONAL_PRODUCT_IDS.bicycleRent.hotel1);
         mapping.hotel2.push(OPTIONAL_PRODUCT_IDS.bicycleRent.hotel2);
         mapping.hotel3.push(OPTIONAL_PRODUCT_IDS.bicycleRent.hotel3);
       }
-      if (selectedOptionalProducts.bicycleTransport && OPTIONAL_PRODUCT_IDS.bicycleTransport) {
+      if (
+        selectedOptionalProducts.bicycleTransport &&
+        OPTIONAL_PRODUCT_IDS.bicycleTransport
+      ) {
         mapping.hotel1.push(OPTIONAL_PRODUCT_IDS.bicycleTransport.hotel1);
         mapping.hotel2.push(OPTIONAL_PRODUCT_IDS.bicycleTransport.hotel2);
         mapping.hotel3.push(OPTIONAL_PRODUCT_IDS.bicycleTransport.hotel3);
       }
     }
     // ADDED LOG
-    console.log('[computeOptionalProductsMapping] Result:', mapping);
+    console.log("[computeOptionalProductsMapping] Result:", mapping);
     return mapping;
   }
 
@@ -1052,30 +1097,32 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
   // Handle case where arrangements might still be null after loading and no error
   if (!selectedArrangement) {
-     console.warn("[RoomPicker Render] No selectedArrangement available for rendering. Displaying 'Not Found' message.");
-     return (
-          <div className="flex flex-col items-center justify-center h-screen">
-            <div className="bg-white rounded-lg shadow-sm p-6 text-center max-w-md mx-auto">
-              <div className="flex justify-center mb-4">
-                 <XCircle className="text-orange-500 w-12 h-12" />
-              </div>
-              <h2 className="text-xl font-semibold text-[#2C4A3C] mb-4">
-                 Geen Opties Gevonden
-              </h2>
-              <p className="text-gray-600 mb-4">
-                 Er zijn geen arrangementen beschikbaar die voldoen aan uw criteria voor de geselecteerde data.
-              </p>
-              <button
-                 onClick={onBack}
-                 className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
-               >
-                 Terug naar arrangement formulier
-               </button>
-             </div>
-           </div>
-     );
+    console.warn(
+      "[RoomPicker Render] No selectedArrangement available for rendering. Displaying 'Not Found' message.",
+    );
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="bg-white rounded-lg shadow-sm p-6 text-center max-w-md mx-auto">
+          <div className="flex justify-center mb-4">
+            <XCircle className="text-orange-500 w-12 h-12" />
+          </div>
+          <h2 className="text-xl font-semibold text-[#2C4A3C] mb-4">
+            Geen Opties Gevonden
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Er zijn geen arrangementen beschikbaar die voldoen aan uw criteria
+            voor de geselecteerde data.
+          </p>
+          <button
+            onClick={onBack}
+            className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
+          >
+            Terug naar arrangement formulier
+          </button>
+        </div>
+      </div>
+    );
   }
-
 
   return (
     <main
@@ -1130,8 +1177,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               </h4>
                               <button
                                 onClick={() => {
-                                  // ADDED LOG
-                                  console.log(`[RoomPicker Render] Opening modal for room:`, { ...room, hotel: night.hotel });
                                   setModalRoomData({
                                     ...room,
                                     hotel: night.hotel,
@@ -1148,57 +1193,75 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 className="w-full text-sm border rounded-md px-2 py-1.5 bg-white"
                                 value={room.category_name}
                                 onChange={(e) => {
-                                  // ADDED LOG
-                                  console.log(`[RoomPicker Render] Room ${index + 1} category changed to: ${e.target.value} for night ${nightIdx}`);
-                                  const newArrangement = JSON.parse(JSON.stringify(selectedArrangement)); // Deep copy
+                                  const newArrangement = JSON.parse(
+                                    JSON.stringify(selectedArrangement),
+                                  ); // Deep copy
                                   const option = night.room_options.find(
                                     (r: any) =>
                                       r.category_name === e.target.value,
                                   );
-                                  if (option && newArrangement.night_details[nightIdx]) {
-                                      const currentRoomData = newArrangement.night_details[nightIdx].chosen_rooms[index];
-                                      newArrangement.night_details[nightIdx].chosen_rooms[index] = {
-                                        ...currentRoomData, // Preserve existing occupant counts
-                                        category_name: option.category_name,
-                                        category_id: option.category_id,
-                                        bed_capacity: option.bed_capacity,
-                                        // TODO: Potentially reset/revalidate occupant counts if capacity changes significantly
-                                      };
-                                      // ADDED LOG
-                                      console.log(`[RoomPicker Render] Updating selectedArrangement state after room change.`);
-                                      setSelectedArrangement(newArrangement);
-                                      // Optional: Reset distribution flag if changing room type requires redistribution
-                                      // setDefaultDistributed(false);
+                                  if (
+                                    option &&
+                                    newArrangement.night_details[nightIdx]
+                                  ) {
+                                    const currentRoomData =
+                                      newArrangement.night_details[nightIdx]
+                                        .chosen_rooms[index];
+                                    newArrangement.night_details[
+                                      nightIdx
+                                    ].chosen_rooms[index] = {
+                                      ...currentRoomData, // Preserve existing occupant counts
+                                      category_name: option.category_name,
+                                      category_id: option.category_id,
+                                      bed_capacity: option.bed_capacity,
+                                      // TODO: Potentially reset/revalidate occupant counts if capacity changes significantly
+                                    };
+                                    setSelectedArrangement(newArrangement);
+                                    // Optional: Reset distribution flag if changing room type requires redistribution
+                                    // setDefaultDistributed(false);
                                   } else {
-                                      console.error("[RoomPicker Render] Could not find selected room option or night detail.", { option, nightIdx });
+                                    console.error(
+                                      "[RoomPicker Render] Could not find selected room option or night detail.",
+                                      { option, nightIdx },
+                                    );
                                   }
                                 }}
                               >
-                                {night.room_options.map((roomOption: any) => (
-                                  <option
-                                    key={roomOption.category_id}
-                                    value={roomOption.category_name}
-                                  >
-                                    {roomOption.category_name}
-                                  </option>
-                                ))}
+                                {night.room_options.map((roomOption: any) => {
+                                  const isOverCapacity =
+                                    roomOption.bed_capacity <
+                                    (room.occupant_countAdults || 0) +
+                                      (room.occupant_countChildren || 0);
+
+                                  if (!isOverCapacity) {
+                                    return (
+                                      <option
+                                        key={roomOption.category_id}
+                                        value={roomOption.category_name}
+                                        disabled={isOverCapacity}
+                                      >
+                                        {roomOption.category_name}
+                                      </option>
+                                    );
+                                  }
+                                  return null;
+                                })}
                               </select>
                               <div className="flex justify-between text-sm text-gray-500">
                                 <span>
                                   {(() => {
-                                     // ADDED LOG
-                                     // console.log(`[RoomPicker Render] Getting display price for Room ${index + 1}, Night ${nightIdx}`);
-                                    const boardKey = selectedBoardOption; // Use current state
-                                    const nightlyPricingForBoard = pricingData[boardKey]?.nightlyPricing || [];
-                                    const foundEntry = nightlyPricingForBoard.find(
-                                      (x: any) =>
-                                        x.date === night.date &&
-                                        x.hotel === night.hotel,
-                                    );
-                                    if (!foundEntry || !foundEntry.pricing) {
-                                        // ADDED LOG
-                                        console.warn(`[RoomPicker Render] Price display: No pricing entry found for Room ${index+1}, Night ${nightIdx}`);
-                                        return "Prijs niet beschikbaar";
+                                    const boardKey = selectedBoardOption;
+                                    const nightlyPricingForBoard =
+                                      pricingData[boardKey]?.nightlyPricing ||
+                                      [];
+                                    const foundEntry =
+                                      nightlyPricingForBoard.find(
+                                        (x: any) =>
+                                          x.date === night.date &&
+                                          x.hotel === night.hotel,
+                                      );
+                                    if (!foundEntry?.pricing) {
+                                      return "Prijs niet beschikbaar";
                                     }
                                     // Use the component's getPriceForSingleRoom
                                     const price = getPriceForSingleRoom(
@@ -1228,21 +1291,36 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     <span className="w-24">Volwassenen:</span>
                                     <button
                                       onClick={() => {
-                                        // ADDED LOG
-                                        console.log(`[RoomPicker Render] Decrementing adults for Room ${index + 1}, Night ${nightIdx}`);
-                                        setSelectedArrangement(currentArrangement => {
-                                            if (!currentArrangement) return null;
-                                            const newArrangement = JSON.parse(JSON.stringify(currentArrangement));
-                                            const targetRoom = newArrangement.night_details[nightIdx]?.chosen_rooms[index];
+                                        setSelectedArrangement(
+                                          (currentArrangement) => {
+                                            if (!currentArrangement)
+                                              return null;
+                                            const newArrangement = JSON.parse(
+                                              JSON.stringify(
+                                                currentArrangement,
+                                              ),
+                                            );
+                                            const targetRoom =
+                                              newArrangement.night_details[
+                                                nightIdx
+                                              ]?.chosen_rooms[index];
                                             if (targetRoom) {
-                                                targetRoom.occupant_countAdults = Math.max(0, (targetRoom.occupant_countAdults || 0) - 1);
+                                              targetRoom.occupant_countAdults =
+                                                Math.max(
+                                                  0,
+                                                  (targetRoom.occupant_countAdults ||
+                                                    0) - 1,
+                                                );
                                             }
                                             return newArrangement;
-                                        });
+                                          },
+                                        );
                                       }}
                                       className="p-1 hover:bg-gray-100 rounded"
                                       // Disable if count is 0
-                                      disabled={(room.occupant_countAdults || 0) === 0}
+                                      disabled={
+                                        (room.occupant_countAdults || 0) === 0
+                                      }
                                     >
                                       <Minus className="w-4 h-4" />
                                     </button>
@@ -1251,34 +1329,74 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     </span>
                                     <button
                                       onClick={() => {
-                                          // ADDED LOG
-                                         console.log(`[RoomPicker Render] Incrementing adults for Room ${index + 1}, Night ${nightIdx}`);
-                                         setSelectedArrangement(currentArrangement => {
-                                             if (!currentArrangement) return null;
-                                             const newArrangement = JSON.parse(JSON.stringify(currentArrangement));
-                                             const targetNight = newArrangement.night_details[nightIdx];
-                                             const targetRoom = targetNight?.chosen_rooms[index];
+                                        // ADDED LOG
+                                        console.log(
+                                          `[RoomPicker Render] Incrementing adults for Room ${
+                                            index + 1
+                                          }, Night ${nightIdx}`,
+                                        );
+                                        setSelectedArrangement(
+                                          (currentArrangement) => {
+                                            if (!currentArrangement)
+                                              return null;
+                                            const newArrangement = JSON.parse(
+                                              JSON.stringify(
+                                                currentArrangement,
+                                              ),
+                                            );
+                                            const targetNight =
+                                              newArrangement.night_details[
+                                                nightIdx
+                                              ];
+                                            const targetRoom =
+                                              targetNight?.chosen_rooms[index];
 
-                                             if (targetRoom) {
-                                                 const currentAdultsInRoom = targetRoom.occupant_countAdults || 0;
-                                                 const currentChildrenInRoom = targetRoom.occupant_countChildren || 0;
-                                                 // Use the accurate sum from the helper function for the night
-                                                 const totalAdultsAssignedThisNight = sumNightAdults(targetNight);
+                                            if (targetRoom) {
+                                              const currentAdultsInRoom =
+                                                targetRoom.occupant_countAdults ||
+                                                0;
+                                              const currentChildrenInRoom =
+                                                targetRoom.occupant_countChildren ||
+                                                0;
+                                              // Use the accurate sum from the helper function for the night
+                                              const totalAdultsAssignedThisNight =
+                                                sumNightAdults(targetNight);
 
-                                                 // Check room capacity AND total adult limit for the whole booking
-                                                 if (currentAdultsInRoom + currentChildrenInRoom + 1 <= targetRoom.bed_capacity && totalAdultsAssignedThisNight < adults) {
-                                                     targetRoom.occupant_countAdults = currentAdultsInRoom + 1;
-                                                 } else {
-                                                     // ADDED LOG
-                                                     console.warn(`[RoomPicker Render] Cannot increment adults. Room Cap: ${targetRoom.bed_capacity}, Current Occ: ${currentAdultsInRoom + currentChildrenInRoom}, Total Adults Assigned Night: ${totalAdultsAssignedThisNight}, Max Adults Booking: ${adults}`);
-                                                 }
-                                             }
-                                             return newArrangement;
-                                         });
+                                              // Check room capacity AND total adult limit for the whole booking
+                                              if (
+                                                currentAdultsInRoom +
+                                                  currentChildrenInRoom +
+                                                  1 <=
+                                                  targetRoom.bed_capacity &&
+                                                totalAdultsAssignedThisNight <
+                                                  adults
+                                              ) {
+                                                targetRoom.occupant_countAdults =
+                                                  currentAdultsInRoom + 1;
+                                              } else {
+                                                // ADDED LOG
+                                                console.warn(
+                                                  `[RoomPicker Render] Cannot increment adults. Room Cap: ${
+                                                    targetRoom.bed_capacity
+                                                  }, Current Occ: ${
+                                                    currentAdultsInRoom +
+                                                    currentChildrenInRoom
+                                                  }, Total Adults Assigned Night: ${totalAdultsAssignedThisNight}, Max Adults Booking: ${adults}`,
+                                                );
+                                              }
+                                            }
+                                            return newArrangement;
+                                          },
+                                        );
                                       }}
                                       className="p-1 hover:bg-gray-100 rounded"
                                       // Disable if room is full or all adults for the booking are assigned to this night
-                                      disabled={(room.occupant_countAdults || 0) + (room.occupant_countChildren || 0) >= room.bed_capacity || currentAssignedAdults >= adults}
+                                      disabled={
+                                        (room.occupant_countAdults || 0) +
+                                          (room.occupant_countChildren || 0) >=
+                                          room.bed_capacity ||
+                                        currentAssignedAdults >= adults
+                                      }
                                     >
                                       <Plus className="w-4 h-4" />
                                     </button>
@@ -1290,21 +1408,36 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     <span className="w-24">Kinderen:</span>
                                     <button
                                       onClick={() => {
-                                         // ADDED LOG
-                                         console.log(`[RoomPicker Render] Decrementing children for Room ${index + 1}, Night ${nightIdx}`);
-                                         setSelectedArrangement(currentArrangement => {
-                                            if (!currentArrangement) return null;
-                                            const newArrangement = JSON.parse(JSON.stringify(currentArrangement));
-                                            const targetRoom = newArrangement.night_details[nightIdx]?.chosen_rooms[index];
+                                        setSelectedArrangement(
+                                          (currentArrangement) => {
+                                            if (!currentArrangement)
+                                              return null;
+                                            const newArrangement = JSON.parse(
+                                              JSON.stringify(
+                                                currentArrangement,
+                                              ),
+                                            );
+                                            const targetRoom =
+                                              newArrangement.night_details[
+                                                nightIdx
+                                              ]?.chosen_rooms[index];
                                             if (targetRoom) {
-                                                targetRoom.occupant_countChildren = Math.max(0, (targetRoom.occupant_countChildren || 0) - 1);
+                                              targetRoom.occupant_countChildren =
+                                                Math.max(
+                                                  0,
+                                                  (targetRoom.occupant_countChildren ||
+                                                    0) - 1,
+                                                );
                                             }
                                             return newArrangement;
-                                        });
+                                          },
+                                        );
                                       }}
                                       className="p-1 hover:bg-gray-100 rounded"
                                       // Disable if count is 0
-                                      disabled={(room.occupant_countChildren || 0) === 0}
+                                      disabled={
+                                        (room.occupant_countChildren || 0) === 0
+                                      }
                                     >
                                       <Minus className="w-4 h-4" />
                                     </button>
@@ -1313,34 +1446,68 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     </span>
                                     <button
                                       onClick={() => {
-                                          // ADDED LOG
-                                          console.log(`[RoomPicker Render] Incrementing children for Room ${index + 1}, Night ${nightIdx}`);
-                                          setSelectedArrangement(currentArrangement => {
-                                              if (!currentArrangement) return null;
-                                              const newArrangement = JSON.parse(JSON.stringify(currentArrangement));
-                                              const targetNight = newArrangement.night_details[nightIdx];
-                                              const targetRoom = targetNight?.chosen_rooms[index];
+                                        setSelectedArrangement(
+                                          (currentArrangement) => {
+                                            if (!currentArrangement)
+                                              return null;
+                                            const newArrangement = JSON.parse(
+                                              JSON.stringify(
+                                                currentArrangement,
+                                              ),
+                                            );
+                                            const targetNight =
+                                              newArrangement.night_details[
+                                                nightIdx
+                                              ];
+                                            const targetRoom =
+                                              targetNight?.chosen_rooms[index];
 
-                                              if (targetRoom) {
-                                                 const currentAdultsInRoom = targetRoom.occupant_countAdults || 0;
-                                                 const currentChildrenInRoom = targetRoom.occupant_countChildren || 0;
-                                                 // Use the accurate sum from the helper function for the night
-                                                 const totalChildrenAssignedThisNight = sumNightChildren(targetNight);
+                                            if (targetRoom) {
+                                              const currentAdultsInRoom =
+                                                targetRoom.occupant_countAdults ||
+                                                0;
+                                              const currentChildrenInRoom =
+                                                targetRoom.occupant_countChildren ||
+                                                0;
+                                              // Use the accurate sum from the helper function for the night
+                                              const totalChildrenAssignedThisNight =
+                                                sumNightChildren(targetNight);
 
-                                                 // Check room capacity AND total children limit for the whole booking
-                                                  if (currentAdultsInRoom + currentChildrenInRoom + 1 <= targetRoom.bed_capacity && totalChildrenAssignedThisNight < children) {
-                                                     targetRoom.occupant_countChildren = currentChildrenInRoom + 1;
-                                                  } else {
-                                                      // ADDED LOG
-                                                      console.warn(`[RoomPicker Render] Cannot increment children. Room Cap: ${targetRoom.bed_capacity}, Current Occ: ${currentAdultsInRoom + currentChildrenInRoom}, Total Children Assigned Night: ${totalChildrenAssignedThisNight}, Max Children Booking: ${children}`);
-                                                  }
+                                              // Check room capacity AND total children limit for the whole booking
+                                              if (
+                                                currentAdultsInRoom +
+                                                  currentChildrenInRoom +
+                                                  1 <=
+                                                  targetRoom.bed_capacity &&
+                                                totalChildrenAssignedThisNight <
+                                                  children
+                                              ) {
+                                                targetRoom.occupant_countChildren =
+                                                  currentChildrenInRoom + 1;
+                                              } else {
+                                                // ADDED LOG
+                                                console.warn(
+                                                  `[RoomPicker Render] Cannot increment children. Room Cap: ${
+                                                    targetRoom.bed_capacity
+                                                  }, Current Occ: ${
+                                                    currentAdultsInRoom +
+                                                    currentChildrenInRoom
+                                                  }, Total Children Assigned Night: ${totalChildrenAssignedThisNight}, Max Children Booking: ${children}`,
+                                                );
                                               }
-                                              return newArrangement;
-                                          });
+                                            }
+                                            return newArrangement;
+                                          },
+                                        );
                                       }}
                                       className="p-1 hover:bg-gray-100 rounded"
                                       // Disable if room is full or all children for the booking are assigned to this night
-                                      disabled={(room.occupant_countAdults || 0) + (room.occupant_countChildren || 0) >= room.bed_capacity || currentAssignedChildren >= children}
+                                      disabled={
+                                        (room.occupant_countAdults || 0) +
+                                          (room.occupant_countChildren || 0) >=
+                                          room.bed_capacity ||
+                                        currentAssignedChildren >= children
+                                      }
                                     >
                                       <Plus className="w-4 h-4" />
                                     </button>
@@ -1350,22 +1517,24 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                             )}
                           </div>
                           {/* Show warning only if multiple rooms AND not all guests are assigned */}
-                          {rooms > 1 && (currentAssignedAdults < adults || currentAssignedChildren < children) && (
-                            <div className="mt-2 text-sm min-h-6 text-red-600">
-                              {currentAssignedAdults < adults && (
-                                <p>
-                                  {adults - currentAssignedAdults} volwassene(n)
-                                  niet toegewezen!
-                                </p>
-                              )}
-                              {currentAssignedChildren < children && (
-                                <p>
-                                  {children - currentAssignedChildren}{" "}
-                                  kind(eren) niet toegewezen!
-                                </p>
-                              )}
-                            </div>
-                          )}
+                          {rooms > 1 &&
+                            (currentAssignedAdults < adults ||
+                              currentAssignedChildren < children) && (
+                              <div className="mt-2 text-sm min-h-6 text-red-600">
+                                {currentAssignedAdults < adults && (
+                                  <p>
+                                    {adults - currentAssignedAdults}{" "}
+                                    volwassene(n) niet toegewezen!
+                                  </p>
+                                )}
+                                {currentAssignedChildren < children && (
+                                  <p>
+                                    {children - currentAssignedChildren}{" "}
+                                    kind(eren) niet toegewezen!
+                                  </p>
+                                )}
+                              </div>
+                            )}
                         </div>
                       ))}
                     </div>
@@ -1396,13 +1565,21 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                   {/* Separator visuals */}
                   {nightIdx < selectedArrangement.night_details.length - 1 && (
                     <div className="hidden lg:flex items-center justify-center w-16">
-                       {/* Use appropriate icon based on travel mode */}
-                       {travelMode === 'cycling' ? <Bike className="w-6 h-6 text-[#2C4A3C]" /> : <Footprints className="w-6 h-6 text-[#2C4A3C]" />}
+                      {/* Use appropriate icon based on travel mode */}
+                      {travelMode === "cycling" ? (
+                        <Bike className="w-6 h-6 text-[#2C4A3C]" />
+                      ) : (
+                        <Footprints className="w-6 h-6 text-[#2C4A3C]" />
+                      )}
                     </div>
                   )}
                   {nightIdx < selectedArrangement.night_details.length - 1 && (
                     <div className="lg:hidden flex justify-center h-16">
-                       {travelMode === 'cycling' ? <Bike className="w-6 h-6 text-[#2C4A3C] self-center" /> : <Footprints className="w-6 h-6 text-[#2C4A3C] self-center" />}
+                      {travelMode === "cycling" ? (
+                        <Bike className="w-6 h-6 text-[#2C4A3C] self-center" />
+                      ) : (
+                        <Footprints className="w-6 h-6 text-[#2C4A3C] self-center" />
+                      )}
                     </div>
                   )}
                 </div>

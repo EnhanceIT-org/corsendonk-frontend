@@ -193,7 +193,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
       if (response.ok) {
         setSubmissionSuccess(true);
-        console.log("Booking successful!");
       } else {
         const errorData = await response.json();
         setErrors((prev) => ({
