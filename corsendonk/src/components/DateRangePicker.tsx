@@ -20,7 +20,9 @@ export function DateRangePicker({
   arrangementLength,
 }: DateRangePickerProps) {
   // Use a single date for selection.
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    addDays(new Date(), 1),
+  );
 
   // Compute the full range based on the selected date and arrangementLength.
   const computedRange = useMemo(
@@ -72,7 +74,8 @@ export function DateRangePicker({
           <Calendar
             initialFocus
             mode="single" // Keep single mode for clickable dates.
-            defaultMonth={computedRange.from}
+            defaultMonth={addDays(new Date(), 1)} // Start on today plus one.
+            disabled={(date) => date <= new Date()} // Disable today and past dates.
             selected={selectedDate}
             onSelect={handleDateSelect}
             numberOfMonths={2}

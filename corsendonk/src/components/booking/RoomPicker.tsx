@@ -15,6 +15,8 @@ import {
   User,
   Info,
   XCircle,
+  Bike,
+  Footprints,
 } from "lucide-react";
 // --- Ensure mappings are correctly imported ---
 import {
@@ -548,6 +550,31 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
   // --- Action: Reserve Button ---
   const onReserve = () => {
+    // Validate occupant assignment
+    const unassignedGuests = selectedArrangement?.night_details.some(
+      (night: any) => {
+        const totalAssignedAdults = sumNightAdults(night);
+        const totalAssignedChildren = sumNightChildren(night);
+        return totalAssignedAdults < adults || totalAssignedChildren < children;
+      },
+    );
+
+    const emptyRooms = selectedArrangement?.night_details.some((night: any) =>
+      night.chosen_rooms.some(
+        (room: any) =>
+          (room.occupant_countAdults || 0) +
+            (room.occupant_countChildren || 0) ===
+          0,
+      ),
+    );
+
+    if (unassignedGuests || emptyRooms) {
+      setError(
+        "Niet alle gasten zijn toegewezen aan kamers of er zijn kamers zonder gasten. Controleer uw selectie.",
+      );
+      return;
+    }
+
     // ADDED LOG
     console.log("[RoomPicker onReserve] Proceeding to next step with:", {
       selectedArrangement,
@@ -558,6 +585,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       travelMode,
       rawConfig,
     });
+
     onContinue(
       selectedArrangement,
       pricingData,
