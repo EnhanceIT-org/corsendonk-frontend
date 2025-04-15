@@ -3,7 +3,8 @@ import React from "react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
-import { ageCategoryMapping, BoardMapping, HOTEL_NAME_MAPPING} from "@/mappings/mappings";
+// Corrected import path and added optionalProducts import
+import { ageCategoryMapping, BoardMapping, HOTEL_NAME_MAPPING, optionalProducts } from "../../mappings/mappings";
 
 function getPriceForSingleRoom(
   nightlyPricing: any,
@@ -193,37 +194,27 @@ export function BookingDetails({
       </div>
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-4">Extras</h2>
+        <div className="space-y-2">
+          {optionalProducts.map((product) => {
+            // Check if the extra is selected in bookingData
+            if (bookingData.optionalExtras[product.key]) {
+              return (
+                <div key={product.key} className="flex justify-between items-center">
+                  <span>{product.name}</span>
+                  {/* Price is now part of the total, just show the name */}
+                </div>
+              );
+            }
+            return null; // Don't render if not selected
+          })}
 
-        {bookingData.optionalExtras.lunch && (
-          <div className="flex justify-between items-center mb-2">
-            <span>Lunch</span>
-            <span>
-              €
-              {15 *
-                bookingData.reservations.length *
-                calculateTotalHumans(bookingData)}
-            </span>
-          </div>
-        )}
-
-        {bookingData.optionalExtras.bicycleRent && (
-          <div className="flex justify-between items-center">
-            <span>Bicycle Rental</span>
-            <span>
-              €
-              {25 *
-                bookingData.reservations.length *
-                calculateTotalHumans(bookingData)}
-            </span>
-          </div>
-        )}
-
-        {!bookingData.optionalExtras.lunch &&
-          !bookingData.optionalExtras.bicycleRent && (
-            <div className="text-gray-500 italic">
-              Geen extra's geselecteerd
-            </div>
-          )}
+          {/* Check if *any* optional extra is selected */}
+          {!Object.values(bookingData.optionalExtras).some(selected => selected) && (
+             <div className="text-gray-500 italic">
+               Geen extra's geselecteerd
+             </div>
+           )}
+        </div>
       </div>
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center">

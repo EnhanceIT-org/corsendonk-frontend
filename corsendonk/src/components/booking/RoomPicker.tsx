@@ -6,7 +6,8 @@ import { RoomDetailModal } from "./RoomDetailModal";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import axios from "axios";
-import { fetchWithBaseUrl } from "@/lib/utils";
+// Corrected import path for fetchWithBaseUrl - Assuming it's in lib relative to src
+import { fetchWithBaseUrl } from "../../lib/utils";
 import {
   Coffee,
   UtensilsCrossed,
@@ -19,13 +20,13 @@ import {
   Footprints,
 } from "lucide-react";
 // --- Ensure mappings are correctly imported ---
+// Corrected import path and import new optionalProducts structure
 import {
   ageCategoryMapping,
   BoardMapping,
-  PRODUCT_NAMES,
-  OPTIONAL_PRODUCT_IDS,
+  optionalProducts, // Import new structure
   HOTEL_NAME_MAPPING,
-} from "@/mappings/mappings";
+} from "../../mappings/mappings";
 // --- End mapping imports ---
 import { PricingSummary } from "./PricingSummary";
 import { Breadcrumb } from "./Breadcrumb";
@@ -112,70 +113,20 @@ function getNightlyRateId(
   const rateId = BoardMapping[hotel]?.[mode]?.[lengthKey]?.[board] || "";
 
   return rateId;
-}
-
-// --- Helper function: Get Product Charging Method ---
-function getProductChargingMethodFn(
-  hotelKey: string,
-  productName: string,
-  config: any,
-): string | null {
-  // Safeguards
-  if (
-    !config ||
-    !config[hotelKey] ||
-    !config[hotelKey].rawConfig ||
-    !config[hotelKey].rawConfig.Configurations ||
-    config[hotelKey].rawConfig.Configurations.length === 0
-  ) {
-    // ADDED LOG
-    console.warn(
-      `[getProductChargingMethodFn] Invalid config structure for hotel ${hotelKey}.`,
-    );
-    return null;
-  }
-
-  const raw = config[hotelKey].rawConfig;
-  const products = raw.Configurations[0].Enterprise?.Products || [];
-
-  // ADDED LOG (Optional: uncomment if needed, can be verbose)
-  // console.log(`[getProductChargingMethodFn] Searching products in hotel ${hotelKey}:`, products.map((p: any) => p.Name?.['en-GB']));
-
-  // Find the product by matching its "Name" to productName
-  const product = products.find((p: any) => p.Name?.["en-GB"] === productName);
-
-  if (!product) {
-    // ADDED LOG
-    //  console.warn(`[getProductChargingMethodFn] Product "${productName}" not found in hotel ${hotelKey}.`);
-    return null;
-  }
-
-  // ADDED LOG
-  // console.log(`[getProductChargingMethodFn] Found product "${productName}". Charging: ${product.Charging}`);
-  return product.Charging || null;
-}
+} // <-- Added missing closing brace here
 
 // --- Helper function: Calculate Total Price ---
+// Updated to use the new optionalProducts mapping
 function calculateTotalPrice(
   arrangement: any,
-  pricingDataObj: any, // Renamed to avoid conflict
-  travelMode: string,
-  adults: number,
-  children: number,
-  rooms: number,
-  config: any,
-  selectedOptionalProducts: { [key: string]: boolean },
-  sumNightAdultsFn: (night: any) => number, // Pass the function type
-  sumNightChildrenFn: (night: any) => number, // Pass the function type
-  getProductPriceFn: (
-    hotelKey: string,
-    productName: string,
-    config: any,
-  ) => number,
+  adults: number, // Total adults for the booking
+  children: number, // Total children for the booking
+  selectedOptionalProductsState: { [key: string]: boolean }, // Renamed state variable
+  sumNightAdultsFn: (night: any) => number,
+  sumNightChildrenFn: (night: any) => number,
   pricesPerNight: number[],
 ): number {
   if (!arrangement?.night_details) {
-    // ADDED LOG
     console.warn(
       "[calculateTotalPrice] No night_details in arrangement. Returning 0.",
     );
@@ -183,102 +134,82 @@ function calculateTotalPrice(
   }
 
   // 1) Start total with the sum of all room-night prices.
-  let total = 0;
-  for (const price of pricesPerNight) {
-    total += price;
-  }
+  let total = pricesPerNight.reduce((sum, price) => sum + price, 0);
+  console.log(`[calculateTotalPrice] Initial total from rooms: ${total}`);
 
-  const activeOptionalProductNames = Object.keys(selectedOptionalProducts)
-    .filter((key) => selectedOptionalProducts[key])
-    .map((key) => PRODUCT_NAMES[key]); // Use the central mapping
+  // 2) Get active optional product keys from the state
+  const activeOptionalProductKeys = Object.keys(selectedOptionalProductsState)
+    .filter((key) => selectedOptionalProductsState[key]);
+  console.log(`[calculateTotalPrice] Active optional product keys: ${activeOptionalProductKeys.join(', ')}`);
 
-  // 3) Keep track for 'Once' and 'PerPerson'
-  const processedOnce = new Set<string>();
-  const processedPerPerson = new Set<string>();
+  // 3) Keep track for 'Once' and 'PerPerson' charging methods across the whole trip
+  const processedOnce = new Set<string>(); // Stores product 'key'
+  const processedPerPerson = new Set<string>(); // Stores product 'key'
 
-  // 4) Loop over each night for optional products
-  for (const night of arrangement.night_details) {
-    const assignedAdults = sumNightAdultsFn(night); // Use the passed function
-    const assignedChildren = sumNightChildrenFn(night); // Use the passed function
+  // 4) Loop over each night to calculate costs for 'PerPersonNight'
+  //    and handle 'Once'/'PerPerson' the first time they appear.
+  arrangement.night_details.forEach((night: any, nightIndex: number) => {
+    const assignedAdults = sumNightAdultsFn(night);
+    const assignedChildren = sumNightChildrenFn(night);
+    const totalGuestsThisNight = assignedAdults + assignedChildren;
+    console.log(`[calculateTotalPrice] Night ${nightIndex + 1} (${night.date}): ${totalGuestsThisNight} guests`);
 
-    for (const optProductName of activeOptionalProductNames) {
-      // Get price and charging method (these functions should log internally)
-      const productPrice = getProductPriceFn(
-        night.hotel,
-        optProductName,
-        config,
-      );
-      const chargingMethod = getProductChargingMethodFn(
-        night.hotel,
-        optProductName,
-        config,
-      );
+    for (const productKey of activeOptionalProductKeys) {
+      // Find the product details from the imported mapping
+      const product = optionalProducts.find((p) => p.key === productKey);
 
-      if (!chargingMethod) {
-        // ADDED LOG
-        console.warn(
-          `  - Product "${optProductName}": No charging method found. Skipping.`,
-        );
+      if (!product) {
+        console.warn(`[calculateTotalPrice] Optional product with key "${productKey}" not found in mappings. Skipping.`);
         continue;
       }
 
-      const hotelProductKey = `${night.hotel}-${optProductName}`;
       let addedCost = 0;
 
-      switch (chargingMethod) {
+      switch (product.chargingMethod) {
         case "Once":
-          if (!processedOnce.has(hotelProductKey)) {
-            addedCost = productPrice;
+          // Add only if this product key hasn't been processed yet for the whole trip
+          if (!processedOnce.has(productKey)) {
+            addedCost = product.price;
             total += addedCost;
-            processedOnce.add(hotelProductKey);
-            // ADDED LOG
-            console.log(
-              `  - Product "${optProductName}": Added ${addedCost} (Once)`,
-            );
+            processedOnce.add(productKey); // Mark as processed for the trip
+            console.log(`  - Product "${product.name}" (${productKey}): Added ${addedCost} (Once)`);
           } else {
-            // ADDED LOG
-            console.log(
-              `  - Product "${optProductName}": Skipped (Already added Once for this hotel)`,
-            );
+             console.log(`  - Product "${product.name}" (${productKey}): Skipped (Already added Once for this trip)`);
           }
           break;
 
         case "PerPerson":
-          if (!processedPerPerson.has(hotelProductKey)) {
-            addedCost = productPrice * (assignedAdults + assignedChildren);
-            total += addedCost;
-            processedPerPerson.add(hotelProductKey);
-          } else {
-            // ADDED LOG
-            console.log(
-              `  - Product "${optProductName}": Skipped (Already added PerPerson for this hotel)`,
-            );
-          }
+           // Add only if this product key hasn't been processed yet for the whole trip
+           if (!processedPerPerson.has(productKey)) {
+             // Calculate based on the *total* number of adults/children in the bookingData,
+             // as this is a one-time charge per person for the whole trip.
+             addedCost = product.price * (adults + children);
+             total += addedCost;
+             processedPerPerson.add(productKey); // Mark as processed for the trip
+             console.log(`  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPerson: ${product.price} * ${adults + children} total guests)`);
+           } else {
+              console.log(`  - Product "${product.name}" (${productKey}): Skipped (Already added PerPerson for this trip)`);
+           }
           break;
 
         case "PerPersonNight":
-          addedCost = productPrice * (assignedAdults + assignedChildren);
+          // Add cost for each night based on guests assigned to that night
+          addedCost = product.price * totalGuestsThisNight;
           total += addedCost;
-          // ADDED LOG
-          console.log(
-            `  - Product "${optProductName}": Added ${addedCost} (PerPersonNight: ${productPrice} * ${
-              assignedAdults + assignedChildren
-            })`,
-          );
+          console.log(`  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPersonNight: ${product.price} * ${totalGuestsThisNight} guests this night)`);
           break;
 
         default:
-          // ADDED LOG
-          console.warn(
-            `  - Product "${optProductName}": Unknown charging method "${chargingMethod}". Skipping.`,
-          );
+          console.warn(`  - Product "${product.name}" (${productKey}): Unknown charging method "${product.chargingMethod}". Skipping.`);
           break;
       }
     }
-  }
+  });
 
+  console.log(`[calculateTotalPrice] Final calculated total: ${total}`);
   return total;
 }
+
 
 // --- Helper function: Distribute Guests ---
 // NOTE: This function mutates the chosenRooms array passed to it.
@@ -411,36 +342,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   const { startDate, arrangementLength, rooms, adults, children, travelMode } =
     bookingData;
 
-  // --- Helper function: Get Product Price (defined inside component scope) ---
-  const getProductPriceFn = (
-    hotelKey: string,
-    productName: string,
-    config: any,
-  ): number => {
-    if (
-      config &&
-      config[hotelKey] &&
-      config[hotelKey].rawConfig &&
-      config[hotelKey].rawConfig.Configurations &&
-      config[hotelKey].rawConfig.Configurations.length > 0
-    ) {
-      const raw = config[hotelKey].rawConfig;
-      const products = raw.Configurations[0].Enterprise?.Products || [];
-
-      // ADDED LOG (Optional: uncomment if needed)
-      // console.log(`[getProductPriceFn] Searching products in hotel ${hotelKey}:`, products.map((p: any) => p.Name?.['en-GB']));
-
-      const product = products.find(
-        (p: any) =>
-          p.Name?.["en-GB"] === productName && p.Prices && p.Prices["EUR"],
-      );
-
-      if (product) {
-        return product.Prices["EUR"];
-      }
-    }
-    return 0;
-  };
+  // Removed getProductPriceFn helper function
 
   function getPriceForSingleRoom(
     nightlyPricing: any,
@@ -952,36 +854,28 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
   // --- Effect: Calculate Total Price ---
   useEffect(() => {
+    // Updated call to calculateTotalPrice with correct arguments
     const newTotal = calculateTotalPrice(
       selectedArrangement,
-      pricingData, // Pass the state variable
-      travelMode,
+      // pricingData removed
       adults,
       children,
-      rooms, // Pass the prop directly
-      rawConfig,
-      selectedOptionalProducts,
-      sumNightAdults, // Pass the function defined above
-      sumNightChildren, // Pass the function defined above
-      getProductPriceFn, // Pass the function defined in this component
+      selectedOptionalProducts, // Pass the state here
+      sumNightAdults,
+      sumNightChildren,
       pricesPerNight,
     );
     setTotalPrice(newTotal);
   }, [
-    // Dependencies match calculateTotalPrice inputs that change
+    // Dependencies updated
     pricesPerNight,
     selectedArrangement,
-    pricingData,
-    rawConfig,
-    selectedOptionalProducts,
-    travelMode,
+    selectedOptionalProducts, // Add state as dependency
     adults,
     children,
-    rooms, // Add rooms prop as dependency
-    // getProductPriceFn is defined in scope and stable, no need to list usually
-    // sumNightAdults/Children are defined above component and stable
-    arrangementLength, // Needed by calculateTotalPrice -> getNightlyRateId
+    // Removed pricingData, rawConfig, travelMode, rooms, arrangementLength as they are not direct inputs anymore or stable
   ]);
+
 
   // --- Handler: Board Toggle ---
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
@@ -1036,51 +930,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     }
     return { name: "Unknown", imageUrl: null };
   };
-
-  // --- Helper: Compute Optional Product Mapping (for final booking) ---
-  function computeOptionalProductsMapping(): Record<string, string[]> {
-    const mapping: Record<string, string[]> = {
-      hotel1: [],
-      hotel2: [],
-      hotel3: [],
-    };
-
-    // ADDED LOG
-    console.log(
-      "[computeOptionalProductsMapping] Computing mapping with selected:",
-      selectedOptionalProducts,
-      "and OPTIONAL_PRODUCT_IDS:",
-      OPTIONAL_PRODUCT_IDS,
-    );
-
-    if (selectedOptionalProducts.lunch && OPTIONAL_PRODUCT_IDS.lunch) {
-      mapping.hotel1.push(OPTIONAL_PRODUCT_IDS.lunch.hotel1);
-      mapping.hotel2.push(OPTIONAL_PRODUCT_IDS.lunch.hotel2);
-      mapping.hotel3.push(OPTIONAL_PRODUCT_IDS.lunch.hotel3);
-    }
-
-    if (travelMode === "cycling") {
-      if (
-        selectedOptionalProducts.bicycleRent &&
-        OPTIONAL_PRODUCT_IDS.bicycleRent
-      ) {
-        mapping.hotel1.push(OPTIONAL_PRODUCT_IDS.bicycleRent.hotel1);
-        mapping.hotel2.push(OPTIONAL_PRODUCT_IDS.bicycleRent.hotel2);
-        mapping.hotel3.push(OPTIONAL_PRODUCT_IDS.bicycleRent.hotel3);
-      }
-      if (
-        selectedOptionalProducts.bicycleTransport &&
-        OPTIONAL_PRODUCT_IDS.bicycleTransport
-      ) {
-        mapping.hotel1.push(OPTIONAL_PRODUCT_IDS.bicycleTransport.hotel1);
-        mapping.hotel2.push(OPTIONAL_PRODUCT_IDS.bicycleTransport.hotel2);
-        mapping.hotel3.push(OPTIONAL_PRODUCT_IDS.bicycleTransport.hotel3);
-      }
-    }
-    // ADDED LOG
-    console.log("[computeOptionalProductsMapping] Result:", mapping);
-    return mapping;
-  }
 
   // --- Render Logic ---
   if (loading)
@@ -1580,9 +1429,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           travelMode={travelMode}
           selectedOptionalProducts={selectedOptionalProducts}
           setSelectedOptionalProducts={setSelectedOptionalProducts}
-          rawConfig={rawConfig}
-          getProductPriceFn={getProductPriceFn} // Pass the function
-          getProductChargingMethodFn={getProductChargingMethodFn} // Pass the function
         />
 
         <PricingSummary

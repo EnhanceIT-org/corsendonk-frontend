@@ -1,15 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import validator from "validator";
-import { Textarea } from "@/components/ui/textarea";
+// Corrected import paths for UI components
+import { Textarea } from "../ui/textarea";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
-} from "@/components/ui/tooltip";
+} from "../ui/tooltip";
 import { Info } from "lucide-react";
 import countries from "i18n-iso-countries";
 import nlLocale from "i18n-iso-countries/langs/nl.json";
+
+// Declare the SecureFields type on the global window object
+declare global {
+  interface Window {
+    SecureFields: any; // Use 'any' for simplicity, or define a more specific type if available
+  }
+}
 
 export function PersonalInformationForm({ bookingData, travelMode }) {
   const [formData, setFormData] = useState({

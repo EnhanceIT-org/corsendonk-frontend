@@ -100,49 +100,31 @@ export const BoardMapping: any = {
     hotel3: "Turnova",
   };
 
-
 /**
- * Centralized product names so we only edit them here.
- * Keys match how we store 'selectedOptionalProducts' in code (e.g. lunch, bicycleRent, etc.).
- * You can add or rename as needed.
+ * Simplified structure for optional products (Production).
+ * Using the same values as dev for now, adjust if needed.
  */
-
-//TO DO probleem hier is dat private products niet in getconfig voorkomen, waar onze code in zoekt
-export const PRODUCT_NAMES = {
-  // Board types
-  breakfast: "Breakfast (Package)",
-
-  // Optional extras
-  lunch: "Lunch package",
-  koffernabreng: "Koffernabreng",
-  bicycleRent: "Bicylce renting",           // wrong spelling on purpose
-  bicycleTransport: "Bicycle transport cost",
-};
-
-/**
- * Centralized IDs (if each product has a unique ID per hotel).
- * This is used in computeOptionalProductsMapping or anywhere we push product IDs.
- */
-
-//TO DO, voorlopig openbaar product id genomen
-export const OPTIONAL_PRODUCT_IDS: Record<
-  string,
-  { hotel1: string; hotel2: string; hotel3: string }
-> = {
-  lunch: {
-    hotel1: "4cebf34e-a051-44c5-a7f1-adf300979c5f", //3 course dinner for now
-    hotel2: "5d99485f-3079-4152-b3fd-ae5b00f4bb4c", //3 course dinner for now
-    hotel3: "e0de7f10-9bc1-4dc5-b1e0-aaa700e8eb9f", // Early check-in for now
+export const optionalProducts = [
+  {
+    key: "lunch",
+    name: "Lunch pakket",
+    price: 15,
+    chargingMethod: "PerPersonNight",
+    availableFor: ["walking", "cycling"],
   },
-  bicycleRent: {
-    hotel1: "4cebf34e-a051-44c5-a7f1-adf300979c5f", //3 course dinner for now
-    hotel2: "5d99485f-3079-4152-b3fd-ae5b00f4bb4c", //3 course dinner for now
-    hotel3: "e0de7f10-9bc1-4dc5-b1e0-aaa700e8eb9f", // Early check-in for now
+  {
+    key: "bicycleRent",
+    name: "Fiets Verhuur",
+    price: 25,
+    chargingMethod: "PerPersonNight",
+    availableFor: ["cycling"],
   },
-  bicycleTransport: {
-    hotel1: "4cebf34e-a051-44c5-a7f1-adf300979c5f", //3 course dinner for now
-    hotel2: "5d99485f-3079-4152-b3fd-ae5b00f4bb4c", //3 course dinner for now
-    hotel3: "e0de7f10-9bc1-4dc5-b1e0-aaa700e8eb9f", // Early check-in for now
+  {
+    key: "bicycleTransport",
+    name: "Fiets Transport",
+    price: 10,
+    chargingMethod: "Once",
+    availableFor: ["cycling"],
   },
-  // Add more as needed...
-};
+  // Add more optional products here if needed for production
+];
