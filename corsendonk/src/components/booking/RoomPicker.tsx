@@ -1407,13 +1407,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                         </div>
                       ))}
                     </div>
-                    <div className="mt-6">
+      <div className="mt-6">
                       <div className="flex gap-4 items-center">
                         <div className="flex items-center gap-2">
                           <Coffee className="w-5 h-5 text-[#2C4A3C]" />
                           <span className="text-sm text-gray-600">Ontbijt</span>
                         </div>
-                        {selectedBoardOption === "halfboard" && (
+                        {night.board_type === "HB" && (
                           <div className="flex items-center gap-2">
                             <UtensilsCrossed className="w-5 h-5 text-[#2C4A3C]" />
                             <span className="text-sm text-gray-600">
@@ -1422,6 +1422,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                           </div>
                         )}
                       </div>
+                      {night.hotel === "hotel3" &&
+                        night.board_type === "B&B" &&
+                        selectedBoardOption === "halfboard" && (
+                          <p className="mt-2 text-sm text-orange-600">
+                            Externe restaurants volboekt, enkel ontbijt mogelijk
+                          </p>
+                        )}
                       <div className="mt-2 flex items-center gap-2">
                         <User className="w-5 h-5 text-[#2C4A3C]" />
                         <span className="text-sm text-gray-600">

@@ -149,71 +149,86 @@ export function BookingDetails({
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-6">Details van uw boeking</h2>
-        {bookingData.reservations.map((reservation, index) => (
-          <div
-            key={index}
-            className="border-b last:border-b-0 pb-6 mb-6 last:pb-0 last:mb-0"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="font-medium text-[#2C4A3C]">
-                  {formatDutchDate(reservation.date)}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {getHotelDisplayName(reservation.hotel)}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Coffee className="w-5 h-5 text-[#2C4A3C]" />
-                {bookingData.mealPlan === "halfboard" && (
-                  <UtensilsCrossed className="w-5 h-5 text-[#2C4A3C]" />
-                )}
-              </div>
-            </div>
-            <div className="space-y-4">
-              {reservation.chosen_rooms.map((room, roomIndex) => (
-                <div key={roomIndex} className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{room.category_name}</span>
-                      <button
-                        className="text-[#2C4A3C] hover:text-[#2C4A3C]/80"
-                        onClick={() =>
-                          onShowRoomDetail({
-                            ...room,
-                            hotel: reservation.hotel,
-                          })
-                        }
-                      >
-                        <Info className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <span className="font-medium">
-                      €
-                      {getPriceForSingleRoom(
-                        bookingData.pricing_data[bookingData.mealPlan],
-                        reservation.hotel,
-                        bookingData.mealPlan,
-                        room,
-                        reservation,
-                        bookingData.travelMode,
-                        bookingData.arrangementLength,
-                        reservation.restaurant_chosen, // NEW: Pass restaurant_chosen
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Users className="w-4 h-4" />
-                    <span>
-                      {room.occupant_countAdults} Volwassenen,{" "}
-                      {room.occupant_countChildren} Kinderen
-                    </span>
-                  </div>
+        {bookingData.reservations.map((reservation, index) => {
+          
+          const boardKey =
+            reservation.board_type === "HB" ? "halfboard" : "breakfast";
+
+          const nightlyPricing = bookingData.pricing_data[boardKey];
+
+          return (
+            <div
+              key={index}
+              className="border-b last:border-b-0 pb-6 mb-6 last:pb-0 last:mb-0"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="font-medium text-[#2C4A3C]">
+                    {formatDutchDate(reservation.date)}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {getHotelDisplayName(reservation.hotel)}
+                  </p>
                 </div>
-              ))}
+                <div className="flex items-center gap-2">
+                  <Coffee className="w-5 h-5 text-[#2C4A3C]" />
+                  {reservation.board_type === "HB" && (
+                    <UtensilsCrossed className="w-5 h-5 text-[#2C4A3C]" />
+                  )}
+                </div>
+              </div>
+              <div className="space-y-4">
+                {reservation.hotel === "hotel3" &&
+                  reservation.board_type === "B&B" &&
+                  bookingData.mealPlan === "halfboard" && (
+                    <p className="mt-1 text-sm text-orange-600">
+                      Externe restaurants volboekt, enkel ontbijt mogelijk
+                    </p>
+                  )}
+                {reservation.chosen_rooms.map((room, roomIndex) => (
+                  <div key={roomIndex} className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{room.category_name}</span>
+                        <button
+                          className="text-[#2C4A3C] hover:text-[#2C4A3C]/80"
+                          onClick={() =>
+                            onShowRoomDetail({
+                              ...room,
+                              hotel: reservation.hotel,
+                            })
+                          }
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <span className="font-medium">
+                        €
+                        {getPriceForSingleRoom(
+                          nightlyPricing,
+                          reservation.hotel,
+                          boardKey,
+                          room,
+                          reservation,
+                          bookingData.travelMode,
+                          bookingData.arrangementLength,
+                          reservation.restaurant_chosen, // NEW: Pass restaurant_chosen
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Users className="w-4 h-4" />
+                      <span>
+                        {room.occupant_countAdults} Volwassenen,{" "}
+                        {room.occupant_countChildren} Kinderen
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-4">Extras</h2>
