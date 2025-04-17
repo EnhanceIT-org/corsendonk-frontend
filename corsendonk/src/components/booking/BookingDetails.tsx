@@ -14,10 +14,11 @@ function getPriceForSingleRoom(
   reservation: any,
   travelMode: string,
   arrangementLength: number, // Added parameter
+  restaurantChosen: string | null, // NEW: Add restaurant parameter
 ): number {
   const nightlyArr = nightlyPricing?.nightlyPricing || [];
   const foundEntry = nightlyArr.find(
-    (entry: any) => entry.date === reservation.date,
+    (entry: any) => entry.date === reservation.date, // Assuming reservation object has the date
   );
   if (!foundEntry) return 0;
   if (!foundEntry?.pricing.CategoryPrices) return 0;
@@ -69,7 +70,8 @@ function getPriceForSingleRoom(
     });
   }
   if (!occupantPriceEntry) return 0;
-  const rateId = getNightlyRateId(hotel, boardType, travelMode, arrangementLength);
+  // NEW: Pass restaurantChosen to getNightlyRateId
+  const rateId = getNightlyRateId(hotel, boardType, travelMode, arrangementLength, restaurantChosen);
   const rPrice = occupantPriceEntry.RateGroupPrices.find(
     (rgp: any) => rgp.MinRateId === rateId,
   );
@@ -80,14 +82,34 @@ function getPriceForSingleRoom(
 }
 function getNightlyRateId(
   hotel: string,
-  boardType: string,
+  boardTypeInput: string, // Renamed to avoid conflict with variable name
   travelMode: string,
-  arrangementLength: number, // Added parameter
+  arrangementLength: number,
+  restaurantChosen: string | null, // NEW: Add restaurant parameter
 ) {
+  // Determine board key ('breakfast' or 'halfboard') from input ('breakfast' or 'halfboard')
+  const board = boardTypeInput === "halfboard" ? "halfboard" : "breakfast";
   let mode = travelMode;
   if (mode !== "walking" && mode !== "cycling") mode = "walking";
   const lengthKey = arrangementLength === 3 ? "3D" : "4D";
-  return BoardMapping[hotel]?.[mode]?.[lengthKey]?.[boardType] || "";
+
+  let rateId = "";
+  const hotelRates = BoardMapping[hotel]?.[mode]?.[lengthKey];
+
+  if (hotelRates) {
+    // NEW: Check for hotel3 halfboard with restaurant
+    if (hotel === "hotel3" && board === "halfboard" && restaurantChosen && (restaurantChosen === "Bink" || restaurantChosen === "Bardo")) {
+      rateId = hotelRates[board]?.[restaurantChosen] || "";
+    } else {
+      // Original logic for other hotels/boards or if restaurant is not applicable/provided
+      // Ensure we access the correct board key ('breakfast' or 'halfboard')
+      rateId = hotelRates[board] || "";
+    }
+  }
+   // ADDED LOG for debugging rate ID lookup
+   console.log(`[BookingDetails/getNightlyRateId] Lookup: hotel=${hotel}, board=${board}, mode=${mode}, length=${lengthKey}, restaurant=${restaurantChosen || 'N/A'} => rateId=${rateId || 'Not Found'}`);
+
+  return rateId;
 }
 
 function calculateTotalHumans(bookingData): number {
@@ -176,7 +198,8 @@ export function BookingDetails({
                         reservation,
                         bookingData.travelMode,
                         bookingData.arrangementLength,
-                      )}
+                        reservation.restaurant_chosen, // NEW: Pass restaurant_chosen
+                      ).toFixed(2)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">

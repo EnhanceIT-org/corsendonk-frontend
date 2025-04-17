@@ -105,15 +105,31 @@ function getNightlyRateId(
   boardType: string, // "HB" or "B&B"
   travelMode: string,
   arrangementLength: number,
+  restaurantChosen: string | null, // NEW: Add restaurant parameter
 ) {
   const board = boardType === "HB" ? "halfboard" : "breakfast";
   let mode = travelMode;
   if (mode !== "walking" && mode !== "cycling") mode = "walking";
   const lengthKey = arrangementLength === 3 ? "3D" : "4D";
-  const rateId = BoardMapping[hotel]?.[mode]?.[lengthKey]?.[board] || "";
+
+  let rateId = "";
+  const hotelRates = BoardMapping[hotel]?.[mode]?.[lengthKey];
+
+  if (hotelRates) {
+    // NEW: Check for hotel3 halfboard with restaurant
+    if (hotel === "hotel3" && board === "halfboard" && restaurantChosen && (restaurantChosen === "Bink" || restaurantChosen === "Bardo")) {
+      rateId = hotelRates[board]?.[restaurantChosen] || "";
+    } else {
+      // Original logic for other hotels/boards or if restaurant is not applicable/provided
+      rateId = hotelRates[board] || "";
+    }
+  }
+
+  // ADDED LOG for debugging rate ID lookup
+  console.log(`[getNightlyRateId] Lookup: hotel=${hotel}, board=${board}, mode=${mode}, length=${lengthKey}, restaurant=${restaurantChosen || 'N/A'} => rateId=${rateId || 'Not Found'}`);
 
   return rateId;
-} // <-- Added missing closing brace here
+}
 
 // --- Helper function: Calculate Total Price ---
 // Updated to use the new optionalProducts mapping
@@ -350,12 +366,18 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     boardType: string, // "HB" or "B&B" based on night.board_type
     travelMode: string,
     room: any,
-    childrenCount: number,
-    adultsCount: number,
-    arrangementLengthParam: number,
-  ): number {
-    if (!nightlyPricing?.CategoryPrices) {
-      return 0;
+  childrenCount: number,
+  adultsCount: number,
+  arrangementLengthParam: number,
+  restaurantChosen: string | null, // NEW: Add restaurant parameter
+): number {
+  // ADDED LOG
+  // console.log(`[getPriceForSingleRoom] Args: hotel=${hotel}, boardType=${boardType}, travelMode=${travelMode}, roomCatId=${room.category_id}, children=${childrenCount}, adults=${adultsCount}, length=${arrangementLengthParam}, restaurant=${restaurantChosen}`);
+
+  if (!nightlyPricing?.CategoryPrices) {
+    // ADDED LOG
+    // console.log(`[getPriceForSingleRoom] No CategoryPrices found in nightlyPricing.`);
+    return 0;
     }
     const cat = nightlyPricing.CategoryPrices.find(
       (cp: any) => cp.CategoryId === room.category_id,
@@ -416,6 +438,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     }
 
     if (!occupantPriceEntry) {
+      // ADDED LOG
+      // console.log(`[getPriceForSingleRoom] No OccupancyPrice entry found for combination:`, occupantArray);
       return 0;
     }
 
@@ -424,7 +448,11 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       boardType,
       travelMode,
       arrangementLengthParam,
+      restaurantChosen, // NEW: Pass restaurantChosen
     );
+
+    // ADDED LOG
+    // console.log(`[getPriceForSingleRoom] Looking for rateId: ${rateId}`);
 
     const rPrice = occupantPriceEntry.RateGroupPrices.find(
       (rgp: any) => rgp.MinRateId === rateId,
@@ -832,8 +860,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
               childrenCount,
               adultsCount,
               arrangementLength,
+              night.restaurant_chosen, // NEW: Pass restaurant_chosen
             );
-
+            // ADDED LOG
+            // console.log(`    - Room ${roomIndex + 1} (${room.category_name}): Price = ${roomPrice}`);
             return acc + roomPrice;
           },
           0,
@@ -1143,9 +1173,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                       room.occupant_countChildren || 0,
                                       room.occupant_countAdults || 0,
                                       arrangementLength,
+                                      night.restaurant_chosen, // NEW: Pass restaurant_chosen here too for display consistency
                                     );
                                     return price > 0
-                                      ? `€${price}`
+                                      ? `€${price.toFixed(2)}` // Format price
                                       : "Prijs niet beschikbaar";
                                   })()}
                                 </span>

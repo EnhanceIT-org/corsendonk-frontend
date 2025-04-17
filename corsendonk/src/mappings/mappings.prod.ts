@@ -70,27 +70,52 @@ export const BoardMapping: any = {
         },
       },
     },
+    // Hotel 3: Turnova
     hotel3: {
-      walking: {
-        "3D": {
-          halfboard: "1dfa2775-e8ac-43aa-99eb-b2b800922b9a", // Walking package Half Board 3D
-          breakfast: "019b1226-6a66-446a-aab2-b2b80092e066", // Walking package Breakfast 3D
+        walking: {
+            "3D": {
+                halfboard: {
+                    // 2025 - 3 day Walking package including dinner Bink with Suitcase delivery
+                    "Bink": "e5023d34-e58d-4e4c-88ee-b2b8009283f5",
+                    // 2025 - 3 day Walking package including dinner Bardo with Suitcase delivery
+                    "Bardo": "1dfa2775-e8ac-43aa-99eb-b2b800922b9a",
+                },
+                // 2025 - 3 day Walking package with Suitcase delivery
+                "breakfast": "019b1226-6a66-446a-aab2-b2b80092e066",
+            },
+            "4D": {
+                halfboard: {
+                    // 2025 - 4 day Walking package including dinner Bink with Suitcase delivery
+                    "Bink": "96fbcbba-115b-49b4-a678-b29200ba4c1a",
+                    // 2025 - 4 day Walking package including dinner Bardo with Suitcase delivery
+                    "Bardo": "629f0a44-7a26-41cb-8561-b29200b86f94",
+                },
+                // 2025 - 4 day Walking package with Suitcase delivery
+                "breakfast": "151fe402-8ac3-4c0b-a85d-b29200b95fee",
+            },
         },
-        "4D": {
-          halfboard: "629f0a44-7a26-41cb-8561-b29200b86f94", // Walking package Half Board 4D not found but correct
-          breakfast: "151fe402-8ac3-4c0b-a85d-b29200b95fee", // Walking package Breakfast 4D
+        cycling: {
+            "3D": {
+                halfboard: {
+                    // 2025 - 3 day Bike package including dinner Bink with Suitcase delivery
+                    "Bink": "3f952ecb-1721-440c-8520-b2b8009140d9",
+                    // 2025 - 3 day Bike package including dinner Bardo with Suitcase delivery
+                    "Bardo": "111064ed-b2a0-4a30-8c2c-b2b80090a765",
+                },
+                // 2025 - 3 day Bike package with Suitcase delivery
+                "breakfast": "d2235280-7807-4a75-82b1-b2b80091bf3c",
+            },
+            "4D": {
+                halfboard: {
+                     // 2025 - 4 day Bike package including dinner Bink with Suitcase delivery
+                    "Bink": "20530abd-ad9b-49fd-a483-b29200b9ed5c",
+                    // 2025 - 4 day Bike package including dinner Bardo with Suitcase delivery
+                    "Bardo": "07a69e53-df3a-420b-b0a8-b29200b38d28",
+                },
+                // 2025 - 4 day Bike package with Suitcase delivery
+                "breakfast": "17c0be28-0560-4df2-97d1-b29200b8f8d3",
+            },
         },
-      },
-      cycling: {
-        "3D": {
-          halfboard: "111064ed-b2a0-4a30-8c2c-b2b80090a765", // Cycling package Half Board 3D
-          breakfast: "d2235280-7807-4a75-82b1-b2b80091bf3c", // Cycling package Breakfast 3D
-        },
-        "4D": {
-          halfboard: "07a69e53-df3a-420b-b0a8-b29200b38d28", // Cycling package Half Board 4D not found but correct
-          breakfast: "17c0be28-0560-4df2-97d1-b29200b8f8d3", // Cycling package Breakfast 4D
-        },
-      },
     },
   };
 
