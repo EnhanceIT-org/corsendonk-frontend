@@ -466,6 +466,7 @@ interface BookingData {
     };
   };
   arrangementLength: number;
+  travelMode: "walking" | "cycling";
 }
 
 interface BookingSummaryProps {
@@ -503,7 +504,8 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
     optionalExtras: optionalProducts,
     mealPlan: boardOption,
     total: totalPrice,
-    arrangementLength, // Added
+    arrangementLength: arrangementLength, // Added
+    travelMode: travelMode,
   });
 
   const [showRoomDetailModal, setShowRoomDetailModal] = useState(false);
