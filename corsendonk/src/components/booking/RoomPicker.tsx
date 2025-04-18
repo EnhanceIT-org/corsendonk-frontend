@@ -16,8 +16,8 @@ import {
   User,
   Info,
   XCircle,
+  Mountain,
   Bike,
-  Footprints,
 } from "lucide-react";
 // --- Ensure mappings are correctly imported ---
 // Corrected import path and import new optionalProducts structure
@@ -117,7 +117,12 @@ function getNightlyRateId(
 
   if (hotelRates) {
     // NEW: Check for hotel3 halfboard with restaurant
-    if (hotel === "hotel3" && board === "halfboard" && restaurantChosen && (restaurantChosen === "Bink" || restaurantChosen === "Bardo")) {
+    if (
+      hotel === "hotel3" &&
+      board === "halfboard" &&
+      restaurantChosen &&
+      (restaurantChosen === "Bink" || restaurantChosen === "Bardo")
+    ) {
       rateId = hotelRates[board]?.[restaurantChosen] || "";
     } else {
       // Original logic for other hotels/boards or if restaurant is not applicable/provided
@@ -126,7 +131,11 @@ function getNightlyRateId(
   }
 
   // ADDED LOG for debugging rate ID lookup
-  console.log(`[getNightlyRateId] Lookup: hotel=${hotel}, board=${board}, mode=${mode}, length=${lengthKey}, restaurant=${restaurantChosen || 'N/A'} => rateId=${rateId || 'Not Found'}`);
+  console.log(
+    `[getNightlyRateId] Lookup: hotel=${hotel}, board=${board}, mode=${mode}, length=${lengthKey}, restaurant=${
+      restaurantChosen || "N/A"
+    } => rateId=${rateId || "Not Found"}`,
+  );
 
   return rateId;
 }
@@ -154,9 +163,14 @@ function calculateTotalPrice(
   console.log(`[calculateTotalPrice] Initial total from rooms: ${total}`);
 
   // 2) Get active optional product keys from the state
-  const activeOptionalProductKeys = Object.keys(selectedOptionalProductsState)
-    .filter((key) => selectedOptionalProductsState[key]);
-  console.log(`[calculateTotalPrice] Active optional product keys: ${activeOptionalProductKeys.join(', ')}`);
+  const activeOptionalProductKeys = Object.keys(
+    selectedOptionalProductsState,
+  ).filter((key) => selectedOptionalProductsState[key]);
+  console.log(
+    `[calculateTotalPrice] Active optional product keys: ${activeOptionalProductKeys.join(
+      ", ",
+    )}`,
+  );
 
   // 3) Keep track for 'Once' and 'PerPerson' charging methods across the whole trip
   const processedOnce = new Set<string>(); // Stores product 'key'
@@ -168,14 +182,20 @@ function calculateTotalPrice(
     const assignedAdults = sumNightAdultsFn(night);
     const assignedChildren = sumNightChildrenFn(night);
     const totalGuestsThisNight = assignedAdults + assignedChildren;
-    console.log(`[calculateTotalPrice] Night ${nightIndex + 1} (${night.date}): ${totalGuestsThisNight} guests`);
+    console.log(
+      `[calculateTotalPrice] Night ${nightIndex + 1} (${
+        night.date
+      }): ${totalGuestsThisNight} guests`,
+    );
 
     for (const productKey of activeOptionalProductKeys) {
       // Find the product details from the imported mapping
       const product = optionalProducts.find((p) => p.key === productKey);
 
       if (!product) {
-        console.warn(`[calculateTotalPrice] Optional product with key "${productKey}" not found in mappings. Skipping.`);
+        console.warn(
+          `[calculateTotalPrice] Optional product with key "${productKey}" not found in mappings. Skipping.`,
+        );
         continue;
       }
 
@@ -188,35 +208,51 @@ function calculateTotalPrice(
             addedCost = product.price;
             total += addedCost;
             processedOnce.add(productKey); // Mark as processed for the trip
-            console.log(`  - Product "${product.name}" (${productKey}): Added ${addedCost} (Once)`);
+            console.log(
+              `  - Product "${product.name}" (${productKey}): Added ${addedCost} (Once)`,
+            );
           } else {
-             console.log(`  - Product "${product.name}" (${productKey}): Skipped (Already added Once for this trip)`);
+            console.log(
+              `  - Product "${product.name}" (${productKey}): Skipped (Already added Once for this trip)`,
+            );
           }
           break;
 
         case "PerPerson":
-           // Add only if this product key hasn't been processed yet for the whole trip
-           if (!processedPerPerson.has(productKey)) {
-             // Calculate based on the *total* number of adults/children in the bookingData,
-             // as this is a one-time charge per person for the whole trip.
-             addedCost = product.price * (adults + children);
-             total += addedCost;
-             processedPerPerson.add(productKey); // Mark as processed for the trip
-             console.log(`  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPerson: ${product.price} * ${adults + children} total guests)`);
-           } else {
-              console.log(`  - Product "${product.name}" (${productKey}): Skipped (Already added PerPerson for this trip)`);
-           }
+          // Add only if this product key hasn't been processed yet for the whole trip
+          if (!processedPerPerson.has(productKey)) {
+            // Calculate based on the *total* number of adults/children in the bookingData,
+            // as this is a one-time charge per person for the whole trip.
+            addedCost = product.price * (adults + children);
+            total += addedCost;
+            processedPerPerson.add(productKey); // Mark as processed for the trip
+            console.log(
+              `  - Product "${
+                product.name
+              }" (${productKey}): Added ${addedCost} (PerPerson: ${
+                product.price
+              } * ${adults + children} total guests)`,
+            );
+          } else {
+            console.log(
+              `  - Product "${product.name}" (${productKey}): Skipped (Already added PerPerson for this trip)`,
+            );
+          }
           break;
 
         case "PerPersonNight":
           // Add cost for each night based on guests assigned to that night
           addedCost = product.price * totalGuestsThisNight;
           total += addedCost;
-          console.log(`  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPersonNight: ${product.price} * ${totalGuestsThisNight} guests this night)`);
+          console.log(
+            `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPersonNight: ${product.price} * ${totalGuestsThisNight} guests this night)`,
+          );
           break;
 
         default:
-          console.warn(`  - Product "${product.name}" (${productKey}): Unknown charging method "${product.chargingMethod}". Skipping.`);
+          console.warn(
+            `  - Product "${product.name}" (${productKey}): Unknown charging method "${product.chargingMethod}". Skipping.`,
+          );
           break;
       }
     }
@@ -225,7 +261,6 @@ function calculateTotalPrice(
   console.log(`[calculateTotalPrice] Final calculated total: ${total}`);
   return total;
 }
-
 
 // --- Helper function: Distribute Guests ---
 // NOTE: This function mutates the chosenRooms array passed to it.
@@ -366,18 +401,18 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     boardType: string, // "HB" or "B&B" based on night.board_type
     travelMode: string,
     room: any,
-  childrenCount: number,
-  adultsCount: number,
-  arrangementLengthParam: number,
-  restaurantChosen: string | null, // NEW: Add restaurant parameter
-): number {
-  // ADDED LOG
-  // console.log(`[getPriceForSingleRoom] Args: hotel=${hotel}, boardType=${boardType}, travelMode=${travelMode}, roomCatId=${room.category_id}, children=${childrenCount}, adults=${adultsCount}, length=${arrangementLengthParam}, restaurant=${restaurantChosen}`);
-
-  if (!nightlyPricing?.CategoryPrices) {
+    childrenCount: number,
+    adultsCount: number,
+    arrangementLengthParam: number,
+    restaurantChosen: string | null, // NEW: Add restaurant parameter
+  ): number {
     // ADDED LOG
-    // console.log(`[getPriceForSingleRoom] No CategoryPrices found in nightlyPricing.`);
-    return 0;
+    // console.log(`[getPriceForSingleRoom] Args: hotel=${hotel}, boardType=${boardType}, travelMode=${travelMode}, roomCatId=${room.category_id}, children=${childrenCount}, adults=${adultsCount}, length=${arrangementLengthParam}, restaurant=${restaurantChosen}`);
+
+    if (!nightlyPricing?.CategoryPrices) {
+      // ADDED LOG
+      // console.log(`[getPriceForSingleRoom] No CategoryPrices found in nightlyPricing.`);
+      return 0;
     }
     const cat = nightlyPricing.CategoryPrices.find(
       (cp: any) => cp.CategoryId === room.category_id,
@@ -906,7 +941,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     // Removed pricingData, rawConfig, travelMode, rooms, arrangementLength as they are not direct inputs anymore or stable
   ]);
 
-
   // --- Handler: Board Toggle ---
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
     // ADDED LOG
@@ -1044,13 +1078,25 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           }}
         />
 
-        <div className="mb-8 text-left">
+        <div className="mb-4 text-left">
           <MealPlanToggle
             selected={selectedBoardOption}
             onChange={handleBoardToggle}
           />
         </div>
 
+        {/* Use appropriate icon based on travel mode */}
+        {travelMode === "cycling" ? (
+          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-2">
+            <Bike size={16} />
+            <span>Fietsen</span>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-2">
+            <Mountain size={16} />
+            <span>Wandelen</span>
+          </div>
+        )}
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
           {selectedArrangement.night_details.map(
             (night: any, nightIdx: number) => {
@@ -1407,7 +1453,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                         </div>
                       ))}
                     </div>
-      <div className="mt-6">
+                    <div className="mt-6">
                       <div className="flex gap-4 items-center">
                         <div className="flex items-center gap-2">
                           <Coffee className="w-5 h-5 text-[#2C4A3C]" />
@@ -1438,26 +1484,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                       </div>
                     </div>
                   </div>
-                  {/* Separator visuals */}
-                  {nightIdx < selectedArrangement.night_details.length - 1 && (
-                    <div className="hidden lg:flex items-center justify-center w-16">
-                      {/* Use appropriate icon based on travel mode */}
-                      {travelMode === "cycling" ? (
-                        <Bike className="w-6 h-6 text-[#2C4A3C]" />
-                      ) : (
-                        <Footprints className="w-6 h-6 text-[#2C4A3C]" />
-                      )}
-                    </div>
-                  )}
-                  {nightIdx < selectedArrangement.night_details.length - 1 && (
-                    <div className="lg:hidden flex justify-center h-16">
-                      {travelMode === "cycling" ? (
-                        <Bike className="w-6 h-6 text-[#2C4A3C] self-center" />
-                      ) : (
-                        <Footprints className="w-6 h-6 text-[#2C4A3C] self-center" />
-                      )}
-                    </div>
-                  )}
                 </div>
               );
             },
