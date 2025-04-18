@@ -305,12 +305,6 @@ function distributeGuestsEvenly(
     occupantWanted[i] = Math.min(occupantWanted[i], free);
   }
 
-  // ADDED LOG
-  console.log(
-    `[distributeGuestsEvenly] Capacity-adjusted plan:`,
-    occupantWanted,
-  );
-
   // Apply distribution
   let totalPlaced = 0;
   for (let i = 0; i < n; i++) {
@@ -325,15 +319,6 @@ function distributeGuestsEvenly(
     totalPlaced += occupantWanted[i];
   }
 
-  // ADDED LOG
-  console.log(
-    `[distributeGuestsEvenly] Total placed: ${totalPlaced}/${count}. Final room counts:`,
-    chosenRooms.map((r) => ({
-      a: r.occupant_countAdults,
-      c: r.occupant_countChildren,
-      cap: r.bed_capacity,
-    })),
-  );
   return totalPlaced;
 }
 
@@ -473,8 +458,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     }
 
     if (!occupantPriceEntry) {
-      // ADDED LOG
-      // console.log(`[getPriceForSingleRoom] No OccupancyPrice entry found for combination:`, occupantArray);
       return 0;
     }
 
@@ -539,17 +522,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       );
       return;
     }
-
-    // ADDED LOG
-    console.log("[RoomPicker onReserve] Proceeding to next step with:", {
-      selectedArrangement,
-      pricingData,
-      totalPrice,
-      selectedOptionalProducts,
-      selectedBoardOption,
-      travelMode,
-      rawConfig,
-    });
 
     onContinue(
       selectedArrangement,
@@ -684,7 +656,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             );
           }
         } else {
-          //  console.log('[RoomPicker InitEffect] Setting selectedArrangement with initial candidate.');
           setSelectedArrangement(initialArrangement);
           // Ensure selectedBoardOption matches the initial one from bookingData
           setSelectedBoardOption(bookingData.boardOption);
@@ -772,20 +743,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       defaultDistributed ||
       !selectedArrangement.night_details
     ) {
-      // ADDED LOG (Optional: uncomment if needed)
-      // console.log('[RoomPicker DistributeGuestsEffect] Skipping distribution:', { hasArrangement: !!selectedArrangement, defaultDistributed, hasNightDetails: !!selectedArrangement?.night_details });
       return;
     }
-
-    // ADDED LOG
-    console.log(
-      "[RoomPicker DistributeGuestsEffect] Running guest distribution:",
-      {
-        adults,
-        children,
-        rooms: selectedArrangement.night_details[0]?.chosen_rooms?.length,
-      },
-    );
 
     // Use functional update with deep copy to prevent race conditions/stale state
     setSelectedArrangement((currentArrangement) => {
@@ -798,8 +757,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         const chosenRooms = night.chosen_rooms || [];
         // Ensure occupant counts are initialized
         chosenRooms.forEach((r: any) => {
-          r.occupant_countAdults = r.occupant_countAdults ?? 0;
-          r.occupant_countChildren = r.occupant_countChildren ?? 0;
+          r.occupant_countAdults ??= 0;
+          r.occupant_countChildren ??= 0;
         });
 
         if (chosenRooms.length === 1) {
@@ -810,9 +769,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           chosenRooms[0].occupant_countChildren = children;
           distributionApplied = true;
         } else if (chosenRooms.length >= 2) {
-          console.log(
-            `[RoomPicker DistributeGuestsEffect] Night ${night.date}: Distributing guests among ${chosenRooms.length} rooms.`,
-          );
           // Reset first
           chosenRooms.forEach((r: any) => {
             r.occupant_countAdults = 0;
@@ -835,17 +791,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       });
 
       if (distributionApplied) {
-        // ADDED LOG
-        console.log(
-          "[RoomPicker DistributeGuestsEffect] Setting updated arrangement and marking as distributed.",
-        );
         setDefaultDistributed(true); // Mark as distributed *after* updating state
         return updated; // Return the updated state
       } else {
-        // ADDED LOG
-        console.log(
-          "[RoomPicker DistributeGuestsEffect] No distribution logic applied (e.g., no rooms). Marking distributed.",
-        );
         setDefaultDistributed(true);
         return currentArrangement; // Return current state if no changes
       }
@@ -859,8 +807,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       !pricingData ||
       !selectedArrangement.night_details
     ) {
-      // ADDED LOG (Optional: uncomment if needed)
-      // console.log('[RoomPicker PricesPerNightEffect] Skipping: Missing data', { hasArrangement: !!selectedArrangement, hasPricing: !!pricingData, hasDetails: !!selectedArrangement?.night_details });
       return;
     }
 
@@ -897,8 +843,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
               arrangementLength,
               night.restaurant_chosen, // NEW: Pass restaurant_chosen
             );
-            // ADDED LOG
-            // console.log(`    - Room ${roomIndex + 1} (${room.category_name}): Price = ${roomPrice}`);
             return acc + roomPrice;
           },
           0,
@@ -948,11 +892,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     setSelectedBoardOption(option);
 
     const newArrangement = arrangements[option]; // Get the corresponding *fetched* arrangement
-    // ADDED LOG
-    console.log(
-      `[RoomPicker handleBoardToggle] Toggling to ${option}. Corresponding arrangement found:`,
-      !!newArrangement,
-    );
 
     if (newArrangement) {
       // Don't manually update board_type here, use the fetched arrangement directly
@@ -1177,8 +1116,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 {night.room_options.map((roomOption: any) => {
                                   const isOverCapacity =
                                     roomOption.bed_capacity <
-                                    (room.occupant_countAdults || 0) +
-                                      (room.occupant_countChildren || 0);
+                                      (room.occupant_countAdults || 0) +
+                                        (room.occupant_countChildren || 0) ||
+                                    roomOption.bed_capacity == 1;
 
                                   if (!isOverCapacity) {
                                     return (
