@@ -55,10 +55,16 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   const cardNumberPlaceholderRef = useRef(null);
   const cvvPlaceholderRef = useRef(null);
 
+  const formDataRef = useRef(formData);
+
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
   useEffect(() => {
     const script = document.createElement("script");
     script.src =
-      "https://pay.sandbox.datatrans.com/upp/payment/js/secure-fields-2.0.0.js";
+      "https://pay.datatrans.com/upp/payment/js/secure-fields-2.0.0.js";
     script.async = true;
 
     script.onload = () => {
@@ -97,63 +103,33 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         }
         secureFieldsRef.current = new SecureFields();
 
-        // Style configuration to match your design
-        const styles = {
-          base: {
-            fontSize: "16px",
-            color: "#333",
-            fontFamily: "system-ui, -apple-system, sans-serif",
-            padding: "8px 0",
-          },
-          ":focus": {
-            outline: "none",
-          },
-          "::placeholder": {
-            color: "#9ca3af",
-          },
-        };
-
-        //FOr corsendonk this value should be used: 3000013748 also url needs to change then without sandbox
         secureFieldsRef.current.initTokenize(
-          "1100007006",
-          // "3000013748",
+          "3000013748",
           {
             cardNumber: cardNumberPlaceholderRef.current.id.toString(),
             cvv: cvvPlaceholderRef.current.id.toString(),
           },
           {
-            styles: styles,
+            styles: {
+              base: {
+                fontSize: "16px",
+                color: "#333",
+                fontFamily: "system-ui, -apple-system, sans-serif",
+                padding: "8px 0",
+              },
+              ":focus": {
+                outline: "none",
+              },
+              "::placeholder": {
+                color: "#9ca3af",
+              },
+            },
           },
         );
 
-        if (secureFieldsRef.current) {
-          secureFieldsRef.current.on("validate", function () {
-            // Apply a red border around invalid fields
-            secureFieldsRef.current.setStyle(
-              "cardNumber.invalid",
-              "border: 1px solid #f00",
-            );
-            secureFieldsRef.current.setStyle(
-              "cvv.invalid",
-              "border: 1px solid #f00",
-            );
-            setIsSubmitting(false);
-          });
-        }
-
-        secureFieldsRef.current.on("ready", function () {
-          // setting a placeholder for the cardNumber field
-          secureFieldsRef.current.setPlaceholder("cardNumber", "Kaartnummer");
-
-          // setting a placeholder for the CVV field
-          secureFieldsRef.current.setPlaceholder("cvv", "CVV/CVC");
-        });
-
-        // Handle success event
         secureFieldsRef.current.on("success", (data) => {
           if (data.transactionId) {
             setTransactionId(data.transactionId);
-            // Continue with form submission after getting transaction ID
             submitFormData(data.transactionId);
           } else {
             setErrors((prev) => ({
@@ -164,7 +140,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           }
         });
 
-        // Handle error event
         secureFieldsRef.current.on("error", (error) => {
           console.error("Datatrans error:", error);
           const newErrors = { ...errors };
@@ -203,6 +178,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log("Field changed:", name, value);
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -300,8 +276,9 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   };
 
   const submitFormData = async (paymentTransactionId) => {
+    console.log(formDataRef.current); // Always the latest formData
     try {
-      const expiryParts = formData.expiry.split("/");
+      const expiryParts = formDataRef.current.expiry.split("/");
       const formattedExpiry = `20${expiryParts[1]}-${expiryParts[0].padStart(
         2,
         "0",
@@ -316,7 +293,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           body: JSON.stringify({
             ...bookingData,
             travelMode,
-            personalInformation: formData,
+            personalInformation: formDataRef.current,
             paymentInfo: {
               method: formData.paymentMethod,
               transactionId: paymentTransactionId,
@@ -372,16 +349,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               expy: year.toString().padStart(2, "0"), // Ensure consistent format
               usage: "SIMPLE",
             };
-
-            setTimeout(() => {
-              try {
-                const validationResult = secureFieldsRef.current.validate();
-                console.log("Validation result:", validationResult);
-              } catch (error) {
-                console.error("Validation error:", error);
-              }
-            }, 1000);
-
             setTimeout(() => {
               try {
                 secureFieldsRef.current.submit(submissionData);
