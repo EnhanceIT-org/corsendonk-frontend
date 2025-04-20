@@ -145,6 +145,14 @@ export function BookingDetails({
   bookingData,
   onShowRoomDetail,
 }: BookingDetailsProps) {
+  // Calculate City Tax
+  const numberOfNights = bookingData.reservations.length;
+  const firstNight = bookingData.reservations[0]; // Assume guest count is constant
+  const totalGuests = firstNight.chosen_rooms.reduce((sum, room) => {
+    return sum + (room.occupant_countAdults || 0) + (room.occupant_countChildren || 0);
+  }, 0);
+  const cityTaxAmount = totalGuests * numberOfNights * 2.5;
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
@@ -259,8 +267,12 @@ export function BookingDetails({
           <div>
             <h2 className="text-lg font-semibold">Totaal</h2>
           </div>
-          <span className="text-2xl font-semibold">€{bookingData.total}</span>
+          <span className="text-2xl font-semibold">€{bookingData.total.toFixed(2)}</span>
         </div>
+        {/* City Tax Information */}
+        <p className="text-sm text-gray-500 mt-1 text-right">
+          Exclusief {cityTaxAmount.toFixed(2)}€ city taks, te betalen in het hotel (€2.5 pp per nacht).
+        </p>
       </div>
     </div>
   );
