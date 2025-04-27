@@ -48,6 +48,12 @@ interface selectedArrangementInterface {
       category_name: string;
       occupant_countAdults?: number;
       occupant_countChildren?: number;
+      extras: {
+        [key: string]: {
+          selected: boolean;
+          amount: number;
+        };
+      };
     }[];
     board_type: string;
     date: string;
@@ -247,10 +253,10 @@ function distributeGuestsEvenly(
     const room = chosenRooms[i];
     if (isAdult) {
       room.occupant_countAdults =
-        (room.occupant_countAdults || 0) + occupantWanted[i];
+        (room.occupant_countAdults ?? 0) + occupantWanted[i];
     } else {
       room.occupant_countChildren =
-        (room.occupant_countChildren || 0) + occupantWanted[i];
+        (room.occupant_countChildren ?? 0) + occupantWanted[i];
     }
     totalPlaced += occupantWanted[i];
   }
@@ -356,10 +362,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         return false;
       }
       const sortedApiOccupancies = [...op.Occupancies].sort((a, b) =>
-        (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || ""),
+        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId || ""),
       );
       const sortedTargetOccupancies = [...occupantArray].sort((a, b) =>
-        (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || ""),
+        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId || ""),
       );
       for (let i = 0; i < sortedApiOccupancies.length; i++) {
         if (
@@ -437,8 +443,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     const emptyRooms = selectedArrangement?.night_details.some((night: any) =>
       night.chosen_rooms.some(
         (room: any) =>
-          (room.occupant_countAdults || 0) +
-            (room.occupant_countChildren || 0) ===
+          (room.occupant_countAdults ?? 0) +
+            (room.occupant_countChildren ?? 0) ===
           0,
       ),
     );
@@ -523,8 +529,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             },
           );
           setError(
-            availBreakfast.error ||
-              availHalfBoard.error ||
+            availBreakfast.error ??
+              availHalfBoard.error ??
               "Geen beschikbare kamers gevonden, probeer andere data",
           );
           setLoading(false);
@@ -613,10 +619,17 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           );
 
           arrangement.night_details.forEach((night) => {
-            if (typeof night.extras !== "object" || night.extras === null) {
-              night.extras = { ...initialExtrasState };
+            if (night.chosen_rooms) {
+              night.chosen_rooms.forEach((room) => {
+                if (typeof room.extras !== "object" || room.extras === null) {
+                  room.extras = { ...initialExtrasState };
+                }
+              });
+            } else {
+              console.warn("No chosen_rooms found for this night:", night);
             }
           });
+
           return arrangement;
         };
 
@@ -910,35 +923,32 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   };
 
   const handleToggleExtra = useCallback(
-    (nightIndex: number, extraKey: string) => {
+    (nightIndex: number, roomIndex: number, extraKey: string) => {
       setSelectedArrangement((currentArrangement) => {
         if (!currentArrangement) return null;
-
+        console.log(currentArrangement);
         const updatedArrangement = JSON.parse(
           JSON.stringify(currentArrangement),
         );
 
         console.log(
-          `[handleToggleExtra] Toggling extra "${extraKey}" for night index ${nightIndex}`,
+          `[handleToggleExtra] Toggling extra "${extraKey}" for night index ${roomIndex}`,
         );
 
-        const night = updatedArrangement.night_details[nightIndex];
-        if (
-          night &&
-          typeof night.extras === "object" &&
-          night.extras !== null
-        ) {
-          console.log(night.extras);
-          console.log(night.extras[extraKey]);
-          if (!night.extras[extraKey]?.selected) {
-            night.extras[extraKey] = { selected: true, amount: 1 };
+        const room =
+          updatedArrangement.night_details[nightIndex].chosen_rooms[roomIndex];
+        if (room && typeof room.extras === "object" && room.extras !== null) {
+          console.log(room.extras);
+          console.log(room.extras[extraKey]);
+          if (!room.extras[extraKey]?.selected) {
+            room.extras[extraKey] = { selected: true, amount: 1 };
           } else {
-            night.extras[extraKey].selected = false;
-            night.extras[extraKey].amount = 0;
+            room.extras[extraKey].selected = false;
+            room.extras[extraKey].amount = 0;
           }
         } else {
           console.warn(
-            `[handleToggleExtra] Could not find night or extras object at index ${nightIndex}`,
+            `[handleToggleExtra] Could not find night or extras object at index ${roomIndex}`,
           );
         }
 
@@ -949,7 +959,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   );
 
   const handleExtraAmountChange = useCallback(
-    (nightIndex: number, extraKey: string, delta: number) => {
+    (nightIdx: number, roomIndex: number, extraKey: string, delta: number) => {
       setSelectedArrangement((currentArrangement) => {
         if (!currentArrangement) return null;
 
@@ -957,13 +967,14 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           JSON.stringify(currentArrangement),
         );
 
-        const night = updatedArrangement.night_details[nightIndex];
-        if (night?.extras?.[extraKey]?.selected) {
-          const currentAmount = night.extras[extraKey].amount ?? 1;
-          night.extras[extraKey].amount = Math.max(1, currentAmount + delta);
+        const room =
+          updatedArrangement.night_details[nightIdx].chosen_rooms[roomIndex];
+        if (room?.extras?.[extraKey]?.selected) {
+          const currentAmount = room.extras[extraKey].amount ?? 1;
+          room.extras[extraKey].amount = Math.max(1, currentAmount + delta);
         } else {
           console.warn(
-            `[handleExtraAmountChange] Could not find selected extra at index ${nightIndex}`,
+            `[handleExtraAmountChange] Could not find selected extra at index ${roomIndex}`,
           );
         }
 
@@ -972,36 +983,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     },
     [],
   );
-
-  // --- Helper: Get Category Details (for Modal) ---
-  // const getCategoryDetails = (
-  //   hotelKey: string,
-  //   categoryId: string,
-  //   config: any,
-  // ) => {
-  //   if (
-  //     config &&
-  //     config[hotelKey] &&
-  //     config[hotelKey].rawConfig &&
-  //     config[hotelKey].rawConfig.Configurations &&
-  //     config[hotelKey].rawConfig.Configurations.length > 0
-  //   ) {
-  //     const raw = config[hotelKey].rawConfig;
-  //     const imageBaseUrl = raw.ImageBaseUrl;
-  //     const categories = raw.Configurations[0].Enterprise.Categories || [];
-  //     const category = categories.find((cat: any) => cat.Id === categoryId);
-  //     if (category) {
-  //       const name = category.Name["en-GB"] || "Unknown";
-  //       const imageId =
-  //         category.ImageIds && category.ImageIds.length > 0
-  //           ? category.ImageIds[0]
-  //           : null;
-  //       const imageUrl = imageId ? `${imageBaseUrl}/${imageId}` : null;
-  //       return { name, imageUrl };
-  //     }
-  //   }
-  //   return { name: "Unknown", imageUrl: null };
-  // };
 
   if (loading)
     return (
@@ -1184,8 +1165,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 {night.room_options.map((roomOption: any) => {
                                   const isOverCapacity =
                                     roomOption.bed_capacity <
-                                      (room.occupant_countAdults || 0) +
-                                        (room.occupant_countChildren || 0) ||
+                                      (room.occupant_countAdults ?? 0) +
+                                        (room.occupant_countChildren ?? 0) ||
                                     roomOption.bed_capacity == 1;
 
                                   if (!isOverCapacity) {
@@ -1207,7 +1188,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                   {(() => {
                                     const boardKey = selectedBoardOption;
                                     const nightlyPricingForBoard =
-                                      pricingData[boardKey]?.nightlyPricing ||
+                                      pricingData[boardKey]?.nightlyPricing ??
                                       [];
                                     const foundEntry =
                                       nightlyPricingForBoard.find(
@@ -1224,8 +1205,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                       night.board_type,
                                       travelMode,
                                       room,
-                                      room.occupant_countChildren || 0,
-                                      room.occupant_countAdults || 0,
+                                      room.occupant_countChildren ?? 0,
+                                      room.occupant_countAdults ?? 0,
                                       arrangementLength,
                                       night.restaurant_chosen, // NEW: Pass restaurant_chosen here too for display consistency
                                     );
@@ -1420,8 +1401,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                       }}
                                       className="p-1 hover:bg-gray-100 rounded"
                                       disabled={
-                                        (room.occupant_countAdults || 0) +
-                                          (room.occupant_countChildren || 0) >=
+                                        (room.occupant_countAdults ?? 0) +
+                                          (room.occupant_countChildren ?? 0) >=
                                           room.bed_capacity ||
                                         currentAssignedChildren >= children
                                       }
@@ -1458,6 +1439,102 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 Geen gasten toegewezen aan deze kamer!
                               </div>
                             )}
+                          <div className="mt-6 pt-4 border-t">
+                            <h4 className="text-md font-medium text-gray-800 mb-3">
+                              Voeg extra's toe:
+                            </h4>
+                            <div className="space-y-3">
+                              {optionalProducts
+                                .filter((product) =>
+                                  product.availableFor.includes(travelMode),
+                                )
+                                .map((product) => (
+                                  <div
+                                    key={product.key}
+                                    className="flex items-center gap-3 cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={
+                                        night.chosen_rooms[index]?.extras?.[
+                                          product.key
+                                        ]?.selected ?? false
+                                      }
+                                      onChange={() =>
+                                        handleToggleExtra(
+                                          nightIdx,
+                                          index,
+                                          product.key,
+                                        )
+                                      }
+                                      className="rounded border-gray-300 text-[#2C4A3C] focus:ring-[#2C4A3C]/50 h-4 w-4"
+                                    />
+                                    <div>
+                                      <span className="font-medium text-sm">
+                                        {product.name}
+                                      </span>
+                                      <span className="text-xs text-gray-500 ml-2">
+                                        {`€${product.price.toFixed(
+                                          2,
+                                        )} ${chargingMethodToDutch(
+                                          product.chargingMethod ?? "",
+                                        )}`}
+                                      </span>
+                                    </div>
+                                    {night.chosen_rooms[index]?.extras?.[
+                                      product.key
+                                    ]?.selected &&
+                                      product.chargingMethod == "Once" && (
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() =>
+                                              handleExtraAmountChange(
+                                                nightIdx,
+                                                index,
+                                                product.key,
+                                                -1,
+                                              )
+                                            }
+                                            className="p-1 border rounded text-gray-600 hover:bg-gray-100"
+                                            disabled={
+                                              night.chosen_rooms[index]
+                                                ?.extras?.[product.key]
+                                                ?.amount <= 1
+                                            }
+                                          >
+                                            -
+                                          </button>
+                                          <span className="text-sm">
+                                            {night.chosen_rooms[index]
+                                              ?.extras?.[product.key]?.amount ??
+                                              1}
+                                          </span>
+                                          <button
+                                            onClick={() =>
+                                              handleExtraAmountChange(
+                                                nightIdx,
+                                                index,
+                                                product.key,
+                                                1,
+                                              )
+                                            }
+                                            className="p-1 border rounded text-gray-600 hover:bg-gray-100"
+                                          >
+                                            +
+                                          </button>
+                                        </div>
+                                      )}
+                                  </div>
+                                ))}
+                              {optionalProducts.filter((p) =>
+                                p.availableFor.includes(travelMode),
+                              ).length === 0 && (
+                                <div className="text-sm text-gray-500 italic">
+                                  Geen extra's beschikbaar voor deze reiswijze.
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1489,89 +1566,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                           {/* Display total from bookingData, not calculated sum */}
                           Totaal {adults + children} gasten
                         </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 pt-4 border-t">
-                      <h4 className="text-md font-medium text-gray-800 mb-3">
-                        Voeg extra's toe:
-                      </h4>
-                      <div className="space-y-3">
-                        {optionalProducts
-                          .filter((product) =>
-                            product.availableFor.includes(travelMode),
-                          )
-                          .map((product) => (
-                            <div
-                              key={product.key}
-                              className="flex items-center gap-3 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={
-                                  night.extras?.[product.key].selected ?? false
-                                }
-                                onChange={() =>
-                                  handleToggleExtra(nightIdx, product.key)
-                                }
-                                className="rounded border-gray-300 text-[#2C4A3C] focus:ring-[#2C4A3C]/50 h-4 w-4"
-                              />
-                              <div>
-                                <span className="font-medium text-sm">
-                                  {product.name}
-                                </span>
-                                <span className="text-xs text-gray-500 ml-2">
-                                  {`€${product.price.toFixed(
-                                    2,
-                                  )} ${chargingMethodToDutch(
-                                    product.chargingMethod ?? "",
-                                  )}`}
-                                </span>
-                              </div>
-                              {night.extras?.[product.key]?.selected &&
-                                product.chargingMethod == "Once" && (
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() =>
-                                        handleExtraAmountChange(
-                                          nightIdx,
-                                          product.key,
-                                          -1,
-                                        )
-                                      }
-                                      className="p-1 border rounded text-gray-600 hover:bg-gray-100"
-                                      disabled={
-                                        night.extras?.[product.key]?.amount <= 1
-                                      }
-                                    >
-                                      -
-                                    </button>
-                                    <span className="text-sm">
-                                      {night.extras?.[product.key]?.amount || 1}
-                                    </span>
-                                    <button
-                                      onClick={() =>
-                                        handleExtraAmountChange(
-                                          nightIdx,
-                                          product.key,
-                                          1,
-                                        )
-                                      }
-                                      className="p-1 border rounded text-gray-600 hover:bg-gray-100"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                )}
-                            </div>
-                          ))}
-                        {optionalProducts.filter((p) =>
-                          p.availableFor.includes(travelMode),
-                        ).length === 0 && (
-                          <div className="text-sm text-gray-500 italic">
-                            Geen extra's beschikbaar voor deze reiswijze.
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
