@@ -107,7 +107,7 @@ export const optionalProducts = [
   {
     key: "lunch",
     name: "Lunch pakket",
-    price: 15,
+    price: 10,
     chargingMethod: "PerPersonNight",
     availableFor: ["walking", "cycling"],
   },

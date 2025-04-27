@@ -168,8 +168,9 @@ function calculateTotalPrice(
     const assignedChildren = sumNightChildrenFn(night);
     const totalGuestsThisNight = assignedAdults + assignedChildren;
 
+    console.log(night.chosen_rooms);
     for (const room of night.chosen_rooms) {
-      const productsForThisRoom = Object.keys(room.extras).filter(
+      const productsForThisRoom = Object.keys(room?.extras ?? {}).filter(
         (key) => room.extras[key].selected,
       );
       for (const productKey of productsForThisRoom) {
@@ -891,17 +892,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   }, [selectedArrangement, pricesPerNight]); // Depends on arrangement (for extras) and room prices
 
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
-    // ADDED LOG
-    console.log(`[RoomPicker handleBoardToggle] Called with: ${option}`);
     setSelectedBoardOption(option);
 
-    const newArrangementData = arrangements[option]; // Get the corresponding *fetched* arrangement
+    const newArrangementData = arrangements[option];
 
     if (newArrangementData) {
       // Initialize extras for the new arrangement before setting it
+
       const initialExtrasState = optionalProducts.reduce(
         (acc, product) => {
-          acc[product.key] = false; // Default all extras to false
+          acc[product.key] = {
+            selected: false,
+            amount: 0,
+          };
           return acc;
         },
         {} as { [key: string]: boolean },
@@ -909,11 +912,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
       const arrangementWithInitializedExtras = JSON.parse(
         JSON.stringify(newArrangementData),
-      ); // Deep copy
+      );
       arrangementWithInitializedExtras.night_details.forEach((night: any) => {
-        // Only initialize if 'extras' doesn't exist or is not an object
-        if (typeof night.extras !== "object" || night.extras === null) {
-          night.extras = { ...initialExtrasState };
+        if (night.chosen_rooms) {
+          night.chosen_rooms.forEach((room) => {
+            if (typeof room.extras !== "object" || room.extras === null) {
+              room.extras = { ...initialExtrasState };
+            }
+          });
+        } else {
+          console.warn("No chosen_rooms found for this night:", night);
         }
       });
 
