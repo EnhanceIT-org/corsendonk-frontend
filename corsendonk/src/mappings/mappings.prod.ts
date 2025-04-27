@@ -128,28 +128,34 @@ export const optionalProducts = [
   {
     key: "lunch",
     name: "Lunch pakket",
-    price: 15,
+    price: {
+      hotel1: 17.5,
+      hotel2: 20,
+      hotel3: 20,
+    },
     chargingMethod: "PerPerson",
     availableFor: ["walking", "cycling"],
   },
   {
+    //TODO fill in the correct mapping
     key: "bicycleRent",
     name: "Fiets Verhuur",
-    price: 25,
+    price: {
+      hotel1: 20,
+      hotel2: 25,
+      hotel3: 30,
+    },
     chargingMethod: "PerPersonNight",
-    availableFor: ["cycling"],
-  },
-  {
-    key: "bicycleTransport",
-    name: "Fiets Transport",
-    price: 10,
-    chargingMethod: "Once",
     availableFor: ["cycling"],
   },
   {
     key: "huisdier",
     name: "Huisdier op kamer",
-    price: 10,
+    price: {
+      hotel1: 20,
+      hotel2: 25,
+      hotel3: 25,
+    },
     chargingMethod: "Once",
     availableFor: ["walking", "cycling"],
   },
