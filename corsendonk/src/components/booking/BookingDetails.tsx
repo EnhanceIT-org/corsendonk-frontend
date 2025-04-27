@@ -37,7 +37,7 @@ function getPriceForSingleRoom(
 ): number {
   const nightlyArr = nightlyPricing?.nightlyPricing ?? [];
   const foundEntry = nightlyArr.find(
-    (entry: any) => entry.date === reservation.date, // Assuming reservation object has the date
+    (entry: any) => entry.date === reservation.date,
   );
   if (!foundEntry) return 0;
   if (!foundEntry?.pricing.CategoryPrices) return 0;
@@ -270,6 +270,41 @@ export function BookingDetails({
                         {room.occupant_countChildren} Kinderen
                       </span>
                     </div>
+                    <div className="bg-white rounded-lg shadow-sm p-6">
+                      <h2 className="text-lg font-semibold mb-4">
+                        Geselecteerde Extra's
+                      </h2>
+                      <div className="space-y-4">
+                        {Object.entries(
+                          room.extras as Record<
+                            string,
+                            { amount: number; selected: boolean }
+                          >,
+                        ).filter(([_, extra]) => extra.selected).length > 0 ? (
+                          Object.entries(
+                            room.extras as Record<
+                              string,
+                              { amount: number; selected: boolean }
+                            >,
+                          ).map(([key, extra], index) => {
+                            if (!extra.selected) return null;
+                            return (
+                              <div
+                                key={index}
+                                className="flex justify-between items-center text-sm"
+                              >
+                                <span>{capitalizeFirstLetter(key)}</span>
+                                <span>x{extra.amount}</span>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            Geen extra's geselecteerd
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -277,71 +312,6 @@ export function BookingDetails({
           );
         })}
       </div>
-      {/* REVISED Extras Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-4">Geselecteerde Extra's</h2>
-        <div className="space-y-4">
-          {bookingData.reservations.map((reservation, index) => {
-            console.log(bookingData.reservations);
-            const nightExtras = reservation.extras ?? {};
-            const selectedKeys = Object.keys(nightExtras).filter(
-              (key) => nightExtras[key].selected,
-            );
-
-            // Only render if there are selected extras for this night
-            if (selectedKeys.length > 0) {
-              return (
-                <div
-                  key={`extras-${index}`}
-                  className="border-b last:border-b-0 pb-4 mb-4 last:pb-0 last:mb-0"
-                >
-                  <h3 className="font-medium text-sm text-gray-600 mb-2">
-                    {formatDutchDate(reservation.date)} -{" "}
-                    {getHotelDisplayName(reservation.hotel)}
-                  </h3>
-
-                  <div className="space-y-1 pl-2">
-                    {selectedKeys.map((key) => {
-                      const product = optionalProducts.find(
-                        (p) => p.key === key,
-                      );
-                      if (!product) return null;
-
-                      return (
-                        <div
-                          key={key}
-                          className="flex justify-between items-center text-sm"
-                        >
-                          <span>{product.name}</span>
-                          <span>x{nightExtras[key].amount}</span>
-                          {/* Optional: Display price breakdown if needed, but it's included in the total */}
-                          {/* <span className="text-gray-500">
-                             €{product.price.toFixed(2)} {chargingMethodToDutch(product.chargingMethod || "")}
-                             {product.chargingMethod?.includes('PerPerson') && ` x ${guestsThisNight}`}
-                           </span> */}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          })}
-
-          {/* Check if *any* optional extra is selected across *all* nights */}
-          {!bookingData.reservations.some(
-            (res) =>
-              res.extras &&
-              Object.values(res.extras).some((selected) => selected),
-          ) && (
-            <div className="text-gray-500 italic">
-              Geen extra's geselecteerd voor dit verblijf.
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center">
           <div>
@@ -351,9 +321,9 @@ export function BookingDetails({
             €{bookingData.total.toFixed(2)}
           </span>
         </div>
-        <p className="text-sm text-gray-500 mt-1 text-right">
-          Exclusief {cityTaxAmount.toFixed(2)}€ city taks, te betalen in het
-          hotel (€2.5 pp per nacht).
+        <p className="text-sm text-gray-500 mt-1 text-left">
+          Exclusief toeristenbelasting van €{cityTaxAmount.toFixed(2)}, te
+          voldoen in het hotel (€2,50 per persoon per nacht).
         </p>
       </div>
     </div>
