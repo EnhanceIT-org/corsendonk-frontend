@@ -495,9 +495,8 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   const arrangementLength = selectedArrangement.night_details.length + 1; // 2 nights = 3 days, 3 nights = 4 days
 
   const [bookingData, setBookingData] = useState<BookingData>({
-    reservations: selectedArrangement.night_details, // This now includes the 'extras' field per night
+    reservations: selectedArrangement.night_details,
     pricing_data: pricingData,
-    // optionalExtras removed from state initialization
     mealPlan: boardOption,
     total: totalPrice,
     arrangementLength: arrangementLength,
@@ -515,16 +514,15 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           title="Voltooi uw boeking"
           onNavigate={(step) => {
             if (step === 1) {
-              onBackToStep1(); // Navigate to step 1
+              onBackToStep1();
             } else if (step === 2) {
-              onBackToStep2(); // Navigate to step 2
+              onBackToStep2();
             }
           }}
         />
 
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
-            {/* Pass onShowRoomDetail callback to BookingDetails */}
             <BookingDetails
               bookingData={bookingData}
               onShowRoomDetail={(room) => {

@@ -155,17 +155,14 @@ function calculateTotalPrice(
     return 0;
   }
 
-  // 1) Start total with the sum of all room-night prices.
   let total = pricesPerNight.reduce((sum, price) => sum + price, 0);
 
-  // 2) Iterate through each night to add costs for selected extras for that night
   arrangement.night_details.forEach((night: any, nightIndex: number) => {
     const assignedAdults = sumNightAdultsFn(night);
     const assignedChildren = sumNightChildrenFn(night);
     const totalGuestsThisNight = assignedAdults + assignedChildren;
 
-    // Get the selected extras for *this specific night*
-    const nightExtras = night.extras ?? {}; // Default to empty object if undefined
+    const nightExtras = night.extras ?? {};
     const activeOptionalProductKeysThisNight = Object.keys(nightExtras).filter(
       (key) => nightExtras[key].selected,
     );
@@ -180,27 +177,22 @@ function calculateTotalPrice(
         continue;
       }
 
-      console.log(product);
       let addedCost = 0;
 
-      // Pricing logic based on charging method for THIS NIGHT
       switch (product.chargingMethod) {
         case "Once":
-          // 'Once' in this context means once *per night* it's selected
-          addedCost = product.price;
+          addedCost = product.price * nightExtras[productKey].amount;
           console.log(
             `  - Product "${product.name}" (${productKey}): Added ${addedCost} (Once for this night)`,
           );
           break;
         case "PerPerson":
-          // 'PerPerson' in this context means per person *for this night* it's selected
           addedCost = product.price * totalGuestsThisNight;
           console.log(
             `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPerson for this night: ${product.price} * ${totalGuestsThisNight} guests)`,
           );
           break;
         case "PerPersonNight":
-          // This behaves the same as PerPerson in the per-night context
           addedCost = product.price * totalGuestsThisNight;
           console.log(
             `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPersonNight: ${product.price} * ${totalGuestsThisNight} guests)`,
@@ -865,7 +857,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     selectedBoardOption,
     travelMode,
     arrangementLength,
-  ]); // Ensure selectedBoardOption is a dependency
+  ]);
 
   // --- Effect: Calculate Total Price ---
   useEffect(() => {

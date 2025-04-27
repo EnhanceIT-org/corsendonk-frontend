@@ -4,7 +4,12 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
 // Corrected import path and added optionalProducts import
-import { ageCategoryMapping, BoardMapping, HOTEL_NAME_MAPPING, optionalProducts } from "../../mappings/mappings";
+import {
+  ageCategoryMapping,
+  BoardMapping,
+  HOTEL_NAME_MAPPING,
+  optionalProducts,
+} from "../../mappings/mappings";
 
 // Helper function to get Dutch charging method text (copied from RoomPicker for consistency)
 function chargingMethodToDutch(method: string): string {
@@ -20,7 +25,6 @@ function chargingMethodToDutch(method: string): string {
   }
 }
 
-
 function getPriceForSingleRoom(
   nightlyPricing: any,
   hotel: string,
@@ -31,7 +35,7 @@ function getPriceForSingleRoom(
   arrangementLength: number, // Added parameter
   restaurantChosen: string | null, // NEW: Add restaurant parameter
 ): number {
-  const nightlyArr = nightlyPricing?.nightlyPricing || [];
+  const nightlyArr = nightlyPricing?.nightlyPricing ?? [];
   const foundEntry = nightlyArr.find(
     (entry: any) => entry.date === reservation.date, // Assuming reservation object has the date
   );
@@ -41,8 +45,8 @@ function getPriceForSingleRoom(
     (cp: any) => cp.CategoryId === room.category_id,
   );
   if (!cat) return 0;
-  const occupantAdults = room.occupant_countAdults || 0;
-  const occupantChildren = room.occupant_countChildren || 0;
+  const occupantAdults = room.occupant_countAdults ?? 0;
+  const occupantChildren = room.occupant_countChildren ?? 0;
   const occupantTotal = occupantAdults + occupantChildren;
   const occupantArray: any[] = [];
   if (occupantAdults > 0) {
@@ -60,11 +64,13 @@ function getPriceForSingleRoom(
   let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
     if (op.Occupancies.length !== occupantArray.length) return false;
     const sorted1 = [...op.Occupancies].sort((a, b) =>
-      (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || ""),
+      (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
     );
-    const sorted2 = occupantArray.sort((a, b) =>
-      (a.AgeCategoryId || "").localeCompare(b.AgeCategoryId || ""),
-    );
+    const sorted2 = occupantArray
+      .slice()
+      .sort((a, b) =>
+        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
+      );
     for (let i = 0; i < sorted1.length; i++) {
       if (
         sorted1[i].AgeCategoryId !== sorted2[i].AgeCategoryId ||
@@ -75,18 +81,22 @@ function getPriceForSingleRoom(
     }
     return true;
   });
-  if (!occupantPriceEntry) {
-    occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
-      const sum = op.Occupancies.reduce(
-        (acc: number, x: any) => acc + x.PersonCount,
-        0,
-      );
-      return sum === occupantTotal;
-    });
-  }
+  occupantPriceEntry ??= cat.OccupancyPrices.find((op: any) => {
+    const sum = op.Occupancies.reduce(
+      (acc: number, x: any) => acc + x.PersonCount,
+      0,
+    );
+    return sum === occupantTotal;
+  });
   if (!occupantPriceEntry) return 0;
   // NEW: Pass restaurantChosen to getNightlyRateId
-  const rateId = getNightlyRateId(hotel, boardType, travelMode, arrangementLength, restaurantChosen);
+  const rateId = getNightlyRateId(
+    hotel,
+    boardType,
+    travelMode,
+    arrangementLength,
+    restaurantChosen,
+  );
   const rPrice = occupantPriceEntry.RateGroupPrices.find(
     (rgp: any) => rgp.MinRateId === rateId,
   );
@@ -113,16 +123,25 @@ function getNightlyRateId(
 
   if (hotelRates) {
     // NEW: Check for hotel3 halfboard with restaurant
-    if (hotel === "hotel3" && board === "halfboard" && restaurantChosen && (restaurantChosen === "Bink" || restaurantChosen === "Bardo")) {
-      rateId = hotelRates[board]?.[restaurantChosen] || "";
+    if (
+      hotel === "hotel3" &&
+      board === "halfboard" &&
+      restaurantChosen &&
+      (restaurantChosen === "Bink" || restaurantChosen === "Bardo")
+    ) {
+      rateId = hotelRates[board]?.[restaurantChosen] ?? "";
     } else {
       // Original logic for other hotels/boards or if restaurant is not applicable/provided
       // Ensure we access the correct board key ('breakfast' or 'halfboard')
-      rateId = hotelRates[board] || "";
+      rateId = hotelRates[board] ?? "";
     }
   }
-   // ADDED LOG for debugging rate ID lookup
-   console.log(`[BookingDetails/getNightlyRateId] Lookup: hotel=${hotel}, board=${board}, mode=${mode}, length=${lengthKey}, restaurant=${restaurantChosen || 'N/A'} => rateId=${rateId || 'Not Found'}`);
+  // ADDED LOG for debugging rate ID lookup
+  console.log(
+    `[BookingDetails/getNightlyRateId] Lookup: hotel=${hotel}, board=${board}, mode=${mode}, length=${lengthKey}, restaurant=${
+      restaurantChosen || "N/A"
+    } => rateId=${rateId || "Not Found"}`,
+  );
 
   return rateId;
 }
@@ -153,18 +172,22 @@ interface BookingDetailsProps {
 }
 
 function getHotelDisplayName(hotelKey: string): string {
-  return HOTEL_NAME_MAPPING[hotelKey] || hotelKey; // Use mapping, fallback to key if not found
+  return HOTEL_NAME_MAPPING[hotelKey] ?? hotelKey; // Use mapping, fallback to key if not found
 }
 
 export function BookingDetails({
   bookingData,
   onShowRoomDetail,
-}: BookingDetailsProps) {
+}: Readonly<BookingDetailsProps>) {
   // Calculate City Tax
   const numberOfNights = bookingData.reservations.length;
   const firstNight = bookingData.reservations[0]; // Assume guest count is constant
   const totalGuests = firstNight.chosen_rooms.reduce((sum, room) => {
-    return sum + (room.occupant_countAdults || 0) + (room.occupant_countChildren || 0);
+    return (
+      sum +
+      (room.occupant_countAdults ?? 0) +
+      (room.occupant_countChildren ?? 0)
+    );
   }, 0);
   const cityTaxAmount = totalGuests * numberOfNights * 2.5;
 
@@ -173,7 +196,6 @@ export function BookingDetails({
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-6">Details van uw boeking</h2>
         {bookingData.reservations.map((reservation, index) => {
-          
           const boardKey =
             reservation.board_type === "HB" ? "halfboard" : "breakfast";
 
@@ -212,7 +234,9 @@ export function BookingDetails({
                   <div key={roomIndex} className="bg-gray-50 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{room.category_name}</span>
+                        <span className="font-medium">
+                          {room.category_name}
+                        </span>
                         <button
                           className="text-[#2C4A3C] hover:text-[#2C4A3C]/80"
                           onClick={() =>
@@ -258,65 +282,78 @@ export function BookingDetails({
         <h2 className="text-lg font-semibold mb-4">Geselecteerde Extra's</h2>
         <div className="space-y-4">
           {bookingData.reservations.map((reservation, index) => {
-            // Find selected extras for this specific night
-            const nightExtras = reservation.extras || {};
-            const selectedKeys = Object.keys(nightExtras).filter(key => nightExtras[key]);
+            console.log(bookingData.reservations);
+            const nightExtras = reservation.extras ?? {};
+            const selectedKeys = Object.keys(nightExtras).filter(
+              (key) => nightExtras[key].selected,
+            );
 
             // Only render if there are selected extras for this night
             if (selectedKeys.length > 0) {
               return (
-                <div key={`extras-${index}`} className="border-b last:border-b-0 pb-4 mb-4 last:pb-0 last:mb-0">
-                   <h3 className="font-medium text-sm text-gray-600 mb-2">
-                     {formatDutchDate(reservation.date)} - {getHotelDisplayName(reservation.hotel)}
-                   </h3>
-                   <div className="space-y-1 pl-2">
-                     {selectedKeys.map(key => {
-                       const product = optionalProducts.find(p => p.key === key);
-                       if (!product) return null; // Should not happen if data is consistent
+                <div
+                  key={`extras-${index}`}
+                  className="border-b last:border-b-0 pb-4 mb-4 last:pb-0 last:mb-0"
+                >
+                  <h3 className="font-medium text-sm text-gray-600 mb-2">
+                    {formatDutchDate(reservation.date)} -{" "}
+                    {getHotelDisplayName(reservation.hotel)}
+                  </h3>
 
-                       // Calculate guests for this night to display price correctly if needed (though price is in total)
-                       const guestsThisNight = reservation.chosen_rooms.reduce((sum, room) => {
-                         return sum + (room.occupant_countAdults || 0) + (room.occupant_countChildren || 0);
-                       }, 0);
+                  <div className="space-y-1 pl-2">
+                    {selectedKeys.map((key) => {
+                      const product = optionalProducts.find(
+                        (p) => p.key === key,
+                      );
+                      if (!product) return null;
 
-                       return (
-                         <div key={key} className="flex justify-between items-center text-sm">
-                           <span>{product.name}</span>
-                           {/* Optional: Display price breakdown if needed, but it's included in the total */}
-                           {/* <span className="text-gray-500">
+                      return (
+                        <div
+                          key={key}
+                          className="flex justify-between items-center text-sm"
+                        >
+                          <span>{product.name}</span>
+                          <span>x{nightExtras[key].amount}</span>
+                          {/* Optional: Display price breakdown if needed, but it's included in the total */}
+                          {/* <span className="text-gray-500">
                              €{product.price.toFixed(2)} {chargingMethodToDutch(product.chargingMethod || "")}
                              {product.chargingMethod?.includes('PerPerson') && ` x ${guestsThisNight}`}
                            </span> */}
-                         </div>
-                       );
-                     })}
-                   </div>
-                 </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             }
-            return null; // No extras selected for this night
+            return null;
           })}
 
           {/* Check if *any* optional extra is selected across *all* nights */}
-          {!bookingData.reservations.some(res => res.extras && Object.values(res.extras).some(selected => selected)) && (
-             <div className="text-gray-500 italic">
-               Geen extra's geselecteerd voor dit verblijf.
-             </div>
-           )}
+          {!bookingData.reservations.some(
+            (res) =>
+              res.extras &&
+              Object.values(res.extras).some((selected) => selected),
+          ) && (
+            <div className="text-gray-500 italic">
+              Geen extra's geselecteerd voor dit verblijf.
+            </div>
+          )}
         </div>
       </div>
-      {/* END REVISED Extras Section */}
 
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-lg font-semibold">Totaal</h2>
           </div>
-          <span className="text-2xl font-semibold">€{bookingData.total.toFixed(2)}</span>
+          <span className="text-2xl font-semibold">
+            €{bookingData.total.toFixed(2)}
+          </span>
         </div>
-        {/* City Tax Information */}
         <p className="text-sm text-gray-500 mt-1 text-right">
-          Exclusief {cityTaxAmount.toFixed(2)}€ city taks, te betalen in het hotel (€2.5 pp per nacht).
+          Exclusief {cityTaxAmount.toFixed(2)}€ city taks, te betalen in het
+          hotel (€2.5 pp per nacht).
         </p>
       </div>
     </div>
