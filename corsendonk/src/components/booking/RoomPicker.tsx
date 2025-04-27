@@ -168,49 +168,55 @@ function calculateTotalPrice(
     const assignedChildren = sumNightChildrenFn(night);
     const totalGuestsThisNight = assignedAdults + assignedChildren;
 
-    const nightExtras = night.extras ?? {};
-    const activeOptionalProductKeysThisNight = Object.keys(nightExtras).filter(
-      (key) => nightExtras[key].selected,
-    );
+    for (const room of night.chosen_rooms) {
+      const productsForThisRoom = Object.keys(room.extras).filter(
+        (key) => room.extras[key].selected,
+      );
+      for (const productKey of productsForThisRoom) {
+        const product = optionalProducts.find((p) => p.key === productKey);
 
-    for (const productKey of activeOptionalProductKeysThisNight) {
-      const product = optionalProducts.find((p) => p.key === productKey);
-
-      if (!product) {
-        console.warn(
-          `  - Optional product with key "${productKey}" not found in mappings. Skipping.`,
-        );
-        continue;
-      }
-
-      let addedCost = 0;
-
-      switch (product.chargingMethod) {
-        case "Once":
-          addedCost = product.price * nightExtras[productKey].amount;
-          console.log(
-            `  - Product "${product.name}" (${productKey}): Added ${addedCost} (Once for this night)`,
-          );
-          break;
-        case "PerPerson":
-          addedCost = product.price * totalGuestsThisNight;
-          console.log(
-            `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPerson for this night: ${product.price} * ${totalGuestsThisNight} guests)`,
-          );
-          break;
-        case "PerPersonNight":
-          addedCost = product.price * totalGuestsThisNight;
-          console.log(
-            `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPersonNight: ${product.price} * ${totalGuestsThisNight} guests)`,
-          );
-          break;
-        default:
+        if (!product) {
           console.warn(
-            `  - Product "${product.name}" (${productKey}): Unknown charging method "${product.chargingMethod}". Skipping.`,
+            `  - Optional product with key "${productKey}" not found in mappings. Skipping.`,
           );
-          break;
+          continue;
+        }
+
+        let addedCost = 0;
+
+        switch (product.chargingMethod) {
+          case "Once":
+            addedCost = product.price * room.extras[productKey].amount;
+            console.log(
+              `  - Product "${product.name}" (${productKey}): Added ${addedCost} (Once for this night)`,
+            );
+            break;
+          case "PerPerson":
+            addedCost =
+              product.price *
+              (parseInt(room.occupant_countChildren ?? "0") +
+                parseInt(room.occupant_countAdults ?? "0"));
+            console.log(
+              `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPerson for this night: ${product.price} * ${totalGuestsThisNight} guests)`,
+            );
+            break;
+          case "PerPersonNight":
+            addedCost =
+              product.price *
+              (parseInt(room.occupant_countChildren ?? 0) +
+                parseInt(room.occupant_countAdults ?? 0));
+            console.log(
+              `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPersonNight: ${product.price} * ${totalGuestsThisNight} guests)`,
+            );
+            break;
+          default:
+            console.warn(
+              `  - Product "${product.name}" (${productKey}): Unknown charging method "${product.chargingMethod}". Skipping.`,
+            );
+            break;
+        }
+        total += addedCost;
       }
-      total += addedCost;
     }
   });
 
