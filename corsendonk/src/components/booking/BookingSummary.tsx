@@ -18,6 +18,7 @@ interface BookingData {
       occupant_countAdults: number;
       occupant_countChildren: number;
     }[];
+    extras: { [key: string]: boolean }; // Added extras to match RoomPicker's structure
     room_options: {
       available_count: number;
       bed_capacity: number;
@@ -26,11 +27,7 @@ interface BookingData {
       room_group: string;
     }[];
   }[];
-  optionalExtras: {
-    lunch: boolean;
-    bicycleRent: boolean;
-    bicycleTransport: boolean;
-  };
+  // optionalExtras removed - now part of reservations
   mealPlan: "breakfast" | "halfboard";
   total: number;
   pricing_data: {
@@ -470,11 +467,11 @@ interface BookingData {
 }
 
 interface BookingSummaryProps {
-  selectedArrangement: any;
+  selectedArrangement: any; // Keep as any for now, but it matches selectedArrangementInterface from RoomPicker
   pricingData: any;
   totalPrice: number;
   boardOption: any;
-  optionalProducts: any;
+  // optionalProducts prop removed
   travelMode: "walking" | "cycling";
   rawConfig: any;
   onBack: () => void;
@@ -488,7 +485,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   pricingData,
   totalPrice,
   boardOption,
-  optionalProducts,
+  // optionalProducts removed from destructuring
   travelMode,
   onBack,
   onBackToStep1,
@@ -499,12 +496,12 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   const arrangementLength = selectedArrangement.night_details.length + 1; // 2 nights = 3 days, 3 nights = 4 days
 
   const [bookingData, setBookingData] = useState<BookingData>({
-    reservations: selectedArrangement.night_details,
+    reservations: selectedArrangement.night_details, // This now includes the 'extras' field per night
     pricing_data: pricingData,
-    optionalExtras: optionalProducts,
+    // optionalExtras removed from state initialization
     mealPlan: boardOption,
     total: totalPrice,
-    arrangementLength: arrangementLength, // Added
+    arrangementLength: arrangementLength,
     travelMode: travelMode,
   });
 

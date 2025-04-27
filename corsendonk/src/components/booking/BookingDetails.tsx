@@ -6,6 +6,21 @@ import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
 // Corrected import path and added optionalProducts import
 import { ageCategoryMapping, BoardMapping, HOTEL_NAME_MAPPING, optionalProducts } from "../../mappings/mappings";
 
+// Helper function to get Dutch charging method text (copied from RoomPicker for consistency)
+function chargingMethodToDutch(method: string): string {
+  switch (method) {
+    case "Once":
+      return "Eenmalig";
+    case "PerPerson":
+      return "Per persoon";
+    case "PerPersonNight":
+      return "Per persoon per nacht";
+    default:
+      return "";
+  }
+}
+
+
 function getPriceForSingleRoom(
   nightlyPricing: any,
   hotel: string,
@@ -238,30 +253,60 @@ export function BookingDetails({
           );
         })}
       </div>
+      {/* REVISED Extras Section */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-4">Extras</h2>
-        <div className="space-y-2">
-          {optionalProducts.map((product) => {
-            // Check if the extra is selected in bookingData
-            if (bookingData.optionalExtras[product.key]) {
+        <h2 className="text-lg font-semibold mb-4">Geselecteerde Extra's</h2>
+        <div className="space-y-4">
+          {bookingData.reservations.map((reservation, index) => {
+            // Find selected extras for this specific night
+            const nightExtras = reservation.extras || {};
+            const selectedKeys = Object.keys(nightExtras).filter(key => nightExtras[key]);
+
+            // Only render if there are selected extras for this night
+            if (selectedKeys.length > 0) {
               return (
-                <div key={product.key} className="flex justify-between items-center">
-                  <span>{product.name}</span>
-                  {/* Price is now part of the total, just show the name */}
-                </div>
+                <div key={`extras-${index}`} className="border-b last:border-b-0 pb-4 mb-4 last:pb-0 last:mb-0">
+                   <h3 className="font-medium text-sm text-gray-600 mb-2">
+                     {formatDutchDate(reservation.date)} - {getHotelDisplayName(reservation.hotel)}
+                   </h3>
+                   <div className="space-y-1 pl-2">
+                     {selectedKeys.map(key => {
+                       const product = optionalProducts.find(p => p.key === key);
+                       if (!product) return null; // Should not happen if data is consistent
+
+                       // Calculate guests for this night to display price correctly if needed (though price is in total)
+                       const guestsThisNight = reservation.chosen_rooms.reduce((sum, room) => {
+                         return sum + (room.occupant_countAdults || 0) + (room.occupant_countChildren || 0);
+                       }, 0);
+
+                       return (
+                         <div key={key} className="flex justify-between items-center text-sm">
+                           <span>{product.name}</span>
+                           {/* Optional: Display price breakdown if needed, but it's included in the total */}
+                           {/* <span className="text-gray-500">
+                             €{product.price.toFixed(2)} {chargingMethodToDutch(product.chargingMethod || "")}
+                             {product.chargingMethod?.includes('PerPerson') && ` x ${guestsThisNight}`}
+                           </span> */}
+                         </div>
+                       );
+                     })}
+                   </div>
+                 </div>
               );
             }
-            return null; // Don't render if not selected
+            return null; // No extras selected for this night
           })}
 
-          {/* Check if *any* optional extra is selected */}
-          {!Object.values(bookingData.optionalExtras).some(selected => selected) && (
+          {/* Check if *any* optional extra is selected across *all* nights */}
+          {!bookingData.reservations.some(res => res.extras && Object.values(res.extras).some(selected => selected)) && (
              <div className="text-gray-500 italic">
-               Geen extra's geselecteerd
+               Geen extra's geselecteerd voor dit verblijf.
              </div>
            )}
         </div>
       </div>
+      {/* END REVISED Extras Section */}
+
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center">
           <div>
