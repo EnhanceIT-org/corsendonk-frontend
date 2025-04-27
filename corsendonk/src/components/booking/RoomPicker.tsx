@@ -168,7 +168,6 @@ function calculateTotalPrice(
     const assignedChildren = sumNightChildrenFn(night);
     const totalGuestsThisNight = assignedAdults + assignedChildren;
 
-    console.log(night.chosen_rooms);
     for (const room of night.chosen_rooms) {
       const productsForThisRoom = Object.keys(room?.extras ?? {}).filter(
         (key) => room.extras[key].selected,
@@ -187,28 +186,20 @@ function calculateTotalPrice(
 
         switch (product.chargingMethod) {
           case "Once":
-            addedCost = product.price * room.extras[productKey].amount;
-            console.log(
-              `  - Product "${product.name}" (${productKey}): Added ${addedCost} (Once for this night)`,
-            );
+            addedCost =
+              product.price[night.hotel] * room.extras[productKey].amount;
             break;
           case "PerPerson":
             addedCost =
-              product.price *
+              product.price[night.hotel] *
               (parseInt(room.occupant_countChildren ?? "0") +
                 parseInt(room.occupant_countAdults ?? "0"));
-            console.log(
-              `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPerson for this night: ${product.price} * ${totalGuestsThisNight} guests)`,
-            );
             break;
           case "PerPersonNight":
             addedCost =
-              product.price *
+              product.price[night.hotel] *
               (parseInt(room.occupant_countChildren ?? 0) +
                 parseInt(room.occupant_countAdults ?? 0));
-            console.log(
-              `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPersonNight: ${product.price} * ${totalGuestsThisNight} guests)`,
-            );
             break;
           default:
             console.warn(
@@ -952,8 +943,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         const room =
           updatedArrangement.night_details[nightIndex].chosen_rooms[roomIndex];
         if (room && typeof room.extras === "object" && room.extras !== null) {
-          console.log(room.extras);
-          console.log(room.extras[extraKey]);
           if (!room.extras[extraKey]?.selected) {
             room.extras[extraKey] = { selected: true, amount: 1 };
           } else {
@@ -1488,7 +1477,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                         {product.name}
                                       </span>
                                       <span className="text-xs text-gray-500 ml-2">
-                                        {`€${product.price.toFixed(
+                                        {`€${product.price[night.hotel].toFixed(
                                           2,
                                         )} ${chargingMethodToDutch(
                                           product.chargingMethod ?? "",

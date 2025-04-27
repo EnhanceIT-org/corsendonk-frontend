@@ -107,21 +107,33 @@ export const optionalProducts = [
   {
     key: "lunch",
     name: "Lunch pakket",
-    price: 10,
+    price: {
+      hotel1: 10,
+      hotel2: 15,
+      hotel3: 20,
+    },
     chargingMethod: "PerPersonNight",
     availableFor: ["walking", "cycling"],
   },
   {
     key: "huisdier",
     name: "Huisdier op kamer",
-    price: 10,
+    price: {
+      hotel1: 10,
+      hotel2: 15,
+      hotel3: 20,
+    },
     chargingMethod: "Once",
     availableFor: ["walking", "cycling"],
   },
   {
     key: "bicycleRent",
     name: "Fiets Verhuur",
-    price: 25,
+    price: {
+      hotel1: 20,
+      hotel2: 25,
+      hotel3: 30,
+    },
     chargingMethod: "Once",
     availableFor: ["cycling"],
   },
