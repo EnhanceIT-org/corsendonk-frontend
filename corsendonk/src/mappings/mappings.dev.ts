@@ -65,14 +65,14 @@ export const BoardMapping: any = {
     walking: {
       "3D": {
         halfboard: {
-          Bink: "4b1be4b2-0699-42aa-bdbb-b27f00e382fb",  // Walking package Half Board 3D Bink
+          Bink: "4b1be4b2-0699-42aa-bdbb-b27f00e382fb", // Walking package Half Board 3D Bink
           Bardo: "545c0c48-f31a-4cd8-ad96-b2c2012e96fb", // Walking package Half Board 3D Bardo
         },
         breakfast: "d10f8d15-4b06-4ea1-aa2a-b27f00e16550", // Walking package Breakfast 3D
       },
       "4D": {
         halfboard: {
-          Bink: "868b019a-b157-4180-bfa7-b2a800de8d3a",  // Walking package Half Board 4D Bink
+          Bink: "868b019a-b157-4180-bfa7-b2a800de8d3a", // Walking package Half Board 4D Bink
           Bardo: "81375e96-c998-40bd-99f4-b2c2012e7559", // Walking package Half Board 4D Bardo
         },
         breakfast: "507671c5-f360-49f8-bc98-b2a800de6a99", // Walking package Breakfast 4D
@@ -81,14 +81,14 @@ export const BoardMapping: any = {
     cycling: {
       "3D": {
         halfboard: {
-          Bink: "c00bb42d-20d1-4df6-a56f-b27f00e3e778",  // Cycling package Half Board 3D Bink
+          Bink: "c00bb42d-20d1-4df6-a56f-b27f00e3e778", // Cycling package Half Board 3D Bink
           Bardo: "22e194ae-93d5-4e78-aef8-b2c2012eb41c", // Cycling package Half Board 3D Bardo
         },
         breakfast: "1186693d-57b7-41a2-9080-b27f00e3c985", // Cycling package Breakfast 3D
       },
       "4D": {
         halfboard: {
-          Bink: "b5434197-6f08-4bcd-8c76-b2a800de513b",  // Cycling package Half Board 4D Bink
+          Bink: "b5434197-6f08-4bcd-8c76-b2a800de513b", // Cycling package Half Board 4D Bink
           Bardo: "c0d76183-ebd3-4b55-9f02-b2c2012ef6b0", // Cycling package Half Board 4D Bardo
         },
         breakfast: "febe8205-217a-4640-80ae-b2a800de33ab", // Cycling package Breakfast 4D
@@ -103,30 +103,26 @@ export const HOTEL_NAME_MAPPING: { [key: string]: string } = {
   hotel3: "Turnova",
 };
 
-/**
- * Simplified structure for optional products.
- */
 export const optionalProducts = [
   {
     key: "lunch",
     name: "Lunch pakket",
-    price: 15, // Example price
-    chargingMethod: "PerPersonNight", // Example charging
+    price: 15,
+    chargingMethod: "PerPersonNight",
+    availableFor: ["walking", "cycling"],
+  },
+  {
+    key: "huisdier",
+    name: "Huisdier op kamer",
+    price: 10,
+    chargingMethod: "Once",
     availableFor: ["walking", "cycling"],
   },
   {
     key: "bicycleRent",
     name: "Fiets Verhuur",
-    price: 25, // Example price
-    chargingMethod: "PerPersonNight", // Example charging
+    price: 25,
+    chargingMethod: "Once",
     availableFor: ["cycling"],
   },
-  {
-    key: "bicycleTransport",
-    name: "Fiets Transport",
-    price: 10, // Example price
-    chargingMethod: "Once", // Example charging
-    availableFor: ["cycling"],
-  },
-  // Add more optional products here if needed
 ];

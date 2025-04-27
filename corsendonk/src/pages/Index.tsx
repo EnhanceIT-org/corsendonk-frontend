@@ -15,11 +15,6 @@ export interface BookingFormData {
 
 export interface finalReservationData {
   travelMode: "walking" | "cycling";
-  optionalProducts: {
-    lunch: boolean;
-    bicycleRent: boolean;
-    bicycleTransport: boolean;
-  };
   boardOption: string;
   selectedArrangement: {
     night_details: {
@@ -448,7 +443,6 @@ const Index = () => {
     selectedArrangement: any,
     pricingData: any,
     totalPrice: number,
-    optionalProducts: any,
     boardOption: any,
     travelMode: "walking" | "cycling",
     rawConfig: any,
@@ -456,10 +450,9 @@ const Index = () => {
     setFinalReservationData({
       selectedArrangement,
       pricingData,
-      optionalProducts,
       boardOption,
       travelMode,
-      rawConfig, // NEW
+      rawConfig,
     });
     setTotalPrice(totalPrice);
     setCurrentStep(3);
@@ -501,13 +494,12 @@ const Index = () => {
             pricingData={finalReservationData.pricingData}
             totalPrice={totalPrice}
             boardOption={finalReservationData.boardOption}
-            optionalProducts={finalReservationData.optionalProducts}
             travelMode={finalReservationData.travelMode}
-            rawConfig={finalReservationData.rawConfig} // NEW
+            rawConfig={finalReservationData.rawConfig}
             onBack={() => setCurrentStep(2)}
             onBookingSuccess={handleBookingSuccess}
             onBackToStep2={() => setCurrentStep(2)}
-            onBackToStep1={() => setCurrentStep(1)} // Make sure this line exists!
+            onBackToStep1={() => setCurrentStep(1)}
           />
         )}
       </main>

@@ -1,12 +1,10 @@
 import * as React from "react";
 import { useEffect, useState, useCallback } from "react"; // Added useCallback
 import { MealPlanToggle } from "./MealPlanToggle";
-// Removed OptionalExtras import
 import { RoomDetailModal } from "./RoomDetailModal";
 import { format } from "date-fns";
-import { nl } from "date-fns/locale";
+import { ar, nl } from "date-fns/locale";
 import axios from "axios";
-// Corrected import path for fetchWithBaseUrl - Assuming it's in lib relative to src
 import { fetchWithBaseUrl } from "../../lib/utils";
 import {
   Coffee,
@@ -18,22 +16,19 @@ import {
   XCircle,
   Mountain,
   Bike,
-  Package, // Added Package icon
 } from "lucide-react";
-// --- Ensure mappings are correctly imported ---
-// Corrected import path and import new optionalProducts structure
+
 import {
   ageCategoryMapping,
   BoardMapping,
-  optionalProducts, // Import new structure
+  optionalProducts,
   HOTEL_NAME_MAPPING,
 } from "../../mappings/mappings";
 
-// Helper function to get Dutch charging method text
 function chargingMethodToDutch(method: string): string {
   switch (method) {
     case "Once":
-      return "Eenmalig";
+      return "X ";
     case "PerPerson":
       return "Per persoon";
     case "PerPersonNight":
@@ -42,10 +37,8 @@ function chargingMethodToDutch(method: string): string {
       return "";
   }
 }
-// --- End mapping imports ---
 import { PricingSummary } from "./PricingSummary";
 import { Breadcrumb } from "./Breadcrumb";
-import { log } from "console";
 
 interface selectedArrangementInterface {
   night_details: {
@@ -61,7 +54,12 @@ interface selectedArrangementInterface {
     hotel: string;
     notes: string[];
     restaurant_chosen: string;
-    extras: { [key: string]: boolean }; // NEW: Added extras state per night
+    extras: {
+      [key: string]: {
+        selected: boolean;
+        amount: number;
+      };
+    };
     room_options: {
       available_count: number;
       bed_capacity: number;
@@ -89,7 +87,6 @@ interface RoomPickerProps {
     selectedArrangement: selectedArrangementInterface, // Use interface
     pricingData: any,
     totalPrice: number,
-    // optionalProducts removed from parameters
     boardOption: any,
     travelMode: "walking" | "cycling",
     rawConfig: any,
@@ -97,31 +94,27 @@ interface RoomPickerProps {
   onBack: () => void;
 }
 
-// --- START: Define sumNightAdults and sumNightChildren ---
 const sumNightAdults = (night: any) =>
   night.chosen_rooms.reduce(
-    (acc: number, r: any) => acc + (r.occupant_countAdults || 0),
+    (acc: number, r: any) => acc + (r.occupant_countAdults ?? 0),
     0,
   );
 const sumNightChildren = (night: any) =>
   night.chosen_rooms.reduce(
-    (acc: number, r: any) => acc + (r.occupant_countChildren || 0),
+    (acc: number, r: any) => acc + (r.occupant_countChildren ?? 0),
     0,
   );
-// --- END: Define sumNightAdults and sumNightChildren ---
 
-// Function to get display name (using mapping with fallback)
 function getHotelDisplayName(hotelKey: string): string {
-  return HOTEL_NAME_MAPPING[hotelKey] || hotelKey; // Use mapping, fallback to key if not found
+  return HOTEL_NAME_MAPPING[hotelKey] || hotelKey;
 }
 
-// --- Helper function: Get Rate ID ---
 function getNightlyRateId(
   hotel: string,
-  boardType: string, // "HB" or "B&B"
+  boardType: string,
   travelMode: string,
   arrangementLength: number,
-  restaurantChosen: string | null, // NEW: Add restaurant parameter
+  restaurantChosen: string | null,
 ) {
   const board = boardType === "HB" ? "halfboard" : "breakfast";
   let mode = travelMode;
@@ -146,18 +139,9 @@ function getNightlyRateId(
     }
   }
 
-  // ADDED LOG for debugging rate ID lookup
-  console.log(
-    `[getNightlyRateId] Lookup: hotel=${hotel}, board=${board}, mode=${mode}, length=${lengthKey}, restaurant=${
-      restaurantChosen || "N/A"
-    } => rateId=${rateId || "Not Found"}`,
-  );
-
   return rateId;
 }
 
-// --- Helper function: Calculate Total Price ---
-// REFACTORED: Calculates total price based on room prices and per-night extras
 function calculateTotalPrice(
   arrangement: selectedArrangementInterface | null,
   sumNightAdultsFn: (night: any) => number,
@@ -165,37 +149,38 @@ function calculateTotalPrice(
   pricesPerNight: number[],
 ): number {
   if (!arrangement?.night_details) {
-    console.warn("[calculateTotalPrice] No night_details in arrangement. Returning 0.");
+    console.warn(
+      "[calculateTotalPrice] No night_details in arrangement. Returning 0.",
+    );
     return 0;
   }
 
   // 1) Start total with the sum of all room-night prices.
   let total = pricesPerNight.reduce((sum, price) => sum + price, 0);
-  console.log(`[calculateTotalPrice] Initial total from rooms: ${total}`);
 
   // 2) Iterate through each night to add costs for selected extras for that night
   arrangement.night_details.forEach((night: any, nightIndex: number) => {
     const assignedAdults = sumNightAdultsFn(night);
     const assignedChildren = sumNightChildrenFn(night);
     const totalGuestsThisNight = assignedAdults + assignedChildren;
-    console.log(`[calculateTotalPrice] Night ${nightIndex + 1} (${night.date}): ${totalGuestsThisNight} guests`);
 
     // Get the selected extras for *this specific night*
-    const nightExtras = night.extras || {}; // Default to empty object if undefined
+    const nightExtras = night.extras ?? {}; // Default to empty object if undefined
     const activeOptionalProductKeysThisNight = Object.keys(nightExtras).filter(
-      (key) => nightExtras[key] === true,
+      (key) => nightExtras[key].selected,
     );
-
-    console.log(`  - Active extras for this night: ${activeOptionalProductKeysThisNight.join(", ") || "None"}`);
 
     for (const productKey of activeOptionalProductKeysThisNight) {
       const product = optionalProducts.find((p) => p.key === productKey);
 
       if (!product) {
-        console.warn(`  - Optional product with key "${productKey}" not found in mappings. Skipping.`);
+        console.warn(
+          `  - Optional product with key "${productKey}" not found in mappings. Skipping.`,
+        );
         continue;
       }
 
+      console.log(product);
       let addedCost = 0;
 
       // Pricing logic based on charging method for THIS NIGHT
@@ -203,27 +188,34 @@ function calculateTotalPrice(
         case "Once":
           // 'Once' in this context means once *per night* it's selected
           addedCost = product.price;
-          console.log(`  - Product "${product.name}" (${productKey}): Added ${addedCost} (Once for this night)`);
+          console.log(
+            `  - Product "${product.name}" (${productKey}): Added ${addedCost} (Once for this night)`,
+          );
           break;
         case "PerPerson":
-           // 'PerPerson' in this context means per person *for this night* it's selected
+          // 'PerPerson' in this context means per person *for this night* it's selected
           addedCost = product.price * totalGuestsThisNight;
-           console.log(`  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPerson for this night: ${product.price} * ${totalGuestsThisNight} guests)`);
+          console.log(
+            `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPerson for this night: ${product.price} * ${totalGuestsThisNight} guests)`,
+          );
           break;
         case "PerPersonNight":
           // This behaves the same as PerPerson in the per-night context
           addedCost = product.price * totalGuestsThisNight;
-          console.log(`  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPersonNight: ${product.price} * ${totalGuestsThisNight} guests)`);
+          console.log(
+            `  - Product "${product.name}" (${productKey}): Added ${addedCost} (PerPersonNight: ${product.price} * ${totalGuestsThisNight} guests)`,
+          );
           break;
         default:
-          console.warn(`  - Product "${product.name}" (${productKey}): Unknown charging method "${product.chargingMethod}". Skipping.`);
+          console.warn(
+            `  - Product "${product.name}" (${productKey}): Unknown charging method "${product.chargingMethod}". Skipping.`,
+          );
           break;
       }
       total += addedCost;
     }
   });
 
-  console.log(`[calculateTotalPrice] Final calculated total: ${total}`);
   return total;
 }
 
@@ -237,13 +229,6 @@ function distributeGuestsEvenly(
   const n = chosenRooms.length;
   if (n === 0) return 0;
 
-  // ADDED LOG
-  console.log(
-    `[distributeGuestsEvenly] Distributing ${count} ${
-      isAdult ? "Adults" : "Children"
-    } into ${n} rooms`,
-  );
-
   const base = Math.floor(count / n);
   let remainder = count % n;
   const occupantWanted = new Array(n).fill(base);
@@ -253,12 +238,6 @@ function distributeGuestsEvenly(
       remainder--;
     }
   }
-
-  // ADDED LOG
-  console.log(
-    `[distributeGuestsEvenly] Initial distribution plan:`,
-    occupantWanted,
-  );
 
   // Adjust based on capacity
   for (let i = 0; i < n; i++) {
@@ -323,7 +302,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  // Removed selectedOptionalProducts state
   const [selectedBoardOption, setSelectedBoardOption] = useState<
     "breakfast" | "halfboard"
   >(bookingData.boardOption);
@@ -483,16 +461,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     // Ensure selectedArrangement is not null before proceeding
     if (!selectedArrangement) {
       setError("Kan niet doorgaan, geen arrangement geselecteerd.");
-      console.error("[onReserve] Attempted to continue without a selected arrangement.");
+      console.error(
+        "[onReserve] Attempted to continue without a selected arrangement.",
+      );
       return;
     }
-
 
     onContinue(
       selectedArrangement, // Pass the arrangement with per-night extras
       pricingData,
       totalPrice,
-      // selectedOptionalProducts removed
       selectedBoardOption,
       travelMode,
       rawConfig,
@@ -626,24 +604,29 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           setSelectedBoardOption(bookingData.boardOption);
         }
 
-        // Initialize extras for the initial arrangement
-        const initializeExtras = (arrangement: selectedArrangementInterface | null) => {
-          if (!arrangement || !arrangement.night_details) return arrangement;
+        const initializeExtras = (
+          arrangement: selectedArrangementInterface | null,
+        ) => {
+          if (!arrangement?.night_details) return arrangement;
 
-          const initialExtrasState = optionalProducts.reduce((acc, product) => {
-            acc[product.key] = false; // Default all extras to false
-            return acc;
-          }, {} as { [key: string]: boolean });
+          const initialExtrasState = optionalProducts.reduce(
+            (acc, product) => {
+              acc[product.key] = {
+                selected: false,
+                amount: 0,
+              };
+              return acc;
+            },
+            {} as { [key: string]: boolean },
+          );
 
-          arrangement.night_details.forEach(night => {
-            // Only initialize if 'extras' doesn't exist or is not an object
-            if (typeof night.extras !== 'object' || night.extras === null) {
-               night.extras = { ...initialExtrasState };
+          arrangement.night_details.forEach((night) => {
+            if (typeof night.extras !== "object" || night.extras === null) {
+              night.extras = { ...initialExtrasState };
             }
           });
           return arrangement;
         };
-
 
         let initialArrangementToSet =
           bookingData.boardOption === "breakfast"
@@ -652,30 +635,37 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
         // Handle fallback if initial option is missing
         if (!initialArrangementToSet) {
-           console.warn(`[RoomPicker InitEffect] No optimal sequence for initial board option: ${bookingData.boardOption}. Trying fallback.`);
-           initialArrangementToSet =
-             bookingData.boardOption === "breakfast"
-               ? availHalfBoard?.optimal_sequence
-               : availBreakfast?.optimal_sequence;
+          console.warn(
+            `[RoomPicker InitEffect] No optimal sequence for initial board option: ${bookingData.boardOption}. Trying fallback.`,
+          );
+          initialArrangementToSet =
+            bookingData.boardOption === "breakfast"
+              ? availHalfBoard?.optimal_sequence
+              : availBreakfast?.optimal_sequence;
 
-           if (initialArrangementToSet) {
-             // Update board option state if fallback is used
-             setSelectedBoardOption(bookingData.boardOption === "breakfast" ? "halfboard" : "breakfast");
-           } else {
-             console.error("[RoomPicker InitEffect] No optimal sequence found for either board option.");
-             setError("Geen beschikbaar arrangement gevonden.");
-             setLoading(false);
-             return; // Exit early
-           }
-         } else {
-           // Ensure board option state matches the one successfully loaded
-           setSelectedBoardOption(bookingData.boardOption);
-         }
+          if (initialArrangementToSet) {
+            // Update board option state if fallback is used
+            setSelectedBoardOption(
+              bookingData.boardOption === "breakfast"
+                ? "halfboard"
+                : "breakfast",
+            );
+          } else {
+            console.error(
+              "[RoomPicker InitEffect] No optimal sequence found for either board option.",
+            );
+            setError("Geen beschikbaar arrangement gevonden.");
+            setLoading(false);
+            return; // Exit early
+          }
+        } else {
+          // Ensure board option state matches the one successfully loaded
+          setSelectedBoardOption(bookingData.boardOption);
+        }
 
         // Initialize extras on the arrangement *before* setting state
         const arrangementWithExtras = initializeExtras(initialArrangementToSet);
         setSelectedArrangement(arrangementWithExtras);
-
 
         // Fetch pricing data *only if* we have valid arrangements to fetch for
         const pricingPromises = [];
@@ -878,7 +868,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   ]); // Ensure selectedBoardOption is a dependency
 
   // --- Effect: Calculate Total Price ---
-  // --- Effect: Calculate Total Price ---
   useEffect(() => {
     // Recalculate total price whenever relevant state changes
     const newTotal = calculateTotalPrice(
@@ -890,7 +879,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     setTotalPrice(newTotal);
   }, [selectedArrangement, pricesPerNight]); // Depends on arrangement (for extras) and room prices
 
-  // --- Handler: Board Toggle ---
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
     // ADDED LOG
     console.log(`[RoomPicker handleBoardToggle] Called with: ${option}`);
@@ -899,80 +887,130 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     const newArrangementData = arrangements[option]; // Get the corresponding *fetched* arrangement
 
     if (newArrangementData) {
-       // Initialize extras for the new arrangement before setting it
-       const initialExtrasState = optionalProducts.reduce((acc, product) => {
-         acc[product.key] = false; // Default all extras to false
-         return acc;
-       }, {} as { [key: string]: boolean });
+      // Initialize extras for the new arrangement before setting it
+      const initialExtrasState = optionalProducts.reduce(
+        (acc, product) => {
+          acc[product.key] = false; // Default all extras to false
+          return acc;
+        },
+        {} as { [key: string]: boolean },
+      );
 
-       const arrangementWithInitializedExtras = JSON.parse(JSON.stringify(newArrangementData)); // Deep copy
-       arrangementWithInitializedExtras.night_details.forEach((night: any) => {
-         // Only initialize if 'extras' doesn't exist or is not an object
-         if (typeof night.extras !== 'object' || night.extras === null) {
-           night.extras = { ...initialExtrasState };
-         }
-       });
+      const arrangementWithInitializedExtras = JSON.parse(
+        JSON.stringify(newArrangementData),
+      ); // Deep copy
+      arrangementWithInitializedExtras.night_details.forEach((night: any) => {
+        // Only initialize if 'extras' doesn't exist or is not an object
+        if (typeof night.extras !== "object" || night.extras === null) {
+          night.extras = { ...initialExtrasState };
+        }
+      });
 
       setSelectedArrangement(arrangementWithInitializedExtras);
       // Reset distribution flag so guest distribution runs for the new arrangement
       setDefaultDistributed(false);
     } else {
-      console.warn(`[handleBoardToggle] No arrangement data found for option: ${option}`);
+      console.warn(
+        `[handleBoardToggle] No arrangement data found for option: ${option}`,
+      );
       setSelectedArrangement(null); // Clear arrangement if none exists for this option
     }
   };
 
-  // --- Handler: Toggle Extra ---
-  const handleToggleExtra = useCallback((nightIndex: number, extraKey: string) => {
-    setSelectedArrangement(currentArrangement => {
-      if (!currentArrangement) return null;
+  const handleToggleExtra = useCallback(
+    (nightIndex: number, extraKey: string) => {
+      setSelectedArrangement((currentArrangement) => {
+        if (!currentArrangement) return null;
 
-      // Deep copy to avoid direct state mutation
-      const updatedArrangement = JSON.parse(JSON.stringify(currentArrangement));
+        const updatedArrangement = JSON.parse(
+          JSON.stringify(currentArrangement),
+        );
 
-      const night = updatedArrangement.night_details[nightIndex];
-      if (night && typeof night.extras === 'object' && night.extras !== null) {
-        // Toggle the value
-        night.extras[extraKey] = !night.extras[extraKey];
-      } else {
-        console.warn(`[handleToggleExtra] Could not find night or extras object at index ${nightIndex}`);
-      }
+        console.log(
+          `[handleToggleExtra] Toggling extra "${extraKey}" for night index ${nightIndex}`,
+        );
 
-      return updatedArrangement;
-    });
-  }, []); // No dependencies needed as it uses the functional update form of setState
+        const night = updatedArrangement.night_details[nightIndex];
+        if (
+          night &&
+          typeof night.extras === "object" &&
+          night.extras !== null
+        ) {
+          console.log(night.extras);
+          console.log(night.extras[extraKey]);
+          if (!night.extras[extraKey]?.selected) {
+            night.extras[extraKey] = { selected: true, amount: 1 };
+          } else {
+            night.extras[extraKey].selected = false;
+            night.extras[extraKey].amount = 0;
+          }
+        } else {
+          console.warn(
+            `[handleToggleExtra] Could not find night or extras object at index ${nightIndex}`,
+          );
+        }
+
+        return updatedArrangement;
+      });
+    },
+    [],
+  );
+
+  const handleExtraAmountChange = useCallback(
+    (nightIndex: number, extraKey: string, delta: number) => {
+      setSelectedArrangement((currentArrangement) => {
+        if (!currentArrangement) return null;
+
+        const updatedArrangement = JSON.parse(
+          JSON.stringify(currentArrangement),
+        );
+
+        const night = updatedArrangement.night_details[nightIndex];
+        if (night?.extras?.[extraKey]?.selected) {
+          const currentAmount = night.extras[extraKey].amount ?? 1;
+          night.extras[extraKey].amount = Math.max(1, currentAmount + delta);
+        } else {
+          console.warn(
+            `[handleExtraAmountChange] Could not find selected extra at index ${nightIndex}`,
+          );
+        }
+
+        return updatedArrangement;
+      });
+    },
+    [],
+  );
 
   // --- Helper: Get Category Details (for Modal) ---
-  const getCategoryDetails = (
-    hotelKey: string,
-    categoryId: string,
-    config: any,
-  ) => {
-    if (
-      config &&
-      config[hotelKey] &&
-      config[hotelKey].rawConfig &&
-      config[hotelKey].rawConfig.Configurations &&
-      config[hotelKey].rawConfig.Configurations.length > 0
-    ) {
-      const raw = config[hotelKey].rawConfig;
-      const imageBaseUrl = raw.ImageBaseUrl;
-      const categories = raw.Configurations[0].Enterprise.Categories || [];
-      const category = categories.find((cat: any) => cat.Id === categoryId);
-      if (category) {
-        const name = category.Name["en-GB"] || "Unknown";
-        const imageId =
-          category.ImageIds && category.ImageIds.length > 0
-            ? category.ImageIds[0]
-            : null;
-        const imageUrl = imageId ? `${imageBaseUrl}/${imageId}` : null;
-        return { name, imageUrl };
-      }
-    }
-    return { name: "Unknown", imageUrl: null };
-  };
+  // const getCategoryDetails = (
+  //   hotelKey: string,
+  //   categoryId: string,
+  //   config: any,
+  // ) => {
+  //   if (
+  //     config &&
+  //     config[hotelKey] &&
+  //     config[hotelKey].rawConfig &&
+  //     config[hotelKey].rawConfig.Configurations &&
+  //     config[hotelKey].rawConfig.Configurations.length > 0
+  //   ) {
+  //     const raw = config[hotelKey].rawConfig;
+  //     const imageBaseUrl = raw.ImageBaseUrl;
+  //     const categories = raw.Configurations[0].Enterprise.Categories || [];
+  //     const category = categories.find((cat: any) => cat.Id === categoryId);
+  //     if (category) {
+  //       const name = category.Name["en-GB"] || "Unknown";
+  //       const imageId =
+  //         category.ImageIds && category.ImageIds.length > 0
+  //           ? category.ImageIds[0]
+  //           : null;
+  //       const imageUrl = imageId ? `${imageBaseUrl}/${imageId}` : null;
+  //       return { name, imageUrl };
+  //     }
+  //   }
+  //   return { name: "Unknown", imageUrl: null };
+  // };
 
-  // --- Render Logic ---
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -1462,44 +1500,94 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                       </div>
                     </div>
 
-                     {/* --- NEW: Optional Extras Section per Night --- */}
-                     <div className="mt-6 pt-4 border-t">
-                       <h4 className="text-md font-medium text-gray-800 mb-3">Voeg extra's toe:</h4>
-                       <div className="space-y-3">
-                         {optionalProducts
-                           .filter(product => product.availableFor.includes(travelMode))
-                           .map(product => (
-                             <label key={product.key} className="flex items-center gap-3 cursor-pointer">
-                               <input
-                                 type="checkbox"
-                                 checked={night.extras?.[product.key] || false}
-                                 onChange={() => handleToggleExtra(nightIdx, product.key)}
-                                 className="rounded border-gray-300 text-[#2C4A3C] focus:ring-[#2C4A3C]/50 h-4 w-4"
-                               />
-                               <div>
-                                 <span className="font-medium text-sm">{product.name}</span>
-                                 <span className="text-xs text-gray-500 ml-2">
-                                   {`€${product.price.toFixed(2)} ${chargingMethodToDutch(product.chargingMethod || "")}`}
-                                 </span>
-                               </div>
-                             </label>
-                           ))}
-                         {optionalProducts.filter(p => p.availableFor.includes(travelMode)).length === 0 && (
-                            <div className="text-sm text-gray-500 italic">
-                               Geen extra's beschikbaar voor deze reiswijze.
-                             </div>
-                         )}
-                       </div>
-                     </div>
-                     {/* --- END: Optional Extras Section --- */}
-
+                    <div className="mt-6 pt-4 border-t">
+                      <h4 className="text-md font-medium text-gray-800 mb-3">
+                        Voeg extra's toe:
+                      </h4>
+                      <div className="space-y-3">
+                        {optionalProducts
+                          .filter((product) =>
+                            product.availableFor.includes(travelMode),
+                          )
+                          .map((product) => (
+                            <div
+                              key={product.key}
+                              className="flex items-center gap-3 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={
+                                  night.extras?.[product.key].selected ?? false
+                                }
+                                onChange={() =>
+                                  handleToggleExtra(nightIdx, product.key)
+                                }
+                                className="rounded border-gray-300 text-[#2C4A3C] focus:ring-[#2C4A3C]/50 h-4 w-4"
+                              />
+                              <div>
+                                <span className="font-medium text-sm">
+                                  {product.name}
+                                </span>
+                                <span className="text-xs text-gray-500 ml-2">
+                                  {`€${product.price.toFixed(
+                                    2,
+                                  )} ${chargingMethodToDutch(
+                                    product.chargingMethod ?? "",
+                                  )}`}
+                                </span>
+                              </div>
+                              {night.extras?.[product.key]?.selected &&
+                                product.chargingMethod == "Once" && (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() =>
+                                        handleExtraAmountChange(
+                                          nightIdx,
+                                          product.key,
+                                          -1,
+                                        )
+                                      }
+                                      className="p-1 border rounded text-gray-600 hover:bg-gray-100"
+                                      disabled={
+                                        night.extras?.[product.key]?.amount <= 1
+                                      }
+                                    >
+                                      -
+                                    </button>
+                                    <span className="text-sm">
+                                      {night.extras?.[product.key]?.amount || 1}
+                                    </span>
+                                    <button
+                                      onClick={() =>
+                                        handleExtraAmountChange(
+                                          nightIdx,
+                                          product.key,
+                                          1,
+                                        )
+                                      }
+                                      className="p-1 border rounded text-gray-600 hover:bg-gray-100"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                )}
+                            </div>
+                          ))}
+                        {optionalProducts.filter((p) =>
+                          p.availableFor.includes(travelMode),
+                        ).length === 0 && (
+                          <div className="text-sm text-gray-500 italic">
+                            Geen extra's beschikbaar voor deze reiswijze.
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
             },
           )}
         </div>
-        {/* Removed OptionalExtras component usage */}
 
         <PricingSummary
           totalPrice={totalPrice}

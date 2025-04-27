@@ -485,7 +485,6 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   pricingData,
   totalPrice,
   boardOption,
-  // optionalProducts removed from destructuring
   travelMode,
   onBack,
   onBackToStep1,
