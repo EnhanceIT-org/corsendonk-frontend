@@ -267,47 +267,13 @@ export function BookingDetails({
                       <Users className="w-4 h-4" />
                       <span>
                         {room.occupant_countAdults} Volwassenen,{" "}
-                        {room.occupant_countChildren} Kinderen
-                      </span>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                      <h2 className="text-lg font-semibold mb-4">
-                        Geselecteerde Extra's
-                      </h2>
-                      <div className="space-y-4">
-                        {Object.entries(
-                          room.extras as Record<
-                            string,
-                            { amount: number; selected: boolean }
-                          >,
-                        ).filter(([_, extra]) => extra.selected).length > 0 ? (
-                          Object.entries(
-                            room.extras as Record<
-                              string,
-                              { amount: number; selected: boolean }
-                            >,
-                          ).map(([key, extra], index) => {
-                            if (!extra.selected) return null;
-                            return (
-                              <div
-                                key={index}
-                                className="flex justify-between items-center text-sm"
-                              >
-                                <span>{capitalizeFirstLetter(key)}</span>
-                                <span>x{extra.amount}</span>
-                              </div>
-                            );
-                          })
-                        ) : (
-                          <p className="text-sm text-gray-500">
-                            Geen extra's geselecteerd
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                         {room.occupant_countChildren} Kinderen
+                       </span>
+                     </div>
+                    {null /* Hide Selected Extras */}
+                   </div>
+                 ))}
+               </div>
             </div>
           );
         })}

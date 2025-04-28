@@ -1442,6 +1442,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 Geen gasten toegewezen aan deze kamer!
                               </div>
                             )}
+                          {/* Optional Extras Section Start */}
+                          {/*
                           <div className="mt-6 pt-4 border-t">
                             <h4 className="text-md font-medium text-gray-800 mb-3">
                               Voeg extra's toe:
@@ -1538,6 +1540,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               )}
                             </div>
                           </div>
+                          */}
+                          {/* Optional Extras Section End */}
                         </div>
                       ))}
                     </div>
