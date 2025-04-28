@@ -1166,23 +1166,31 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 }}
                               >
                                 {night.room_options.map((roomOption: any) => {
+                                  const currentSelectedCount = night.chosen_rooms.filter(
+                                    (r: any) => r.category_id === roomOption.category_id
+                                  ).length;
+                                  
+                                  const isExhausted =
+                                  currentSelectedCount >= roomOption.available_count;
+
                                   const isOverCapacity =
                                     roomOption.bed_capacity <
                                       (room.occupant_countAdults ?? 0) +
-                                        (room.occupant_countChildren ?? 0) ||
-                                    roomOption.bed_capacity == 1;
+                                      (room.occupant_countChildren ?? 0) ||
+                                    roomOption.bed_capacity === 1;
 
-                                  if (!isOverCapacity) {
+                                    if (isOverCapacity || isExhausted) {
+                                      return null;                             // hide option entirely
+                                    }
                                     return (
                                       <option
                                         key={roomOption.category_id}
                                         value={roomOption.category_name}
-                                        disabled={isOverCapacity}
                                       >
                                         {roomOption.category_name}
                                       </option>
                                     );
-                                  }
+                                  
                                   return null;
                                 })}
                               </select>
