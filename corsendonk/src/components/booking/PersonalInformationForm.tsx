@@ -93,7 +93,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
       try {
         const SecureFields = window.SecureFields;
         if (!SecureFields) {
-          console.error("SecureFields library not loaded");
+          // console.error("SecureFields library not loaded");
           setErrors((prev) => ({
             ...prev,
             general:
@@ -141,7 +141,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         });
 
         secureFieldsRef.current.on("error", (error) => {
-          console.error("Datatrans error:", error);
+          // console.error("Datatrans error:", error);
           const newErrors = { ...errors };
 
           if (error.field === "cardNumber") {
@@ -156,7 +156,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           setIsSubmitting(false);
         });
       } catch (error) {
-        console.error("Error initializing Datatrans:", error);
+        // console.error("Error initializing Datatrans:", error);
         setErrors((prev) => ({
           ...prev,
           general:
@@ -178,7 +178,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log("Field changed:", name, value);
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -276,7 +275,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   };
 
   const submitFormData = async (paymentTransactionId) => {
-    console.log(formDataRef.current); // Always the latest formData
     try {
       const expiryParts = formDataRef.current.expiry.split("/");
       const formattedExpiry = `20${expiryParts[1]}-${expiryParts[0].padStart(
@@ -315,7 +313,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         }));
       }
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       setErrors((prev) => ({
         ...prev,
         general: "Er is een fout opgetreden. Probeer het later opnieuw.",
@@ -353,7 +351,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               try {
                 secureFieldsRef.current.submit(submissionData);
               } catch (innerError) {
-                console.error("Error inside submit timeout:", innerError);
+                // console.error("Error inside submit timeout:", innerError);
                 setErrors((prev) => ({
                   ...prev,
                   general:
@@ -363,7 +361,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               }
             }, 100);
           } catch (error) {
-            console.error("Error submitting secure fields:", error);
+            // console.error("Error submitting secure fields:", error);
             setErrors((prev) => ({
               ...prev,
               general:
@@ -373,7 +371,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           }
           // The rest will be handled by the success callback
         } catch (error) {
-          console.error("Error submitting secure fields:", error);
+          // console.error("Error submitting secure fields:", error);
           setErrors((prev) => ({
             ...prev,
             general:

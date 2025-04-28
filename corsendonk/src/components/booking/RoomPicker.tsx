@@ -155,9 +155,9 @@ function calculateTotalPrice(
   pricesPerNight: number[],
 ): number {
   if (!arrangement?.night_details) {
-    console.warn(
-      "[calculateTotalPrice] No night_details in arrangement. Returning 0.",
-    );
+    // console.warn(
+    //   "[calculateTotalPrice] No night_details in arrangement. Returning 0.",
+    // );
     return 0;
   }
 
@@ -176,9 +176,9 @@ function calculateTotalPrice(
         const product = optionalProducts.find((p) => p.key === productKey);
 
         if (!product) {
-          console.warn(
-            `  - Optional product with key "${productKey}" not found in mappings. Skipping.`,
-          );
+          // console.warn(
+          //   `  - Optional product with key "${productKey}" not found in mappings. Skipping.`,
+          // );
           continue;
         }
 
@@ -202,9 +202,9 @@ function calculateTotalPrice(
                 parseInt(room.occupant_countAdults ?? 0));
             break;
           default:
-            console.warn(
-              `  - Product "${product.name}" (${productKey}): Unknown charging method "${product.chargingMethod}". Skipping.`,
-            );
+            // console.warn(
+            //   `  - Product "${product.name}" (${productKey}): Unknown charging method "${product.chargingMethod}". Skipping.`,
+            // );
             break;
         }
         total += addedCost;
@@ -322,12 +322,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     arrangementLengthParam: number,
     restaurantChosen: string | null, // NEW: Add restaurant parameter
   ): number {
-    // ADDED LOG
-    // console.log(`[getPriceForSingleRoom] Args: hotel=${hotel}, boardType=${boardType}, travelMode=${travelMode}, roomCatId=${room.category_id}, children=${childrenCount}, adults=${adultsCount}, length=${arrangementLengthParam}, restaurant=${restaurantChosen}`);
-
     if (!nightlyPricing?.CategoryPrices) {
-      // ADDED LOG
-      // console.log(`[getPriceForSingleRoom] No CategoryPrices found in nightlyPricing.`);
       return 0;
     }
     const cat = nightlyPricing.CategoryPrices.find(
@@ -400,9 +395,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       restaurantChosen, // NEW: Pass restaurantChosen
     );
 
-    // ADDED LOG
-    // console.log(`[getPriceForSingleRoom] Looking for rateId: ${rateId}`);
-
     const rPrice = occupantPriceEntry.RateGroupPrices.find(
       (rgp: any) => rgp.MinRateId === rateId,
     );
@@ -457,9 +449,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     // Ensure selectedArrangement is not null before proceeding
     if (!selectedArrangement) {
       setError("Kan niet doorgaan, geen arrangement geselecteerd.");
-      console.error(
-        "[onReserve] Attempted to continue without a selected arrangement.",
-      );
+      // console.error(
+      //   "[onReserve] Attempted to continue without a selected arrangement.",
+      // );
       return;
     }
 
@@ -484,11 +476,11 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         );
         if (!configRes.ok) {
           // ADDED LOG
-          console.error(
-            "[RoomPicker InitEffect] Failed to fetch config response:",
-            configRes.status,
-            configRes.statusText,
-          );
+          // console.error(
+          //   "[RoomPicker InitEffect] Failed to fetch config response:",
+          //   configRes.status,
+          //   configRes.statusText,
+          // );
           throw new Error(
             `Failed to fetch configuration (${configRes.status})`,
           );
@@ -519,13 +511,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
         // Check for errors/empty results from availability
         if (availBreakfast?.error && availHalfBoard?.error) {
-          console.error(
-            "[RoomPicker InitEffect] Both availability calls returned errors:",
-            {
-              breakfastError: availBreakfast.error,
-              halfboardError: availHalfBoard.error,
-            },
-          );
+          // console.error(
+          //   "[RoomPicker InitEffect] Both availability calls returned errors:",
+          //   {
+          //     breakfastError: availBreakfast.error,
+          //     halfboardError: availHalfBoard.error,
+          //   },
+          // );
           setError(
             availBreakfast.error ??
               availHalfBoard.error ??
@@ -538,9 +530,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           !availBreakfast?.optimal_sequence &&
           !availHalfBoard?.optimal_sequence
         ) {
-          console.error(
-            "[RoomPicker InitEffect] No optimal sequences found in either availability response.",
-          );
+          // console.error(
+          //   "[RoomPicker InitEffect] No optimal sequences found in either availability response.",
+          // );
           setError(
             "Geen beschikbare arrangementen gevonden voor deze selectie.",
           );
@@ -560,9 +552,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             : availHalfBoard?.optimal_sequence;
 
         if (!initialArrangement) {
-          console.warn(
-            `[RoomPicker InitEffect] No optimal sequence available for the initial board option: ${bookingData.boardOption}. Trying the other board option.`,
-          );
+          // console.warn(
+          //   `[RoomPicker InitEffect] No optimal sequence available for the initial board option: ${bookingData.boardOption}. Trying the other board option.`,
+          // );
           // Try falling back to the *other* option if the preferred one is missing
           const fallbackArrangement =
             bookingData.boardOption === "breakfast"
@@ -570,22 +562,15 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
               : availBreakfast?.optimal_sequence;
 
           if (!fallbackArrangement) {
-            console.error(
-              "[RoomPicker InitEffect] No optimal sequence found for either board option.",
-            );
+            // console.error(
+            //   "[RoomPicker InitEffect] No optimal sequence found for either board option.",
+            // );
             setError(
               "Geen beschikbaar arrangement gevonden voor de geselecteerde opties.",
             );
             setLoading(false);
             return;
           } else {
-            console.log(
-              `[RoomPicker InitEffect] Using fallback arrangement: ${
-                bookingData.boardOption === "breakfast"
-                  ? "halfboard"
-                  : "breakfast"
-              }`,
-            );
             setSelectedArrangement(fallbackArrangement);
             // IMPORTANT: Update the selectedBoardOption state to match the fallback!
             setSelectedBoardOption(
@@ -624,7 +609,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                 }
               });
             } else {
-              console.warn("No chosen_rooms found for this night:", night);
+              // console.warn("No chosen_rooms found for this night:", night);
             }
           });
 
@@ -638,9 +623,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
         // Handle fallback if initial option is missing
         if (!initialArrangementToSet) {
-          console.warn(
-            `[RoomPicker InitEffect] No optimal sequence for initial board option: ${bookingData.boardOption}. Trying fallback.`,
-          );
+          // console.warn(
+          //   `[RoomPicker InitEffect] No optimal sequence for initial board option: ${bookingData.boardOption}. Trying fallback.`,
+          // );
           initialArrangementToSet =
             bookingData.boardOption === "breakfast"
               ? availHalfBoard?.optimal_sequence
@@ -654,9 +639,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                 : "breakfast",
             );
           } else {
-            console.error(
-              "[RoomPicker InitEffect] No optimal sequence found for either board option.",
-            );
+            // console.error(
+            //   "[RoomPicker InitEffect] No optimal sequence found for either board option.",
+            // );
             setError("Geen beschikbaar arrangement gevonden.");
             setLoading(false);
             return; // Exit early
@@ -683,9 +668,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           );
         } else {
           pricingPromises.push(Promise.resolve({ data: { data: null } })); // Placeholder if no breakfast arrangement
-          console.warn(
-            "[RoomPicker InitEffect] No breakfast arrangement, skipping breakfast pricing fetch.",
-          );
+          // console.warn(
+          //   "[RoomPicker InitEffect] No breakfast arrangement, skipping breakfast pricing fetch.",
+          // );
         }
 
         if (availHalfBoard?.optimal_sequence) {
@@ -699,9 +684,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           );
         } else {
           pricingPromises.push(Promise.resolve({ data: { data: null } })); // Placeholder if no halfboard arrangement
-          console.warn(
-            "[RoomPicker InitEffect] No halfboard arrangement, skipping halfboard pricing fetch.",
-          );
+          // console.warn(
+          //   "[RoomPicker InitEffect] No halfboard arrangement, skipping halfboard pricing fetch.",
+          // );
         }
 
         const [pricingBreakfastRes, pricingHalfBoardRes] =
@@ -713,19 +698,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         });
       } catch (err: any) {
         // ADDED LOG
-        console.error(
-          "[RoomPicker InitEffect] Error during data fetching:",
-          err,
-        );
+        // console.error(
+        //   "[RoomPicker InitEffect] Error during data fetching:",
+        //   err,
+        // );
         if (err.response) {
-          console.error(
-            "[RoomPicker InitEffect] Error response data:",
-            err.response.data,
-          );
-          console.error(
-            "[RoomPicker InitEffect] Error response status:",
-            err.response.status,
-          );
+          // console.error(
+          //   "[RoomPicker InitEffect] Error response data:",
+          //   err.response.data,
+          // );
+          // console.error(
+          //   "[RoomPicker InitEffect] Error response status:",
+          //   err.response.status,
+          // );
         }
         setError(err.message || "Error fetching data");
       } finally {
@@ -771,9 +756,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         });
 
         if (chosenRooms.length === 1) {
-          console.log(
-            `[RoomPicker DistributeGuestsEffect] Night ${night.date}: Assigning all guests to single room.`,
-          );
           chosenRooms[0].occupant_countAdults = adults;
           chosenRooms[0].occupant_countChildren = children;
           distributionApplied = true;
@@ -831,8 +813,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         );
 
         if (!foundEntry?.pricing) {
-          // ADDED LOG
-          console.warn(`  - No pricing entry found.`);
+          // // ADDED LOG
+          // console.warn(`  - No pricing entry found.`);
           return 0;
         }
 
@@ -912,7 +894,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             }
           });
         } else {
-          console.warn("No chosen_rooms found for this night:", night);
+          // console.warn("No chosen_rooms found for this night:", night);
         }
       });
 
@@ -920,9 +902,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       // Reset distribution flag so guest distribution runs for the new arrangement
       setDefaultDistributed(false);
     } else {
-      console.warn(
-        `[handleBoardToggle] No arrangement data found for option: ${option}`,
-      );
+      // console.warn(
+      //   `[handleBoardToggle] No arrangement data found for option: ${option}`,
+      // );
       setSelectedArrangement(null); // Clear arrangement if none exists for this option
     }
   };
@@ -931,13 +913,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     (nightIndex: number, roomIndex: number, extraKey: string) => {
       setSelectedArrangement((currentArrangement) => {
         if (!currentArrangement) return null;
-        console.log(currentArrangement);
         const updatedArrangement = JSON.parse(
           JSON.stringify(currentArrangement),
-        );
-
-        console.log(
-          `[handleToggleExtra] Toggling extra "${extraKey}" for night index ${roomIndex}`,
         );
 
         const room =
@@ -950,9 +927,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             room.extras[extraKey].amount = 0;
           }
         } else {
-          console.warn(
-            `[handleToggleExtra] Could not find night or extras object at index ${roomIndex}`,
-          );
+          // console.warn(
+          //   `[handleToggleExtra] Could not find night or extras object at index ${roomIndex}`,
+          // );
         }
 
         return updatedArrangement;
@@ -976,9 +953,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           const currentAmount = room.extras[extraKey].amount ?? 1;
           room.extras[extraKey].amount = Math.max(1, currentAmount + delta);
         } else {
-          console.warn(
-            `[handleExtraAmountChange] Could not find selected extra at index ${roomIndex}`,
-          );
+          // console.warn(
+          //   `[handleExtraAmountChange] Could not find selected extra at index ${roomIndex}`,
+          // );
         }
 
         return updatedArrangement;
@@ -1026,9 +1003,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
   // Handle case where arrangements might still be null after loading and no error
   if (!selectedArrangement) {
-    console.warn(
-      "[RoomPicker Render] No selectedArrangement available for rendering. Displaying 'Not Found' message.",
-    );
+    // console.warn(
+    //   "[RoomPicker Render] No selectedArrangement available for rendering. Displaying 'Not Found' message.",
+    // );
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="bg-white rounded-lg shadow-sm p-6 text-center max-w-md mx-auto">
@@ -1158,39 +1135,43 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     };
                                     setSelectedArrangement(newArrangement);
                                   } else {
-                                    console.error(
-                                      "[RoomPicker Render] Could not find selected room option or night detail.",
-                                      { option, nightIdx },
-                                    );
+                                    // console.error(
+                                    //   "[RoomPicker Render] Could not find selected room option or night detail.",
+                                    //   { option, nightIdx },
+                                    // );
                                   }
                                 }}
                               >
                                 {night.room_options.map((roomOption: any) => {
-                                  const currentSelectedCount = night.chosen_rooms.filter(
-                                    (r: any) => r.category_id === roomOption.category_id
-                                  ).length;
-                                  
+                                  const currentSelectedCount =
+                                    night.chosen_rooms.filter(
+                                      (r: any) =>
+                                        r.category_id ===
+                                        roomOption.category_id,
+                                    ).length;
+
                                   const isExhausted =
-                                  currentSelectedCount >= roomOption.available_count;
+                                    currentSelectedCount >=
+                                    roomOption.available_count;
 
                                   const isOverCapacity =
                                     roomOption.bed_capacity <
                                       (room.occupant_countAdults ?? 0) +
-                                      (room.occupant_countChildren ?? 0) ||
+                                        (room.occupant_countChildren ?? 0) ||
                                     roomOption.bed_capacity === 1;
 
-                                    if (isOverCapacity || isExhausted) {
-                                      return null;                             // hide option entirely
-                                    }
-                                    return (
-                                      <option
-                                        key={roomOption.category_id}
-                                        value={roomOption.category_name}
-                                      >
-                                        {roomOption.category_name}
-                                      </option>
-                                    );
-                                  
+                                  if (isOverCapacity || isExhausted) {
+                                    return null; // hide option entirely
+                                  }
+                                  return (
+                                    <option
+                                      key={roomOption.category_id}
+                                      value={roomOption.category_name}
+                                    >
+                                      {roomOption.category_name}
+                                    </option>
+                                  );
+
                                   return null;
                                 })}
                               </select>

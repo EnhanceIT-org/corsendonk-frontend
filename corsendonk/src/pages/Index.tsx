@@ -459,7 +459,6 @@ const Index = () => {
   };
 
   const handleBookingSuccess = (reservationData: any) => {
-    console.log("Booking successful!", reservationData);
     // You can redirect or display a final confirmation message here.
   };
 

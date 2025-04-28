@@ -136,12 +136,6 @@ function getNightlyRateId(
       rateId = hotelRates[board] ?? "";
     }
   }
-  // ADDED LOG for debugging rate ID lookup
-  console.log(
-    `[BookingDetails/getNightlyRateId] Lookup: hotel=${hotel}, board=${board}, mode=${mode}, length=${lengthKey}, restaurant=${
-      restaurantChosen || "N/A"
-    } => rateId=${rateId || "Not Found"}`,
-  );
 
   return rateId;
 }
@@ -267,13 +261,13 @@ export function BookingDetails({
                       <Users className="w-4 h-4" />
                       <span>
                         {room.occupant_countAdults} Volwassenen,{" "}
-                         {room.occupant_countChildren} Kinderen
-                       </span>
-                     </div>
+                        {room.occupant_countChildren} Kinderen
+                      </span>
+                    </div>
                     {null /* Hide Selected Extras */}
-                   </div>
-                 ))}
-               </div>
+                  </div>
+                ))}
+              </div>
             </div>
           );
         })}

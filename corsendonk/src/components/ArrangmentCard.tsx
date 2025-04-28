@@ -59,7 +59,6 @@ export function ArrangmentCard({
         <Button
           onClick={() => {
             setSelectedArrangement(title);
-            console.log("Arrangment selected!");
           }}
           className={`hover:bg-gray-500 transition-all duration-200 ${
             selectedArrangement === title ? "bg-gray-500" : "bg-accent"
