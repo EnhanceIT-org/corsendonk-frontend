@@ -1143,16 +1143,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 }}
                               >
                                 {night.room_options.map((roomOption: any) => {
-                                  const currentSelectedCount =
-                                    night.chosen_rooms.filter(
-                                      (r: any) =>
-                                        r.category_id ===
-                                        roomOption.category_id,
-                                    ).length;
+                                  // how many of this category are already chosen tonight?
+                                  const currentSelectedCount = night.chosen_rooms.filter(
+                                    (r: any) => r.category_id === roomOption.category_id,
+                                  ).length;
 
                                   const isExhausted =
-                                    currentSelectedCount >=
-                                    roomOption.available_count;
+                                    currentSelectedCount >= roomOption.available_count;
+
+                                  const isSelectedHere =
+                                    room.category_id === roomOption.category_id;
 
                                   const isOverCapacity =
                                     roomOption.bed_capacity <
@@ -1160,19 +1160,20 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                         (room.occupant_countChildren ?? 0) ||
                                     roomOption.bed_capacity === 1;
 
-                                  if (isOverCapacity || isExhausted) {
-                                    return null; // hide option entirely
-                                  }
+                                  const shouldDisable =
+                                    isOverCapacity || (isExhausted && !isSelectedHere);
+
                                   return (
                                     <option
                                       key={roomOption.category_id}
                                       value={roomOption.category_name}
+                                      disabled={shouldDisable}
                                     >
                                       {roomOption.category_name}
+                                      {isExhausted && !isSelectedHere ? " (Volzet)" : ""}
                                     </option>
                                   );
 
-                                  return null;
                                 })}
                               </select>
                               <div className="flex justify-between text-sm text-gray-500">
