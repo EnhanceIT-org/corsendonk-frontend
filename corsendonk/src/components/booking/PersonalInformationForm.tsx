@@ -466,9 +466,10 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         <p className="mb-4 text-lg">
           <strong>Bedankt voor uw reservering!</strong>
         </p>
-        <p className="mb-4">Uw boeking is succesvol bevestigd.</p>
         <p className="mb-4">
-          U ontvangt spoedig een e-mail met alle nodige informatie.
+        <strong>Let op:</strong> u ontvangt per hotel een 
+              afzonderlijke bevestigingsmail. Zo kunt u eenvoudig nagaan in 
+              welk hotel u per overnachting verblijft.'
         </p>
 
         {/* Flex container for buttons */}
@@ -800,34 +801,31 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           />
         </div>
 
-        {/* Fietsverhuur Section */}
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Fietsverhuur?
-          </label>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="contactForBikeRental"
-              name="contactForBikeRental"
-              checked={contactForBikeRental}
-              onChange={handleCheckboxChange}
-              className="h-4 w-4 text-[#2C4A3C] focus:ring-[#2C4A3C] border-gray-300 rounded"
-            />
-            <label
-              htmlFor="contactForBikeRental"
-              className="ml-2 block text-sm text-gray-900"
-            >
-              Contacteer mij in verband met fietsen huren
+        {/* Fietsverhuur Section*/}
+        {travelMode === 'cycling' && (
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Fietsverhuur?
             </label>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="contactForBikeRental"
+                name="contactForBikeRental"
+                checked={contactForBikeRental}
+                onChange={handleCheckboxChange}
+                className="h-4 w-4 text-[#2C4A3C] focus:ring-[#2C4A3C] border-gray-300 rounded"
+              />
+              <label
+                htmlFor="contactForBikeRental"
+                className="ml-2 block text-sm text-gray-900"
+              >
+                Contacteer mij in verband met fietsen huren
+              </label>
+            </div>
           </div>
-        </div>
-
-        <div className="mt-2 text-sm text-gray-500">
-          <p>
-            Velden met <span className="text-red-600">*</span> zijn verplicht
-          </p>
-        </div>
+        )}
+        
 
         <button
           type="submit"
