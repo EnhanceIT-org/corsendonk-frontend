@@ -31,6 +31,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     expiry: "",
     notes: "",
   });
+  const [contactForBikeRental, setContactForBikeRental] = useState(false);
 
   const [errors, setErrors] = useState({
     email: "",
@@ -185,6 +186,13 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     clearError(name);
   };
 
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    if (name === "contactForBikeRental") {
+      setContactForBikeRental(checked);
+    }
+  };
+
   const handlePaymentMethodChange = (method) => {
     setFormData((prev) => ({
       ...prev,
@@ -281,6 +289,15 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         2,
         "0",
       )}`;
+
+      // Append bike rental note if checkbox is checked
+      let finalNotes = formDataRef.current.notes;
+      if (contactForBikeRental) {
+        finalNotes = finalNotes
+          ? `${finalNotes} | Contacteer ivm fietsverhuur`
+          : "Contacteer ivm fietsverhuur";
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/reservations/book/`,
         {
@@ -291,9 +308,12 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           body: JSON.stringify({
             ...bookingData,
             travelMode,
-            personalInformation: formDataRef.current,
+            personalInformation: {
+              ...formDataRef.current,
+              notes: finalNotes, // Use the potentially modified notes
+            },
             paymentInfo: {
-              method: formData.paymentMethod,
+              method: formDataRef.current.paymentMethod, // Use ref here too for consistency
               transactionId: paymentTransactionId,
               expiry: formattedExpiry,
               holderName: formData.creditCardName,
@@ -785,6 +805,29 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             placeholder="Voer hier extra notities in"
             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C] focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none shadow-none"
           />
+        </div>
+
+        {/* Fietsverhuur Section */}
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Fietsverhuur?
+          </label>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="contactForBikeRental"
+              name="contactForBikeRental"
+              checked={contactForBikeRental}
+              onChange={handleCheckboxChange}
+              className="h-4 w-4 text-[#2C4A3C] focus:ring-[#2C4A3C] border-gray-300 rounded"
+            />
+            <label
+              htmlFor="contactForBikeRental"
+              className="ml-2 block text-sm text-gray-900"
+            >
+              Contacteer mij in verband met fietsen huren
+            </label>
+          </div>
         </div>
 
         <div className="mt-2 text-sm text-gray-500">
