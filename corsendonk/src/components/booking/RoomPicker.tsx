@@ -692,6 +692,66 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         const [pricingBreakfastRes, pricingHalfBoardRes] =
           await Promise.all(pricingPromises);
 
+        // --- NEW: Validate Pricing Data ---
+        const validatePricing = (pricingResult: any, boardType: string): boolean => {
+          if (!pricingResult?.data?.data?.nightlyPricing) {
+            // console.log(`[Pricing Validation] No nightlyPricing for ${boardType}. Skipping validation.`);
+            return true; // No data to validate, consider it valid for now
+          }
+          for (const nightPrice of pricingResult.data.data.nightlyPricing) {
+            if (
+              !nightPrice.pricing ||
+              nightPrice.pricing.RateGroups?.length === 0 ||
+              nightPrice.pricing.Rates?.length === 0 ||
+              nightPrice.pricing.CategoryPrices?.length === 0
+            ) {
+              // console.error(
+              //   `[Pricing Validation] Empty pricing found for ${boardType} on date ${nightPrice.date}, hotel ${nightPrice.hotel}.`,
+              //   nightPrice.pricing,
+              // );
+              return false; // Invalid pricing found
+            }
+          }
+          // console.log(`[Pricing Validation] Pricing for ${boardType} seems valid.`);
+          return true; // All nights have pricing data
+        };
+
+        const isBreakfastPricingValid = validatePricing(pricingBreakfastRes, "breakfast");
+        const isHalfboardPricingValid = validatePricing(pricingHalfBoardRes, "halfboard");
+
+        // Check validity based on the *selected* arrangement's board type initially
+        const currentSelectedArrangementBoard = selectedArrangement?.night_details?.[0]?.board_type === 'HB' ? 'halfboard' : 'breakfast';
+
+        let isCurrentPricingValid = true;
+        if (currentSelectedArrangementBoard === 'breakfast' && availBreakfast?.optimal_sequence) {
+            isCurrentPricingValid = isBreakfastPricingValid;
+        } else if (currentSelectedArrangementBoard === 'halfboard' && availHalfBoard?.optimal_sequence) {
+            isCurrentPricingValid = isHalfboardPricingValid;
+        } else if (!availBreakfast?.optimal_sequence && !availHalfBoard?.optimal_sequence) {
+             // If no arrangements were found initially, this check isn't the primary issue
+             isCurrentPricingValid = true; // Allow existing error handling to take precedence
+        } else {
+            // If the initially selected board option didn't have an arrangement,
+            // check the validity of the fallback option that *was* selected.
+            const fallbackBoard = selectedBoardOption; // This state holds the actual selected board
+             if (fallbackBoard === 'breakfast' && availBreakfast?.optimal_sequence) {
+                isCurrentPricingValid = isBreakfastPricingValid;
+            } else if (fallbackBoard === 'halfboard' && availHalfBoard?.optimal_sequence) {
+                isCurrentPricingValid = isHalfboardPricingValid;
+            }
+        }
+
+
+        if (!isCurrentPricingValid) {
+          setError(
+            "Er zijn geen arrangementen beschikbaar die voldoen aan uw criteria voor de geselecteerde data.",
+          );
+          setLoading(false);
+          return; // Stop processing
+        }
+        // --- END NEW ---
+
+
         setPricingData({
           breakfast: pricingBreakfastRes.data.data,
           halfboard: pricingHalfBoardRes.data.data,
