@@ -1154,11 +1154,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                   const isSelectedHere =
                                     room.category_id === roomOption.category_id;
 
-                                  const isOverCapacity =
-                                    roomOption.bed_capacity <
-                                      (room.occupant_countAdults ?? 0) +
-                                        (room.occupant_countChildren ?? 0) ||
-                                    roomOption.bed_capacity === 1;
+                                  const guestsInThisSlot = (room.occupant_countAdults ?? 0) + (room.occupant_countChildren ?? 0);
+                                    
+
+                                  const isOverCapacity = roomOption.bed_capacity < guestsInThisSlot;
 
                                   const shouldDisable =
                                     isOverCapacity || (isExhausted && !isSelectedHere);
