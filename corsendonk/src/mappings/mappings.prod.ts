@@ -1,15 +1,14 @@
-// age categories are fucked per hotel, basically everyone +12 is an adult
-// maybe we should mention this on the frontend
 
-//DONE
-
+// AGE CATEGORIES ARE FUCKED. In the backend we can only specify 'Childcount', which
+//always defaults to 0-2 years, and because of the mews setup diner etc doesn't get added
+//for babies, so if children are selected pricing isn't correct.
 export const ageCategoryMapping: Record<
   string,
   { adult: string; child: string }
 > = {
   hotel1: {
     adult: "e6c1575b-5c75-41b9-8667-adf200f7bc48", // Adults (No age limit)
-    child: "aa6eeb7f-ab65-464c-9d4c-af3b00adedc8", // Child 3-5 years
+    child: "c8d2e446-f518-45ac-bc83-aee600df5e0e", // Baby (0-2 years)
   },
   hotel2: {
     adult: "30a5e937-e0ec-4888-946a-ae4a00d4dad6", // Adults (No age limit)
