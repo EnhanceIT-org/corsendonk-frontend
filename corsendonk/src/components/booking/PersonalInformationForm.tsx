@@ -474,13 +474,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         {/* Flex container for buttons */}
         <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <button
-            onClick={() => (window.location.href = "/")}
-            className="w-full sm:w-auto bg-[#2C4A3C] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2C4A3C]/90 transition-colors"
-          >
-            Terug naar homepagina
-          </button>
-
-          <button
             onClick={() =>
               (window.location.href = "https://www.corsendonkhotels.com")
             }
