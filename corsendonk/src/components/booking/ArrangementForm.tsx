@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from 'react-i18next'; // Import hook
 import {
   Minus,
   Plus,
@@ -38,6 +39,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
   onContinue,
   bookingData,
 }) => {
+  const { t } = useTranslation(); // Instantiate hook
   const [formData, setFormData] = useState<ArrangementFormData>({
     arrangementLength:
       bookingData.arrangementLength === 3 || bookingData.arrangementLength === 4
@@ -80,12 +82,12 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
   return (
     <main className="min-h-screen w-full bg-gray-50 pb-32" data-prototypeid="2">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <Breadcrumb currentStep={1} title="Plan uw verblijf" />
+        <Breadcrumb currentStep={1} title={t('breadcrumb.planStay', 'Plan your stay')} />
 
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-8">
           <div>
             <h2 className="text-lg font-semibold mb-3">
-              Selecteer hoe lang uw verblijf zal duren
+              {t('arrangementForm.selectDurationTitle', 'Select the duration of your stay')}
             </h2>
             <select
               className="w-full max-w-[200px] border border-gray-200 rounded-lg px-4 py-2.5 appearance-none bg-white hover:border-[#2C4A3C] transition-colors focus:outline-none focus:border-[#2C4A3C] cursor-pointer"
@@ -94,16 +96,16 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 setFormData((prev) => ({
                   ...prev,
                   arrangementLength: parseInt(e.target.value) === 3 ? 3 : 4,
-                }))
-              }
-            >
-              <option value={3}>3 Dagen</option>
-              <option value={4}>4 Dagen</option>
+                 }))
+               }
+             >
+              <option value={3}>{t('arrangementForm.duration.3days', '3 Days')}</option>
+              <option value={4}>{t('arrangementForm.duration.4days', '4 Days')}</option>
             </select>
           </div>
           <div>
             <h2 className="text-lg font-semibold mb-3">
-              Kies een startdatum van uw verblijf
+              {t('arrangementForm.selectStartDateTitle', 'Choose a start date for your stay')}
             </h2>
             <DateRangePicker
               arrangementLength={formData.arrangementLength}
@@ -119,10 +121,10 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             />
           </div>
           <div>
-            <h2 className="text-lg font-semibold mb-4">Aantal Gasten</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('arrangementForm.guestCountTitle', 'Number of Guests')}</h2>
             <div className="space-y-4 align-start">
               <div className="flex sm:flex-row flex-col sm:items-center justify-between items-start max-w-[300px]">
-                <span className="sm:mb-0 mb-1">Volwassenen</span>
+                <span className="sm:mb-0 mb-1">{t('occupancy.adults', 'Adults')}</span>
                 <div className="flex items-center">
                   <button
                     onClick={() => handleDecrement("adults")}
@@ -160,9 +162,9 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             </div>
           </div>
           <div>
-            <h2 className="text-lg font-semibold mb-4">Aantal Kamers</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('arrangementForm.roomCountTitle', 'Number of Rooms')}</h2>
             <div className="flex items-center justify-between max-w-[300px]">
-              <span>Kamers</span>
+              <span>{t('arrangementForm.roomsLabel', 'Rooms')}</span>
               <div className="flex items-center">
                 <button
                   onClick={() => handleDecrement("rooms")}
@@ -190,13 +192,13 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             </div>
             {formData.rooms === formData.adults + formData.children && (
               <span className="text-sm text-gray-500">
-                Maximaal aantal kamers
+                {t('arrangementForm.maxRoomsReached', 'Maximum number of rooms reached')}
               </span>
             )}
           </div>
           <div>
             <h2 className="text-lg font-semibold mb-4">
-              Voorkeur verplaatsing
+              {t('arrangementForm.travelPreferenceTitle', 'Travel Preference')}
             </h2>
             <div className="gap-4 flex flex-col sm:flex-row">
               <button
@@ -213,7 +215,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 }
               >
                 <Footprints className="w-5 h-5" />
-                <span>Wandelen</span>
+                <span>{t('travelMode.walking', 'Walking')}</span>
               </button>
               <button
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
@@ -229,12 +231,12 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 }
               >
                 <Bike className="w-5 h-5" />
-                <span>Fietsen</span>
+                <span>{t('travelMode.cycling', 'Cycling')}</span>
               </button>
             </div>
           </div>
           <div>
-            <h2 className="text-lg font-semibold mb-4">Maaltijden</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('arrangementForm.mealsTitle', 'Meals')}</h2>
             <div className="gap-4 flex flex-col sm:flex-row">
               <button
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
@@ -250,7 +252,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 }
               >
                 <Coffee className="w-5 h-5" />
-                <span>Enkel Ontbijt</span>
+                <span>{t('mealPlan.breakfastOnly', 'Breakfast Only')}</span>
               </button>
               <button
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
@@ -266,7 +268,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 }
               >
                 <UtensilsCrossed className="w-5 h-5" />
-                <span>Halfpension</span>
+                <span>{t('mealPlan.halfBoard', 'Half Board')}</span>
               </button>
             </div>
           </div>
@@ -276,7 +278,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             onClick={handleContinue}
             className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            Ga door naar kamerselectie
+            {t('arrangementForm.continueToRoomSelection', 'Continue to room selection')}
           </button>
         </div>
       </div>

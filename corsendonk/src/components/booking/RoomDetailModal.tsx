@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from 'react-i18next'; // Import hook
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface RoomDetailModalProps {
@@ -11,11 +12,19 @@ interface RoomDetailModalProps {
   onClose: () => void;
 }
 
-function getCategoryDetails(hotel: string, categoryId: string, config: any) {
-  // Default values
-  let name = "Onbekende Kamer";
+// Map i18next language codes to the codes used in rawConfig
+const langCodeMapping: { [key: string]: string } = {
+  en: 'en-GB',
+  nl: 'nl-NL',
+  fr: 'fr-FR', // Assuming fr-FR is used in rawConfig, adjust if needed
+};
+
+function getCategoryDetails(hotel: string, categoryId: string, config: any, currentLang: string) {
+  const { t } = useTranslation(); // Use hook inside function if needed, or pass t as arg
+  // Default values using translation keys
+  let name = t('roomDetailModal.unknownRoom', 'Unknown Room');
   let imageUrls: string[] = [];
-  let description = "Beschrijving niet beschikbaar."; // Default description
+  let description = t('roomDetailModal.descriptionUnavailable', 'Description not available.');
 
   if (
     config &&
@@ -32,18 +41,22 @@ function getCategoryDetails(hotel: string, categoryId: string, config: any) {
     const category = categories.find((cat: any) => cat.Id === categoryId);
 
     if (category) {
-      // Use Dutch name if available, fallback to category_name from props, then default
-      name = category.Name?.["nl-NL"] || category.Name?.["en-GB"] || name;
+      const currentLangCode = langCodeMapping[currentLang] || 'nl-NL'; // Default to nl-NL if mapping fails
+      const fallbackLangCodeEn = 'en-GB';
+      const fallbackLangCodeNl = 'nl-NL';
 
-      // Get image URLs
+      // Fallback logic for name
+      name = category.Name?.[currentLangCode] || category.Name?.[fallbackLangCodeEn] || category.Name?.[fallbackLangCodeNl] || name;
+
+      // Get image URLs (no change needed here)
       imageUrls =
         category.ImageIds && category.ImageIds.length > 0
           ? category.ImageIds.map((imgId: string) => `${imageBaseUrl}/${imgId}`)
           : [];
 
-      
-      description = category.Description?.["nl-NL"] || description; // Get nl-NL description or keep default
-      
+      // Fallback logic for description
+      description = category.Description?.[currentLangCode] || category.Description?.[fallbackLangCodeEn] || category.Description?.[fallbackLangCodeNl] || description;
+
     }
   }
   // Return name, imageUrls, and the description
@@ -55,11 +68,14 @@ export function RoomDetailModal({
   rawConfig,
   onClose,
 }: RoomDetailModalProps) {
+  const { t, i18n } = useTranslation(); // Instantiate hook
   // Destructure name, imageUrls, AND description from the helper function
+  // Pass the current language to the helper
   const { name, imageUrls, description } = getCategoryDetails(
     room.hotel,
     room.category_id,
     rawConfig,
+    i18n.language, // Pass current language
   );
 
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
@@ -98,7 +114,7 @@ export function RoomDetailModal({
             <button
               onClick={onClose}
               className="p-1 hover:bg-gray-100 rounded"
-              title="Close Modal"
+              title={t('common.closeModal', 'Close Modal')}
             >
               <X className="w-6 h-6" />
             </button>
@@ -118,8 +134,8 @@ export function RoomDetailModal({
               ))
             ) : (
               <img
-                src="https://placehold.co/400x300?text=Geen+Afbeelding" // Placeholder text updated
-                alt="Geen afbeelding beschikbaar"
+                src={`https://placehold.co/400x300?text=${t('roomDetailModal.noImagePlaceholder', 'No+Image')}`} // Use translated placeholder text
+                alt={t('roomDetailModal.noImageAlt', 'No image available')}
                 className="rounded-lg w-full"
               />
             )}
@@ -128,7 +144,7 @@ export function RoomDetailModal({
           
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium mb-2 text-[#2C4A3C]">Beschrijving</h4>
+              <h4 className="font-medium mb-2 text-[#2C4A3C]">{t('roomDetailModal.descriptionTitle', 'Description')}</h4>
               {/* Display the fetched description */}
               <p className="text-gray-600 whitespace-pre-wrap">{description}</p>
             </div>
@@ -143,7 +159,7 @@ export function RoomDetailModal({
            <div
              className="absolute inset-0"
              onClick={closeLightbox}
-             title="Close Lightbox"
+             title={t('common.closeLightbox', 'Close Lightbox')}
            ></div>
            <div className="relative z-10 max-w-4xl w-full max-h-full flex flex-col items-center">
              <img
@@ -154,7 +170,7 @@ export function RoomDetailModal({
              <button
                onClick={closeLightbox}
                className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full"
-               title="Close"
+               title={t('common.close', 'Close')}
              >
                <X className="w-5 h-5" />
              </button>
@@ -165,7 +181,7 @@ export function RoomDetailModal({
                    showPrevImage();
                  }}
                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full"
-                 title="Previous"
+                 title={t('common.previous', 'Previous')}
                >
                  <ChevronLeft className="w-5 h-5" />
                </button>
@@ -177,7 +193,7 @@ export function RoomDetailModal({
                    showNextImage();
                  }}
                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full"
-                 title="Next"
+                 title={t('common.next', 'Next')}
                >
                  <ChevronRight className="w-5 h-5" />
                </button>

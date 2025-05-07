@@ -1,7 +1,8 @@
 // components/new_components/BookingDetails.tsx
 import React from "react";
+import { useTranslation } from 'react-i18next'; // Import hook
 import { format } from "date-fns";
-import { nl } from "date-fns/locale";
+import { nl, enUS, fr } from "date-fns/locale"; // Import required locales
 import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
 // Corrected import path and added optionalProducts import
 import {
@@ -11,19 +12,7 @@ import {
   optionalProducts,
 } from "../../mappings/mappings";
 
-// Helper function to get Dutch charging method text (copied from RoomPicker for consistency)
-function chargingMethodToDutch(method: string): string {
-  switch (method) {
-    case "Once":
-      return "Eenmalig";
-    case "PerPerson":
-      return "Per persoon";
-    case "PerPersonNight":
-      return "Per persoon per nacht";
-    default:
-      return "";
-  }
-}
+// Removed chargingMethodToDutch function - use t('chargingMethods...') instead
 
 function getPriceForSingleRoom(
   nightlyPricing: any,
@@ -149,10 +138,26 @@ function calculateTotalHumans(bookingData): number {
   return total;
 }
 
-function formatDutchDate(dateString: string) {
-  const raw = format(new Date(dateString), "EEEE, d MMMM", { locale: nl });
+// --- Helper functions: Date/String Formatting ---
+// Copied from RoomPicker
+function getLocale(language: string) {
+  switch (language) {
+    case 'en':
+      return enUS;
+    case 'fr':
+      return fr;
+    case 'nl':
+    default:
+      return nl;
+  }
+}
+
+function formatDateForLocale(dateString: string, currentLanguage: string) {
+  const locale = getLocale(currentLanguage);
+  const raw = format(new Date(dateString), "EEEE, d MMMM", { locale });
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
+// Removed formatDutchDate function
 
 function capitalizeFirstLetter(str: string) {
   if (!str) return "";
@@ -173,6 +178,7 @@ export function BookingDetails({
   bookingData,
   onShowRoomDetail,
 }: Readonly<BookingDetailsProps>) {
+  const { t, i18n } = useTranslation(); // Instantiate hook
   // Calculate City Tax
   const numberOfNights = bookingData.reservations.length;
   const firstNight = bookingData.reservations[0]; // Assume guest count is constant
@@ -188,7 +194,7 @@ export function BookingDetails({
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-6">Details van uw boeking</h2>
+        <h2 className="text-lg font-semibold mb-6">{t('bookingDetails.title', 'Details of your booking')}</h2>
         {bookingData.reservations.map((reservation, index) => {
           const boardKey =
             reservation.board_type === "HB" ? "halfboard" : "breakfast";
@@ -203,7 +209,7 @@ export function BookingDetails({
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="font-medium text-[#2C4A3C]">
-                    {formatDutchDate(reservation.date)}
+                    {formatDateForLocale(reservation.date, i18n.language)}
                   </h3>
                   <p className="text-sm text-gray-500">
                     {getHotelDisplayName(reservation.hotel)}
@@ -221,7 +227,7 @@ export function BookingDetails({
                   reservation.board_type === "B&B" &&
                   bookingData.mealPlan === "halfboard" && (
                     <p className="mt-1 text-sm text-orange-600">
-                      Externe restaurants volboekt, enkel ontbijt mogelijk
+                      {t('bookingDetails.warning.externalRestaurantsFull', 'External restaurants fully booked, only breakfast possible')}
                     </p>
                   )}
                 {reservation.chosen_rooms.map((room, roomIndex) => (
@@ -260,8 +266,7 @@ export function BookingDetails({
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Users className="w-4 h-4" />
                       <span>
-                        {room.occupant_countAdults} Volwassenen,{" "}
-                        {room.occupant_countChildren} Kinderen
+                        {t('bookingDetails.occupancy', { adults: room.occupant_countAdults, children: room.occupant_countChildren, defaultValue: `${room.occupant_countAdults} Adults, ${room.occupant_countChildren} Children` })}
                       </span>
                     </div>
                     {null /* Hide Selected Extras */}
@@ -275,15 +280,14 @@ export function BookingDetails({
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-lg font-semibold">Totaal</h2>
+            <h2 className="text-lg font-semibold">{t('common.total', 'Total')}</h2>
           </div>
           <span className="text-2xl font-semibold">
             €{bookingData.total.toFixed(2)}
           </span>
         </div>
         <p className="text-sm text-gray-500 mt-1 text-left">
-          Exclusief toeristenbelasting van €{cityTaxAmount.toFixed(2)}, te
-          voldoen in het hotel (€2,50 per persoon per nacht).
+          {t('bookingDetails.cityTaxNote', { amount: cityTaxAmount.toFixed(2), rate: '2,50', defaultValue: `Excluding city tax of €${cityTaxAmount.toFixed(2)}, payable at the hotel (€2.50 per person per night).` })}
         </p>
       </div>
     </div>

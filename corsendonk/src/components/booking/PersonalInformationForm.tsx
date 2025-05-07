@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from 'react-i18next'; // Import hook
 import validator from "validator";
 // Corrected import paths for UI components
 import { Textarea } from "../ui/textarea";
@@ -20,6 +21,7 @@ declare global {
 }
 
 export function PersonalInformationForm({ bookingData, travelMode }) {
+  const { t } = useTranslation(); // Instantiate hook
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -97,8 +99,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           // console.error("SecureFields library not loaded");
           setErrors((prev) => ({
             ...prev,
-            general:
-              "Betaalsysteem kon niet worden geladen. Vernieuw de pagina en probeer opnieuw.",
+            general: t('personalInfoForm.error.paymentSystemLoadFailed', 'Payment system could not be loaded. Please refresh the page and try again.'),
           }));
           return;
         }
@@ -135,8 +136,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           } else {
             setErrors((prev) => ({
               ...prev,
-              general:
-                "Er is een fout opgetreden bij het verwerken van de kredietkaart.",
+              general: t('personalInfoForm.error.creditCardProcessingFailed', 'An error occurred while processing the credit card.'),
             }));
           }
         });
@@ -146,11 +146,11 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           const newErrors = { ...errors };
 
           if (error.field === "cardNumber") {
-            newErrors.creditCard = "Ongeldig kredietkaart nummer";
+            newErrors.creditCard = t('personalInfoForm.error.invalidCardNumber', 'Invalid credit card number');
           } else if (error.field === "cvv") {
-            newErrors.cvc = "Ongeldige CVC/CVV";
+            newErrors.cvc = t('personalInfoForm.error.invalidCvc', 'Invalid CVC/CVV');
           } else {
-            newErrors.general = `Betalingsfout: ${error.message}`;
+            newErrors.general = t('personalInfoForm.error.paymentErrorGeneral', { message: error.message, defaultValue: `Payment error: ${error.message}` });
           }
 
           setErrors(newErrors);
@@ -158,12 +158,11 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         });
       } catch (error) {
         // console.error("Error initializing Datatrans:", error);
-        setErrors((prev) => ({
-          ...prev,
-          general:
-            "Er is een fout opgetreden bij het initialiseren van de betaalmethode.",
-        }));
-      }
+          setErrors((prev) => ({
+            ...prev,
+            general: t('personalInfoForm.error.paymentInitFailed', 'An error occurred while initializing the payment method.'),
+          }));
+        }
     }
   }, [isReady]);
 
@@ -221,37 +220,37 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
   const validateForm = () => {
     let isValid = true;
-    const newErrors = { ...errors };
+    const newErrors = { ...errors }; // Start with existing errors to preserve card/cvc errors from datatrans
 
     if (!validator.isEmail(formData.email)) {
-      newErrors.email = "Voer een geldig e-mailadres in";
+      newErrors.email = t('personalInfoForm.validation.invalidEmail', 'Please enter a valid email address');
       isValid = false;
     }
 
     if (formData.firstName.trim().length < 2) {
-      newErrors.firstName = "Voornaam moet minimaal 2 tekens bevatten";
+      newErrors.firstName = t('personalInfoForm.validation.firstNameTooShort', 'First name must be at least 2 characters');
       isValid = false;
     }
 
     if (formData.lastName.trim().length < 2) {
-      newErrors.lastName = "Achternaam moet minimaal 2 tekens bevatten";
+      newErrors.lastName = t('personalInfoForm.validation.lastNameTooShort', 'Last name must be at least 2 characters');
       isValid = false;
     }
 
     if (!validator.isMobilePhone(formData.phone)) {
-      newErrors.phone = "Voer een geldig telefoonnummer in";
+      newErrors.phone = t('personalInfoForm.validation.invalidPhone', 'Please enter a valid phone number');
       isValid = false;
     }
 
     // Only validate credit card fields if kredietkaart payment method is selected
     if (formData.paymentMethod === "kredietkaart") {
       if (formData.creditCardName.trim().length < 3) {
-        newErrors.creditCardName = "Voer de naam van de kaarthouder in";
+        newErrors.creditCardName = t('personalInfoForm.validation.cardholderNameRequired', 'Please enter the cardholder name');
         isValid = false;
       }
 
       if (!/^\d{2}\/\d{2}$/.test(formData.expiry)) {
-        newErrors.expiry = "Gebruik formaat MM/JJ";
+        newErrors.expiry = t('personalInfoForm.validation.expiryFormat', 'Use MM/YY format');
         isValid = false;
       } else {
         const [month, year] = formData.expiry.split("/").map(Number);
@@ -265,14 +264,13 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         maxDate.setFullYear(maxDate.getFullYear() + 5);
 
         if (month < 1 || month > 12) {
-          newErrors.expiry = "Maand moet tussen 01 en 12 liggen";
+          newErrors.expiry = t('personalInfoForm.validation.expiryMonthInvalid', 'Month must be between 01 and 12');
           isValid = false;
         } else if (expiryDate <= currentDate) {
-          newErrors.expiry = "Kaart is verlopen";
+          newErrors.expiry = t('personalInfoForm.validation.cardExpired', 'Card has expired');
           isValid = false;
         } else if (expiryDate > maxDate) {
-          newErrors.expiry =
-            "Vervaldatum mag niet meer dan 5 jaar in de toekomst liggen";
+          newErrors.expiry = t('personalInfoForm.validation.expiryTooFar', 'Expiry date cannot be more than 5 years in the future');
           isValid = false;
         }
       }
@@ -290,7 +288,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         "0",
       )}`;
 
-      // Append bike rental note if checkbox is checked
+      // Append bike rental note if checkbox is checked, geen vertaling nodig hier
       let finalNotes = formDataRef.current.notes;
       if (contactForBikeRental) {
         finalNotes = finalNotes
@@ -329,17 +327,17 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         setErrors((prev) => ({
           ...prev,
           general:
-            errorData.message || "Er is een fout opgetreden bij het boeken.",
+            errorData.message || t('personalInfoForm.error.bookingFailed', 'An error occurred while booking.'),
         }));
       }
     } catch (error) {
       // console.error(error);
       setErrors((prev) => ({
         ...prev,
-        general: "Er is een fout opgetreden. Probeer het later opnieuw.",
+        general: t('personalInfoForm.error.generalTryAgain', 'An error occurred. Please try again later.'),
       }));
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Ensure this is always called
     }
   };
 
@@ -349,7 +347,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     if (!validateForm()) {
       setErrors((prev) => ({
         ...prev,
-        general: "Er zijn fouten in het formulier. Controleer alle velden.",
+        general: t('personalInfoForm.error.formErrors', 'There are errors in the form. Please check all fields.'),
       }));
       return;
     }
@@ -374,38 +372,34 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                 // console.error("Error inside submit timeout:", innerError);
                 setErrors((prev) => ({
                   ...prev,
-                  general:
-                    "Er is een fout opgetreden bij de verwerking van de betaling.",
+                  general: t('personalInfoForm.error.paymentProcessingFailed', 'An error occurred while processing the payment.'),
                 }));
-                setIsSubmitting(false);
+                setIsSubmitting(false); // Ensure submitting state is reset on inner error
               }
             }, 100);
           } catch (error) {
             // console.error("Error submitting secure fields:", error);
             setErrors((prev) => ({
               ...prev,
-              general:
-                "Er is een fout opgetreden bij de verwerking van de betaling.",
+              general: t('personalInfoForm.error.paymentProcessingFailed', 'An error occurred while processing the payment.'),
             }));
-            setIsSubmitting(false);
+            setIsSubmitting(false); // Ensure submitting state is reset on error
           }
           // The rest will be handled by the success callback
         } catch (error) {
           // console.error("Error submitting secure fields:", error);
-          setErrors((prev) => ({
-            ...prev,
-            general:
-              "Er is een fout opgetreden bij de verwerking van de betaling.",
-          }));
-          setIsSubmitting(false);
-        }
+            setErrors((prev) => ({
+              ...prev,
+              general: t('personalInfoForm.error.paymentProcessingFailed', 'An error occurred while processing the payment.'),
+            }));
+            setIsSubmitting(false); // Ensure submitting state is reset on error
+          }
       } else {
         setErrors((prev) => ({
           ...prev,
-          general:
-            "Betaalsysteem is niet geïnitialiseerd. Vernieuw de pagina en probeer opnieuw.",
+          general: t('personalInfoForm.error.paymentSystemNotInitialized', 'Payment system is not initialized. Please refresh the page and try again.'),
         }));
-        setIsSubmitting(false);
+        setIsSubmitting(false); // Ensure submitting state is reset
       }
     } else {
       // For bank transfer, submit directly
@@ -461,15 +455,13 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           </svg>
         </div>
         <h2 className="text-xl font-semibold text-green-600 mb-4">
-          Reservering succesvol!
+          {t('personalInfoForm.success.title', 'Reservation successful!')}
         </h2>
         <p className="mb-4 text-lg">
-          <strong>Bedankt voor uw reservering!</strong>
+          <strong>{t('personalInfoForm.success.thankYou', 'Thank you for your reservation!')}</strong>
         </p>
         <p className="mb-4">
-        <strong>Let op:</strong> u ontvangt per hotel een 
-              afzonderlijke bevestigingsmail. Zo kunt u eenvoudig nagaan in 
-              welk hotel u per overnachting verblijft.'
+          {t('personalInfoForm.success.confirmationNote', 'Please note: you will receive a separate confirmation email for each hotel. This allows you to easily check which hotel you are staying at each night.')}
         </p>
 
         {/* Flex container for buttons */}
@@ -480,7 +472,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             }
             className="w-full sm:w-auto bg-[#2C4A3C] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            Terug naar Corsendonk homepagina
+            {t('personalInfoForm.success.backToHomeButton', 'Back to Corsendonk homepage')}
           </button>
         </div>
       </div>
@@ -489,7 +481,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-lg font-semibold mb-6">Persoonlijke Informatie</h2>
+      <h2 className="text-lg font-semibold mb-6">{t('personalInfoForm.title', 'Personal Information')}</h2>
 
       {errors.general && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg">
@@ -503,7 +495,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             htmlFor="email"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Email <span className="text-red-600">*</span>
+            {t('personalInfoForm.emailLabel', 'Email')} <span className="text-red-600">*</span>
           </label>
           <input
             type="email"
@@ -528,7 +520,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               htmlFor="firstName"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Voornaam <span className="text-red-600">*</span>
+              {t('personalInfoForm.firstNameLabel', 'First Name')} <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
@@ -551,7 +543,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               htmlFor="lastName"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Achternaam <span className="text-red-600">*</span>
+              {t('personalInfoForm.lastNameLabel', 'Last Name')} <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
@@ -576,7 +568,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             htmlFor="phone"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Telefoonnummer <span className="text-red-600">*</span>
+            {t('personalInfoForm.phoneLabel', 'Phone Number')} <span className="text-red-600">*</span>
           </label>
           <input
             type="tel"
@@ -600,7 +592,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             htmlFor="nationality"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Nationaliteit <span className="text-red-600">*</span>
+            {t('personalInfoForm.nationalityLabel', 'Nationality')} <span className="text-red-600">*</span>
           </label>
           <select
             id="nationality"
@@ -623,7 +615,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         {/* Payment Method Toggle */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Betaalmethode <span className="text-red-600">*</span>
+            {t('personalInfoForm.paymentMethodLabel', 'Payment Method')} <span className="text-red-600">*</span>
           </label>
           <div className="flex sm:flex-row flex-col rounded-md overflow-hidden border border-gray-200">
             <button
@@ -635,7 +627,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              Kredietkaart
+              {t('personalInfoForm.paymentMethod.creditCard', 'Credit Card')}
             </button>
             <button
               type="button"
@@ -646,7 +638,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              Bankoverschrijving
+              {t('personalInfoForm.paymentMethod.bankTransfer', 'Bank Transfer')}
             </button>
           </div>
         </div>
@@ -656,8 +648,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           <>
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <p className="text-sm text-gray-700">
-                De kredietkaart wordt enkel gebruikt als garantie of bij
-                laattijdige annulering of niet opdagen.
+                {t('personalInfoForm.creditCardGuaranteeNote', 'The credit card is only used as a guarantee or in case of late cancellation or no-show.')}
               </p>
             </div>
             <div>
@@ -665,7 +656,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                 htmlFor="creditCardName"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Naam van de kaarthouder <span className="text-red-600">*</span>
+                {t('personalInfoForm.cardholderNameLabel', 'Cardholder Name')} <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
@@ -690,7 +681,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                 htmlFor="creditCard"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Kredietkaart nummer <span className="text-red-600">*</span>
+                {t('personalInfoForm.cardNumberLabel', 'Credit Card Number')} <span className="text-red-600">*</span>
               </label>
               <div
                 id="creditCard"
@@ -711,14 +702,14 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                   htmlFor="expiry"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Vervaldatum (MM/JJ) <span className="text-red-600">*</span>
+                  {t('personalInfoForm.expiryDateLabel', 'Expiry Date (MM/YY)')} <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
                   id="expiry"
                   name="expiry"
                   required
-                  placeholder="MM/JJ"
+                  placeholder={t('personalInfoForm.expiryPlaceholder', 'MM/YY')}
                   className={`w-full border ${
                     errors.expiry ? "border-red-500" : "border-gray-200"
                   } rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C]`}
@@ -736,7 +727,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                   htmlFor="cvc"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  CVC/CVV <span className="text-red-600">*</span>
+                  {t('personalInfoForm.cvcLabel', 'CVC/CVV')} <span className="text-red-600">*</span>
                 </label>
                 <div
                   id="cvc"
@@ -755,9 +746,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         ) : (
           <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
             <p className="text-sm text-gray-700">
-              U ontvangt een bevestingsmail met ons rekeningnummer, we vragen
-              een betaling binnen de 5 dagen na het maken van de reservering om
-              de reservatie te bevestigen.
+              {t('personalInfoForm.bankTransferInfoNote', 'You will receive a confirmation email with our bank account number. We request payment within 5 days of making the reservation to confirm it.')}
             </p>
           </div>
         )}
@@ -767,7 +756,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             htmlFor="notes"
             className="block text-sm font-medium text-gray-700 mb-1 flex items-center"
           >
-            Extra Notities
+            {t('personalInfoForm.extraNotesLabel', 'Extra Notes')}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -784,8 +773,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                   className="max-w-xs z-50 bg-white shadow-lg"
                 >
                   <p className="text-sm text-gray-500">
-                    U kunt hier extra opmerkingen of speciale verzoeken
-                    invoeren, of vermelden indien u lid bent van een vereniging.
+                    {t('personalInfoForm.extraNotesTooltip', 'You can enter extra comments or special requests here, or mention if you are a member of an association.')}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -796,7 +784,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             name="notes"
             value={formData.notes}
             onChange={handleChange}
-            placeholder="Voer hier extra notities in"
+            placeholder={t('personalInfoForm.extraNotesPlaceholder', 'Enter extra notes here')}
             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#2C4A3C] focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none shadow-none"
           />
         </div>
@@ -805,7 +793,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         {travelMode === 'cycling' && (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fietsverhuur?
+              {t('personalInfoForm.bikeRentalLabel', 'Bike Rental?')}
             </label>
             <div className="flex items-center">
               <input
@@ -820,7 +808,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
                 htmlFor="contactForBikeRental"
                 className="ml-2 block text-sm text-gray-900"
               >
-                Contacteer mij in verband met fietsen huren
+                {t('personalInfoForm.bikeRentalCheckbox', 'Contact me regarding bike rental')}
               </label>
             </div>
           </div>
@@ -835,7 +823,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           } text-white px-8 py-3 rounded-lg font-medium transition-colors mt-6 flex justify-center items-center`}
           onClick={handleSubmit}
         >
-          {isSubmitting ? "Bezig met verwerken..." : "Bevestig Reservatie"}
+          {isSubmitting ? t('common.processing', 'Processing...') : t('personalInfoForm.confirmReservationButton', 'Confirm Reservation')}
         </button>
       </form>
     </div>

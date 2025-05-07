@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from 'react-i18next'; // Import hook
 
 interface PricingSummaryProps {
   totalPrice: number;
@@ -13,6 +14,7 @@ export function PricingSummary({
   rooms,
   onReserve,
 }: PricingSummaryProps) {
+  const { t } = useTranslation(); // Instantiate hook
   // Compute the average price per room per night if valid numbers are provided
   const avgPricePerRoomPerNight =
     nights > 0 && rooms > 0
@@ -24,17 +26,17 @@ export function PricingSummary({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <div className="text-sm text-gray-500">Totale Prijs</div>
-            <div className="text-2xl font-semibold">€ {totalPrice}</div>
+            <div className="text-sm text-gray-500">{t('pricingSummary.totalPriceLabel', 'Total Price')}</div>
+            <div className="text-2xl font-semibold">€ {totalPrice.toFixed(2)}</div> {/* Ensure price is formatted */}
             <div className="text-sm text-gray-500">
-              Gemiddelde prijs per kamer per nacht: € {avgPricePerRoomPerNight}
+              {t('pricingSummary.avgPriceLabel', { price: avgPricePerRoomPerNight, defaultValue: `Average price per room per night: € ${avgPricePerRoomPerNight}` })}
             </div>
           </div>
           <button
             onClick={onReserve}
             className="w-full sm:w-auto bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            Reserveer uw kamers nu
+            {t('pricingSummary.reserveButton', 'Reserve your rooms now')}
           </button>
         </div>
       </div>

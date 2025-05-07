@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ArrangementForm } from "@/components/booking/ArrangementForm";
 import { RoomPicker } from "@/components/booking/RoomPicker";
 import { BookingSummary } from "@/components/booking/BookingSummary";
+import LanguageSwitcher from "@/components/LanguageSwitcher"; // Added import
 
 export interface BookingFormData {
   startDate: string; // formatted as DD-MM-YYYY
@@ -464,6 +465,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-secondary">
+      <LanguageSwitcher /> {/* Added LanguageSwitcher component */}
       <main className="container py-8">
         {/* Progress Timeline */}
         {currentStep === 1 && (
