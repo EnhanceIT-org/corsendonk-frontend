@@ -467,9 +467,9 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           <strong>Bedankt voor uw reservering!</strong>
         </p>
         <p className="mb-4">
-        <strong>Let op:</strong> u ontvangt per hotel een 
-              afzonderlijke bevestigingsmail. Zo kunt u eenvoudig nagaan in 
-              welk hotel u per overnachting verblijft.'
+          <strong>Let op:</strong> u ontvangt per hotel een afzonderlijke
+          bevestigingsmail. Zo kunt u eenvoudig nagaan in welk hotel u per
+          overnachting verblijft.
         </p>
 
         {/* Flex container for buttons */}
@@ -802,7 +802,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         </div>
 
         {/* Fietsverhuur Section*/}
-        {travelMode === 'cycling' && (
+        {travelMode === "cycling" && (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Fietsverhuur?
@@ -825,7 +825,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             </div>
           </div>
         )}
-        
 
         <button
           type="submit"
