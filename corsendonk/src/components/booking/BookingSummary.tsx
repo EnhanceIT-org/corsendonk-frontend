@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from 'react-i18next'; // Import hook
 import { PersonalInformationForm } from "./PersonalInformationForm";
 import { BookingDetails } from "./BookingDetails";
 import { Breadcrumb } from "./Breadcrumb";
@@ -492,6 +493,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   onBookingSuccess,
   rawConfig,
 }) => {
+  const { t } = useTranslation(); // Instantiate hook
   const arrangementLength = selectedArrangement.night_details.length + 1; // 2 nights = 3 days, 3 nights = 4 days
 
   const [bookingData, setBookingData] = useState<BookingData>({
@@ -511,7 +513,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
       <div className="px-4 sm:px-6 lg:px-8 pt-8">
         <Breadcrumb
           currentStep={3}
-          title="Voltooi uw boeking"
+          title={t('breadcrumb.completeBooking', 'Complete your booking')}
           onNavigate={(step) => {
             if (step === 1) {
               onBackToStep1();

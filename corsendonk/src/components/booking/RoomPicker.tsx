@@ -1,9 +1,10 @@
 import * as React from "react";
 import { useEffect, useState, useCallback } from "react"; // Added useCallback
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { MealPlanToggle } from "./MealPlanToggle";
 import { RoomDetailModal } from "./RoomDetailModal";
 import { format } from "date-fns";
-import { ar, nl } from "date-fns/locale";
+import { nl, enUS, fr } from "date-fns/locale"; // Import required locales
 import axios from "axios";
 import { fetchWithBaseUrl } from "../../lib/utils";
 import {
@@ -25,18 +26,8 @@ import {
   HOTEL_NAME_MAPPING,
 } from "../../mappings/mappings";
 
-function chargingMethodToDutch(method: string): string {
-  switch (method) {
-    case "Once":
-      return "X ";
-    case "PerPerson":
-      return "Per persoon";
-    case "PerPersonNight":
-      return "Per persoon per nacht";
-    default:
-      return "";
-  }
-}
+// Removed chargingMethodToDutch function - use t('chargingMethods...') instead
+
 import { PricingSummary } from "./PricingSummary";
 import { Breadcrumb } from "./Breadcrumb";
 
@@ -263,10 +254,24 @@ function distributeGuestsEvenly(
 }
 
 // --- Helper functions: Date/String Formatting ---
-function formatDutchDate(dateString: string) {
-  const raw = format(new Date(dateString), "EEEE, d MMMM", { locale: nl });
+function getLocale(language: string) {
+  switch (language) {
+    case 'en':
+      return enUS;
+    case 'fr':
+      return fr;
+    case 'nl':
+    default:
+      return nl;
+  }
+}
+
+function formatDateForLocale(dateString: string, currentLanguage: string) {
+  const locale = getLocale(currentLanguage);
+  const raw = format(new Date(dateString), "EEEE, d MMMM", { locale });
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
+// Removed formatDutchDate function
 
 function capitalizeFirstLetter(str: string) {
   if (!str) return "";
@@ -279,6 +284,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   onBack,
   onContinue,
 }) => {
+  const { t, i18n } = useTranslation(); // Instantiate hook
   const [rawConfig, setRawConfig] = useState<any>(null);
   const [arrangements, setArrangements] = useState<{
     breakfast: any;
@@ -440,15 +446,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     );
 
     if (unassignedGuests || emptyRooms) {
-      setError(
-        "Niet alle gasten zijn toegewezen aan kamers of er zijn kamers zonder gasten. Controleer uw selectie.",
-      );
+      setError(t('roomPicker.error.guestsNotAssigned'));
       return;
     }
 
     // Ensure selectedArrangement is not null before proceeding
     if (!selectedArrangement) {
-      setError("Kan niet doorgaan, geen arrangement geselecteerd.");
+      setError(t('roomPicker.error.noArrangementSelected'));
       // console.error(
       //   "[onReserve] Attempted to continue without a selected arrangement.",
       // );
@@ -518,10 +522,11 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           //     halfboardError: availHalfBoard.error,
           //   },
           // );
+          // Use a more specific key if available, otherwise fallback
           setError(
             availBreakfast.error ??
               availHalfBoard.error ??
-              "Geen beschikbare kamers gevonden, probeer andere data",
+              t('roomPicker.error.noRoomsFoundTryDifferentDates', 'No available rooms found, please try different dates'),
           );
           setLoading(false);
           return;
@@ -533,9 +538,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           // console.error(
           //   "[RoomPicker InitEffect] No optimal sequences found in either availability response.",
           // );
-          setError(
-            "Geen beschikbare arrangementen gevonden voor deze selectie.",
-          );
+          setError(t('roomPicker.error.noArrangementsAvailableBody', 'No arrangements available for this selection.')); // Keep this key
           setLoading(false);
           return;
         }
@@ -565,9 +568,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             // console.error(
             //   "[RoomPicker InitEffect] No optimal sequence found for either board option.",
             // );
-            setError(
-              "Geen beschikbaar arrangement gevonden voor de geselecteerde opties.",
-            );
+            setError(t('roomPicker.error.noArrangementsAvailableTitle', 'No Arrangements Available')); // Keep this key
             setLoading(false);
             return;
           } else {
@@ -642,7 +643,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             // console.error(
             //   "[RoomPicker InitEffect] No optimal sequence found for either board option.",
             // );
-            setError("Geen beschikbaar arrangement gevonden.");
+            setError(t('roomPicker.error.noArrangementsAvailableTitle', 'No Arrangements Available')); // Keep this key
             setLoading(false);
             return; // Exit early
           }
@@ -743,9 +744,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
 
         if (!isCurrentPricingValid) {
-          setError(
-            "Er zijn geen arrangementen beschikbaar die voldoen aan uw criteria voor de geselecteerde data.",
-          );
+          setError(t('roomPicker.error.noArrangementsAvailableBody', 'No arrangements available for the selected criteria.')); // Keep this key
           setLoading(false);
           return; // Stop processing
         }
@@ -772,7 +771,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           //   err.response.status,
           // );
         }
-        setError(err.message || "Error fetching data");
+        setError(err.message || t('common.error', 'Error fetching data')); // Keep this key
       } finally {
         setLoading(false);
       }
@@ -1029,10 +1028,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <img
           src="/corsendonk_green_png.png" // Use relative path from public folder
-          alt="Loading Logo"
+          alt={t('common.loading', 'Loading Logo')}
           className="w-auto max-w-[180px] md:max-w-[220px] h-auto mb-6 animate-pulse"
         />
-        <p className="text-lg text-gray-700">Eventjes Geduld Aub</p>
+        <p className="text-lg text-gray-700">{t('common.pleaseWait', 'Just a moment please')}</p>
       </div>
     );
 
@@ -1045,16 +1044,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           </div>
           <h2 className="text-xl font-semibold text-[#2C4A3C] mb-4">
             {/* Display the specific error message */}
-            {error || "Er is een fout opgetreden"}
+            {error || t('common.error', 'An error occurred')}
           </h2>
           <p className="text-gray-600 mb-4">
-            Controleer uw selectie of probeer het later opnieuw.
+            {t('roomPicker.error.checkSelectionOrTryLater', 'Please check your selection or try again later.')}
           </p>
           <button
             onClick={onBack}
             className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            Terug naar arrangement formulier
+            {t('common.backToArrangementForm', 'Back to arrangement form')}
           </button>
         </div>
       </div>
@@ -1073,17 +1072,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             <XCircle className="text-orange-500 w-12 h-12" />
           </div>
           <h2 className="text-xl font-semibold text-[#2C4A3C] mb-4">
-            Geen Opties Gevonden
+            {t('roomPicker.error.noOptionsFoundTitle', 'No Options Found')}
           </h2>
           <p className="text-gray-600 mb-4">
-            Er zijn geen arrangementen beschikbaar die voldoen aan uw criteria
-            voor de geselecteerde data.
+            {t('roomPicker.error.noArrangementsAvailableBody', 'No arrangements available for the selected criteria.')}
           </p>
           <button
             onClick={onBack}
             className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            Terug naar arrangement formulier
+            {t('common.backToArrangementForm', 'Back to arrangement form')}
           </button>
         </div>
       </div>
@@ -1098,10 +1096,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       <div className="max-w-7xl px-4 sm:px-6 lg:px-8 pt-8">
         <Breadcrumb
           currentStep={2}
-          title="Uw Boeking"
+          title={t('breadcrumb.yourBooking', 'Your Booking')}
           onNavigate={(step) => {
             if (step === 1) {
-              onBack();
+              onBack(); // Keep existing logic, just translate title
             }
           }}
         />
@@ -1117,12 +1115,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         {travelMode === "cycling" ? (
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-2">
             <Bike size={16} />
-            <span>Fietsen</span>
+            <span>{t('travelMode.cycling', 'Cycling')}</span>
           </div>
         ) : (
           <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-2">
             <Mountain size={16} />
-            <span>Wandelen</span>
+            <span>{t('travelMode.walking', 'Walking')}</span>
           </div>
         )}
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
@@ -1137,7 +1135,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                   <div className="flex-1 bg-white rounded-lg shadow-sm p-6">
                     <div className="border-b pb-4 mb-6">
                       <h2 className="text-xl font-medium text-[#2C4A3C]">
-                        {formatDutchDate(night.date)}
+                        {formatDateForLocale(night.date, i18n.language)}
                       </h2>
                     </div>
                     <div className="mb-6">
@@ -1151,7 +1149,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                           <div className="space-y-4">
                             <div className="flex justify-between items-start">
                               <h4 className="font-medium text-[#2C4A3C]">
-                                Kamer {index + 1}
+                                {t('room.roomNumber', { number: index + 1, defaultValue: `Room ${index + 1}` })}
                               </h4>
                               <button
                                 onClick={() => {
@@ -1161,9 +1159,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                   });
                                   setShowRoomDetailModal(true);
                                 }}
-                                className="text-[#2C4A3C] hover:text-[#2C4A3C]/80 ml-2"
+                                className="text-[#2C4A3C] hover:text-[#2C4A3C]/80 ml-2 flex items-center text-xs" // Added flex and text-xs
                               >
-                                <Info className="w-4 h-4" />
+                                <Info className="w-4 h-4 mr-1" />
                               </button>
                             </div>
                             <div className="flex flex-col gap-2">
@@ -1229,7 +1227,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                       disabled={shouldDisable}
                                     >
                                       {roomOption.category_name}
-                                      {isExhausted && !isSelectedHere ? " (Volzet)" : ""}
+                                      {isExhausted && !isSelectedHere ? ` (${t('room.full', 'Full')})` : ""}
                                     </option>
                                   );
 
@@ -1249,7 +1247,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                           x.hotel === night.hotel,
                                       );
                                     if (!foundEntry?.pricing) {
-                                      return "Prijs niet beschikbaar";
+                                      return t('room.priceUnavailable', 'Price unavailable');
                                     }
                                     const price = getPriceForSingleRoom(
                                       foundEntry.pricing,
@@ -1264,7 +1262,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     );
                                     return price > 0
                                       ? `€${price.toFixed(2)}` // Format price
-                                      : "Prijs niet beschikbaar";
+                                      : t('room.priceUnavailable', 'Price unavailable');
                                   })()}
                                 </span>
                               </div>
@@ -1273,7 +1271,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               <div className="mt-2 space-y-2">
                                 {adults > 0 && (
                                   <div className="flex items-center gap-2">
-                                    <span className="w-24">Volwassenen:</span>
+                                    <span className="w-24">{t('occupancy.adults', 'Adults')}:</span>
                                     <button
                                       onClick={() => {
                                         setSelectedArrangement(
@@ -1369,7 +1367,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 )}
                                 {children > 0 && (
                                   <div className="flex items-center gap-2">
-                                    <span className="w-24">Kinderen:</span>
+                                    <span className="w-24">{t('occupancy.children', 'Children')}:</span>
                                     <button
                                       onClick={() => {
                                         setSelectedArrangement(
@@ -1472,14 +1470,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               <div className="mt-2 text-sm min-h-6 text-red-600">
                                 {currentAssignedAdults < adults && (
                                   <p>
-                                    {adults - currentAssignedAdults}{" "}
-                                    volwassene(n) niet toegewezen!
+                                    {t('roomPicker.warning.adultsUnassigned', { count: adults - currentAssignedAdults, defaultValue: `${adults - currentAssignedAdults} adult(s) unassigned!` })}
                                   </p>
                                 )}
                                 {currentAssignedChildren < children && (
                                   <p>
-                                    {children - currentAssignedChildren}{" "}
-                                    kind(eren) niet toegewezen!
+                                    {t('roomPicker.warning.childrenUnassigned', { count: children - currentAssignedChildren, defaultValue: `${children - currentAssignedChildren} child(ren) unassigned!` })}
                                   </p>
                                 )}
                               </div>
@@ -1488,14 +1484,14 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                             room.occupant_countAdults === 0 &&
                             room.occupant_countChildren === 0 && (
                               <div className="mt-2 text-sm text-red-600">
-                                Geen gasten toegewezen aan deze kamer!
+                                {t('roomPicker.warning.noGuestsAssigned', 'No guests assigned to this room!')}
                               </div>
                             )}
                           {/* Optional Extras Section Start */}
                           {/*
                           <div className="mt-6 pt-4 border-t">
                             <h4 className="text-md font-medium text-gray-800 mb-3">
-                              Voeg extra's toe:
+                              {t('room.optionalExtras', 'Optional Extras')}:
                             </h4>
                             <div className="space-y-3">
                               {optionalProducts
@@ -1530,8 +1526,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                       <span className="text-xs text-gray-500 ml-2">
                                         {`€${product.price[night.hotel].toFixed(
                                           2,
-                                        )} ${chargingMethodToDutch(
-                                          product.chargingMethod ?? "",
+                                        )} ${t(
+                                          `chargingMethods.${product.chargingMethod.toLowerCase()}`,
+                                          { defaultValue: product.chargingMethod } // Fallback if key missing
                                         )}`}
                                       </span>
                                     </div>
@@ -1584,7 +1581,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 p.availableFor.includes(travelMode),
                               ).length === 0 && (
                                 <div className="text-sm text-gray-500 italic">
-                                  Geen extra's beschikbaar voor deze reiswijze.
+                                  {t('room.noExtrasAvailableForTravelMode', 'No extras available for this travel mode.')}
                                 </div>
                               )}
                             </div>
@@ -1598,13 +1595,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                       <div className="flex gap-4 items-center">
                         <div className="flex items-center gap-2">
                           <Coffee className="w-5 h-5 text-[#2C4A3C]" />
-                          <span className="text-sm text-gray-600">Ontbijt</span>
+                          <span className="text-sm text-gray-600">{t('mealPlan.breakfast', 'Breakfast')}</span>
                         </div>
                         {night.board_type === "HB" && (
                           <div className="flex items-center gap-2">
                             <UtensilsCrossed className="w-5 h-5 text-[#2C4A3C]" />
                             <span className="text-sm text-gray-600">
-                              Avondeten
+                              {t('mealPlan.halfBoard', 'Half Board')}
                             </span>
                           </div>
                         )}
@@ -1613,14 +1610,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                         night.board_type === "B&B" &&
                         selectedBoardOption === "halfboard" && (
                           <p className="mt-2 text-sm text-orange-600">
-                            Externe restaurants volboekt, enkel ontbijt mogelijk
+                            {t('roomPicker.warning.externalRestaurantsFull', 'External restaurants fully booked, only breakfast possible')}
                           </p>
                         )}
                       <div className="mt-2 flex items-center gap-2">
                         <User className="w-5 h-5 text-[#2C4A3C]" />
                         <span className="text-sm text-gray-600">
-                          {/* Display total from bookingData, not calculated sum */}
-                          Totaal {adults + children} gasten
+                          {t('roomPicker.totalGuests', { count: adults + children, defaultValue: `Total ${adults + children} guests` })}
                         </span>
                       </div>
                     </div>
