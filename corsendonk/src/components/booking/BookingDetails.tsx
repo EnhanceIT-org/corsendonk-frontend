@@ -1,6 +1,6 @@
 // components/new_components/BookingDetails.tsx
 import React from "react";
-import { useTranslation } from 'react-i18next'; // Import hook
+import { useTranslation } from "react-i18next"; // Import hook
 import { format } from "date-fns";
 import { nl, enUS, fr } from "date-fns/locale"; // Import required locales
 import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
@@ -138,15 +138,13 @@ function calculateTotalHumans(bookingData): number {
   return total;
 }
 
-// --- Helper functions: Date/String Formatting ---
-// Copied from RoomPicker
 function getLocale(language: string) {
   switch (language) {
-    case 'en':
+    case "en":
       return enUS;
-    case 'fr':
+    case "fr":
       return fr;
-    case 'nl':
+    case "nl":
     default:
       return nl;
   }
@@ -194,7 +192,9 @@ export function BookingDetails({
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-6">{t('bookingDetails.title', 'Details of your booking')}</h2>
+        <h2 className="text-lg font-semibold mb-6">
+          {t("bookingDetails.title", "Details of your booking")}
+        </h2>
         {bookingData.reservations.map((reservation, index) => {
           const boardKey =
             reservation.board_type === "HB" ? "halfboard" : "breakfast";
@@ -227,7 +227,10 @@ export function BookingDetails({
                   reservation.board_type === "B&B" &&
                   bookingData.mealPlan === "halfboard" && (
                     <p className="mt-1 text-sm text-orange-600">
-                      {t('bookingDetails.warning.externalRestaurantsFull', 'External restaurants fully booked, only breakfast possible')}
+                      {t(
+                        "bookingDetails.warning.externalRestaurantsFull",
+                        "External restaurants fully booked, only breakfast possible",
+                      )}
                     </p>
                   )}
                 {reservation.chosen_rooms.map((room, roomIndex) => (
@@ -266,7 +269,11 @@ export function BookingDetails({
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Users className="w-4 h-4" />
                       <span>
-                        {t('bookingDetails.occupancy', { adults: room.occupant_countAdults, children: room.occupant_countChildren, defaultValue: `${room.occupant_countAdults} Adults, ${room.occupant_countChildren} Children` })}
+                        {t("bookingDetails.occupancy", {
+                          adults: room.occupant_countAdults,
+                          children: room.occupant_countChildren,
+                          defaultValue: `${room.occupant_countAdults} Adults, ${room.occupant_countChildren} Children`,
+                        })}
                       </span>
                     </div>
                     {null /* Hide Selected Extras */}
@@ -280,14 +287,22 @@ export function BookingDetails({
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-lg font-semibold">{t('common.total', 'Total')}</h2>
+            <h2 className="text-lg font-semibold">
+              {t("common.total", "Total")}
+            </h2>
           </div>
           <span className="text-2xl font-semibold">
             €{bookingData.total.toFixed(2)}
           </span>
         </div>
         <p className="text-sm text-gray-500 mt-1 text-left">
-          {t('bookingDetails.cityTaxNote', { amount: cityTaxAmount.toFixed(2), rate: '2,50', defaultValue: `Excluding city tax of €${cityTaxAmount.toFixed(2)}, payable at the hotel (€2.50 per person per night).` })}
+          {t("bookingDetails.cityTaxNote", {
+            amount: cityTaxAmount.toFixed(2),
+            rate: "2,50",
+            defaultValue: `Excluding city tax of €${cityTaxAmount.toFixed(
+              2,
+            )}, payable at the hotel (€2.50 per person per night).`,
+          })}
         </p>
       </div>
     </div>

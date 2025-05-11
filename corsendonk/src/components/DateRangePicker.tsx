@@ -5,8 +5,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next"; // Import hook
 import { CalendarIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
+import { enUS, fr, nl } from "date-fns/locale"; // Import desired locales
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
@@ -15,10 +17,22 @@ interface DateRangePickerProps {
   arrangementLength: number; // expected to be 3 or 4
 }
 
+const determineLocale = (lang: string) => {
+  switch (lang) {
+    case "fr":
+      return fr;
+    case "nl":
+      return nl;
+    default:
+      return enUS;
+  }
+};
+
 export function DateRangePicker({
   onChange,
   arrangementLength,
 }: DateRangePickerProps) {
+  const { t, i18n } = useTranslation();
   // Use a single date for selection.
   const [selectedDate, setSelectedDate] = useState<Date>(
     addDays(new Date(), 1),
@@ -66,21 +80,26 @@ export function DateRangePicker({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4 text-black" />
-            {format(computedRange.from, "LLL dd, y")} -{" "}
-            {format(computedRange.to, "LLL dd, y")}
+            {format(computedRange.from, "PPP", {
+              locale: determineLocale(i18n.language),
+            })}{" "}
+            -{" "}
+            {format(computedRange.to, "PPP", {
+              locale: determineLocale(i18n.language),
+            })}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 border-[#2C4A3C]" align="start">
           <Calendar
             initialFocus
-            mode="single" // Keep single mode for clickable dates.
-            defaultMonth={addDays(new Date(), 1)} // Start on today plus one.
-            disabled={(date) => date <= new Date()} // Disable today and past dates.
+            mode="single"
+            defaultMonth={addDays(new Date(), 1)}
+            disabled={(date) => date <= new Date()}
             selected={selectedDate}
             onSelect={handleDateSelect}
             numberOfMonths={2}
-            modifiers={modifiers} // Pass the custom modifier for styling.
-            className="custom-calendar"
+            modifiers={modifiers}
+            locale={determineLocale(i18n.language)}
           />
         </PopoverContent>
       </Popover>
