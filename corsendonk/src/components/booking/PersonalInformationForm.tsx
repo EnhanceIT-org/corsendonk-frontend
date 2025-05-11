@@ -383,7 +383,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         }));
       }
     } catch (error) {
-      // console.error(error);
+      console.error(error);
       setErrors((prev) => ({
         ...prev,
         general: t(
@@ -427,7 +427,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
               try {
                 secureFieldsRef.current.submit(submissionData);
               } catch (innerError) {
-                // console.error("Error inside submit timeout:", innerError);
                 setErrors((prev) => ({
                   ...prev,
                   general: t(
@@ -924,6 +923,24 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             </div>
           </div>
         )}
+        <div className="mt-4 text-sm text-gray-900">
+          {t(
+            "personalInfoForm.acceptTermsLabelBeforeLink",
+            "By pressing the confirm button, you accept",
+          )}{" "}
+          <a
+            href="https://corsendonkhotels.com/en/sales-conditions-and-privacy/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#2C4A3C] underline hover:text-[#2C4A3C]/90"
+          >
+            {t("personalInfoForm.generalConditionsLink", "General Conditions")}
+          </a>
+          {t(
+            "personalInfoForm.acceptTermsLabelAfterLink",
+            " of the reservation",
+          )}{" "}
+        </div>
 
         <button
           type="submit"
