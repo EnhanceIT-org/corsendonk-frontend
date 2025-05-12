@@ -96,6 +96,7 @@
   "personalInfoForm.generalConditionsLink": "the general conditions",
   "personalInfoForm.acceptTermsLabelBeforeLink": "By pressing the confirm button, you accept the ",
   "personalInfoForm.acceptTermsLabelAfterLink": " of the reservation",
+  "personalInfoForm.generalConditionsLinkUrl": "https://corsendonkhotels.com/en/sales-conditions-and-privacy/",
   "common.processing": "Processing...",
   "personalInfoForm.validation.invalidEmail": "Please enter a valid email address",
   "personalInfoForm.validation.firstNameTooShort": "First name must be at least 2 characters",

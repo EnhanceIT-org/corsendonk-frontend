@@ -929,7 +929,10 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             "By pressing the confirm button, you accept",
           )}{" "}
           <a
-            href="https://corsendonkhotels.com/en/sales-conditions-and-privacy/"
+            href={t("personalInfoForm.generalConditionsLinkUrl", {
+              defaultValue:
+                "https://corsendonkhotels.com/en/sales-conditions-and-privacy/",
+            })}
             target="_blank"
             rel="noopener noreferrer"
             className="text-[#2C4A3C] underline hover:text-[#2C4A3C]/90"
