@@ -62,10 +62,17 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
   });
 
   const handleIncrement = (field: "adults" | "children" | "rooms") => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: prev[field] + 1,
-    }));
+    setFormData((prev) => {
+      // total guests to 10 (mews api call doesnt allow more)
+      if ((field === "adults" || field === "children") && prev.adults + prev.children >= 10) {
+        return prev; 
+      }
+      
+      return {
+        ...prev,
+        [field]: prev[field] + 1,
+      };
+    });
   };
 
   const handleDecrement = (field: "adults" | "children" | "rooms") => {
