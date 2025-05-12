@@ -328,24 +328,14 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     restaurantChosen: string | null, // NEW: Add restaurant parameter
   ): number {
     if (!nightlyPricing?.CategoryPrices) {
-      setError(
-        t(
-          "roomPicker.error.noArrangementsAvailableBody",
-          "No arrangements available for the selected criteria.",
-        ),
-      );
+      
       return 0;
     }
     const cat = nightlyPricing.CategoryPrices.find(
       (cp: any) => cp.CategoryId === room.category_id,
     );
     if (!cat) {
-      setError(
-        t(
-          "roomPicker.error.noArrangementsAvailableBody",
-          "No arrangements available for the selected criteria.",
-        ),
-      );
+      
       return 0;
     }
 
@@ -401,12 +391,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     }
 
     if (!occupantPriceEntry) {
-      setError(
-        t(
-          "roomPicker.error.noArrangementsAvailableBody",
-          "No arrangements available for the selected criteria.",
-        ),
-      );
+      
       return 0;
     }
 
@@ -422,12 +407,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       (rgp: any) => rgp.MinRateId === rateId,
     );
     if (!rPrice) {
-      setError(
-        t(
-          "roomPicker.error.noArrangementsAvailableBody",
-          "No arrangements available for the selected criteria.",
-        ),
-      );
+      
       return 0;
     }
 
@@ -890,60 +870,69 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
   // --- Effect: Calculate Prices Per Night ---
   useEffect(() => {
-    if (
-      !selectedArrangement ||
-      !pricingData ||
-      !selectedArrangement.night_details
-    ) {
-      return;
-    }
+    // Wait until automatic distribution finished
+    if (!defaultDistributed) return;
+    if (!selectedArrangement || !pricingData) return;
 
-    const newPricesPerNight = selectedArrangement.night_details.map(
-      (night: any, nightIndex: number) => {
-        const chosenRooms = night.chosen_rooms || [];
-        const boardKey = selectedBoardOption; // Use the state for the currently selected board
+    const nightlyTotals: number[] = selectedArrangement.night_details.map(
+      (night, nightIndex) => {
+        const chosenRooms = night.chosen_rooms ?? [];
+
+        const boardKey = selectedBoardOption;
         const nightlyPricingForBoard =
-          pricingData[boardKey]?.nightlyPricing || [];
+          pricingData[boardKey]?.nightlyPricing ?? [];
 
         const foundEntry = nightlyPricingForBoard.find(
           (x: any) => x.date === night.date && x.hotel === night.hotel,
         );
 
-        if (!foundEntry?.pricing) {
-          // // ADDED LOG
-          // console.warn(`  - No pricing entry found.`);
-          return 0;
-        }
+        if (!foundEntry?.pricing) return 0;
 
-        const nightTotal = chosenRooms.reduce(
-          (acc: number, room: any, roomIndex: number) => {
-            const adultsCount = room.occupant_countAdults ?? 0;
-            const childrenCount = room.occupant_countChildren ?? 0;
+        const nightTotal = chosenRooms.reduce((acc: number, room: any) => {
+          const adults = room.occupant_countAdults ?? 0;
+          const children = room.occupant_countChildren ?? 0;
 
-            const roomPrice = getPriceForSingleRoom(
+          // ❶ NEW guard → ignore empty rooms so they don’t trigger a “missing price”
+          if (adults + children === 0) return acc;
+
+          return (
+            acc +
+            getPriceForSingleRoom(
               foundEntry.pricing,
               night.hotel,
-              night.board_type, // Use the specific night's board type ('HB' or 'B&B') for rate lookup
+              night.board_type,
               travelMode,
               room,
-              childrenCount,
-              adultsCount,
+              children,
+              adults,
               arrangementLength,
-              night.restaurant_chosen, // NEW: Pass restaurant_chosen
-            );
-            return acc + roomPrice;
-          },
-          0,
-        );
+              night.restaurant_chosen,
+            )
+          );
+        }, 0);
 
         return nightTotal;
       },
     );
 
-    setPricesPerNight(newPricesPerNight);
+    setPricesPerNight(nightlyTotals);
+
+    // ❷ CENTRAL error detection (runs once, right here)
+    const hasMissingPrice = selectedArrangement.night_details.some(
+      (_, idx) => nightlyTotals[idx] === 0,
+    );
+    setError(
+      hasMissingPrice
+        ? t(
+            "roomPicker.error.noArrangementsAvailableBody",
+            "No arrangements available for the selected criteria.",
+          )
+        : null,
+    );
   }, [
     selectedArrangement,
     pricingData,
+    defaultDistributed, // NEW dep
     selectedBoardOption,
     travelMode,
     arrangementLength,
@@ -962,6 +951,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   }, [selectedArrangement, pricesPerNight]); // Depends on arrangement (for extras) and room prices
 
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
+    setError(null);
     setSelectedBoardOption(option);
 
     const newArrangementData = arrangements[option];
