@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useEffect, useState, useCallback } from "react"; // Added useCallback
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from "react-i18next"; // Import useTranslation
 import { MealPlanToggle } from "./MealPlanToggle";
 import { RoomDetailModal } from "./RoomDetailModal";
 import { format } from "date-fns";
@@ -229,8 +229,8 @@ function distributeGuestsEvenly(
   // Adjust based on capacity
   for (let i = 0; i < n; i++) {
     const room = chosenRooms[i];
-    const existingAdults = room.occupant_countAdults || 0;
-    const existingChildren = room.occupant_countChildren || 0;
+    const existingAdults = room.occupant_countAdults ?? 0;
+    const existingChildren = room.occupant_countChildren ?? 0;
     const used = existingAdults + existingChildren;
     const free = room.bed_capacity - used;
     occupantWanted[i] = Math.min(occupantWanted[i], free);
@@ -256,11 +256,11 @@ function distributeGuestsEvenly(
 // --- Helper functions: Date/String Formatting ---
 function getLocale(language: string) {
   switch (language) {
-    case 'en':
+    case "en":
       return enUS;
-    case 'fr':
+    case "fr":
       return fr;
-    case 'nl':
+    case "nl":
     default:
       return nl;
   }
@@ -271,7 +271,6 @@ function formatDateForLocale(dateString: string, currentLanguage: string) {
   const raw = format(new Date(dateString), "EEEE, d MMMM", { locale });
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
-// Removed formatDutchDate function
 
 function capitalizeFirstLetter(str: string) {
   if (!str) return "";
@@ -329,12 +328,24 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     restaurantChosen: string | null, // NEW: Add restaurant parameter
   ): number {
     if (!nightlyPricing?.CategoryPrices) {
+      setError(
+        t(
+          "roomPicker.error.noArrangementsAvailableBody",
+          "No arrangements available for the selected criteria.",
+        ),
+      );
       return 0;
     }
     const cat = nightlyPricing.CategoryPrices.find(
       (cp: any) => cp.CategoryId === room.category_id,
     );
     if (!cat) {
+      setError(
+        t(
+          "roomPicker.error.noArrangementsAvailableBody",
+          "No arrangements available for the selected criteria.",
+        ),
+      );
       return 0;
     }
 
@@ -361,10 +372,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         return false;
       }
       const sortedApiOccupancies = [...op.Occupancies].sort((a, b) =>
-        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId || ""),
+        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
       );
       const sortedTargetOccupancies = [...occupantArray].sort((a, b) =>
-        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId || ""),
+        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
       );
       for (let i = 0; i < sortedApiOccupancies.length; i++) {
         if (
@@ -390,6 +401,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     }
 
     if (!occupantPriceEntry) {
+      setError(
+        t(
+          "roomPicker.error.noArrangementsAvailableBody",
+          "No arrangements available for the selected criteria.",
+        ),
+      );
       return 0;
     }
 
@@ -405,6 +422,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       (rgp: any) => rgp.MinRateId === rateId,
     );
     if (!rPrice) {
+      setError(
+        t(
+          "roomPicker.error.noArrangementsAvailableBody",
+          "No arrangements available for the selected criteria.",
+        ),
+      );
       return 0;
     }
 
@@ -446,13 +469,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     );
 
     if (unassignedGuests || emptyRooms) {
-      setError(t('roomPicker.error.guestsNotAssigned'));
+      setError(t("roomPicker.error.guestsNotAssigned"));
       return;
     }
 
     // Ensure selectedArrangement is not null before proceeding
     if (!selectedArrangement) {
-      setError(t('roomPicker.error.noArrangementSelected'));
+      setError(t("roomPicker.error.noArrangementSelected"));
       // console.error(
       //   "[onReserve] Attempted to continue without a selected arrangement.",
       // );
@@ -479,12 +502,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           `/reservations/initial-setup/?startDate=${formattedStartDateGET}&length=${arrangementLength}`,
         );
         if (!configRes.ok) {
-          // ADDED LOG
-          // console.error(
-          //   "[RoomPicker InitEffect] Failed to fetch config response:",
-          //   configRes.status,
-          //   configRes.statusText,
-          // );
           throw new Error(
             `Failed to fetch configuration (${configRes.status})`,
           );
@@ -515,18 +532,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
         // Check for errors/empty results from availability
         if (availBreakfast?.error && availHalfBoard?.error) {
-          // console.error(
-          //   "[RoomPicker InitEffect] Both availability calls returned errors:",
-          //   {
-          //     breakfastError: availBreakfast.error,
-          //     halfboardError: availHalfBoard.error,
-          //   },
-          // );
-          // Use a more specific key if available, otherwise fallback
           setError(
             availBreakfast.error ??
               availHalfBoard.error ??
-              t('roomPicker.error.noRoomsFoundTryDifferentDates', 'No available rooms found, please try different dates'),
+              t(
+                "roomPicker.error.noRoomsFoundTryDifferentDates",
+                "No available rooms found, please try different dates",
+              ),
           );
           setLoading(false);
           return;
@@ -535,10 +547,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           !availBreakfast?.optimal_sequence &&
           !availHalfBoard?.optimal_sequence
         ) {
-          // console.error(
-          //   "[RoomPicker InitEffect] No optimal sequences found in either availability response.",
-          // );
-          setError(t('roomPicker.error.noArrangementsAvailableBody', 'No arrangements available for this selection.')); // Keep this key
+          setError(
+            t(
+              "roomPicker.error.noArrangementsAvailableBody",
+              "No arrangements available for this selection.",
+            ),
+          ); // Keep this key
           setLoading(false);
           return;
         }
@@ -548,32 +562,28 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           halfboard: availHalfBoard?.optimal_sequence,
         });
 
-        // Determine initial arrangement based on bookingData *after* fetching
         const initialArrangement =
           bookingData.boardOption === "breakfast"
             ? availBreakfast?.optimal_sequence
             : availHalfBoard?.optimal_sequence;
 
         if (!initialArrangement) {
-          // console.warn(
-          //   `[RoomPicker InitEffect] No optimal sequence available for the initial board option: ${bookingData.boardOption}. Trying the other board option.`,
-          // );
-          // Try falling back to the *other* option if the preferred one is missing
           const fallbackArrangement =
             bookingData.boardOption === "breakfast"
               ? availHalfBoard?.optimal_sequence
               : availBreakfast?.optimal_sequence;
 
           if (!fallbackArrangement) {
-            // console.error(
-            //   "[RoomPicker InitEffect] No optimal sequence found for either board option.",
-            // );
-            setError(t('roomPicker.error.noArrangementsAvailableTitle', 'No Arrangements Available')); // Keep this key
+            setError(
+              t(
+                "roomPicker.error.noArrangementsAvailableTitle",
+                "No Arrangements Available",
+              ),
+            ); // Keep this key
             setLoading(false);
             return;
           } else {
             setSelectedArrangement(fallbackArrangement);
-            // IMPORTANT: Update the selectedBoardOption state to match the fallback!
             setSelectedBoardOption(
               bookingData.boardOption === "breakfast"
                 ? "halfboard"
@@ -609,8 +619,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                   room.extras = { ...initialExtrasState };
                 }
               });
-            } else {
-              // console.warn("No chosen_rooms found for this night:", night);
             }
           });
 
@@ -622,11 +630,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             ? availBreakfast?.optimal_sequence
             : availHalfBoard?.optimal_sequence;
 
-        // Handle fallback if initial option is missing
         if (!initialArrangementToSet) {
-          // console.warn(
-          //   `[RoomPicker InitEffect] No optimal sequence for initial board option: ${bookingData.boardOption}. Trying fallback.`,
-          // );
           initialArrangementToSet =
             bookingData.boardOption === "breakfast"
               ? availHalfBoard?.optimal_sequence
@@ -640,10 +644,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                 : "breakfast",
             );
           } else {
-            // console.error(
-            //   "[RoomPicker InitEffect] No optimal sequence found for either board option.",
-            // );
-            setError(t('roomPicker.error.noArrangementsAvailableTitle', 'No Arrangements Available')); // Keep this key
+            setError(
+              t(
+                "roomPicker.error.noArrangementsAvailableTitle",
+                "No Arrangements Available",
+              ),
+            ); // Keep this key
             setLoading(false);
             return; // Exit early
           }
@@ -692,11 +698,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
         const [pricingBreakfastRes, pricingHalfBoardRes] =
           await Promise.all(pricingPromises);
-
-        // --- NEW: Validate Pricing Data ---
-        const validatePricing = (pricingResult: any, boardType: string): boolean => {
+        console.log(pricingBreakfastRes);
+        console.log(pricingHalfBoardRes);
+        const validatePricing = (
+          pricingResult: any,
+          boardType: string,
+        ): boolean => {
           if (!pricingResult?.data?.data?.nightlyPricing) {
-            // console.log(`[Pricing Validation] No nightlyPricing for ${boardType}. Skipping validation.`);
+            console.log(
+              `[Pricing Validation] No nightlyPricing for ${boardType}. Skipping validation.`,
+            );
             return true; // No data to validate, consider it valid for now
           }
           for (const nightPrice of pricingResult.data.data.nightlyPricing) {
@@ -706,10 +717,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
               nightPrice.pricing.Rates?.length === 0 ||
               nightPrice.pricing.CategoryPrices?.length === 0
             ) {
-              // console.error(
-              //   `[Pricing Validation] Empty pricing found for ${boardType} on date ${nightPrice.date}, hotel ${nightPrice.hotel}.`,
-              //   nightPrice.pricing,
-              // );
+              console.error(
+                `[Pricing Validation] Empty pricing found for ${boardType} on date ${nightPrice.date}, hotel ${nightPrice.hotel}.`,
+                nightPrice.pricing,
+              );
               return false; // Invalid pricing found
             }
           }
@@ -717,39 +728,66 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           return true; // All nights have pricing data
         };
 
-        const isBreakfastPricingValid = validatePricing(pricingBreakfastRes, "breakfast");
-        const isHalfboardPricingValid = validatePricing(pricingHalfBoardRes, "halfboard");
+        const isBreakfastPricingValid = validatePricing(
+          pricingBreakfastRes,
+          "breakfast",
+        );
+        const isHalfboardPricingValid = validatePricing(
+          pricingHalfBoardRes,
+          "halfboard",
+        );
 
         // Check validity based on the *selected* arrangement's board type initially
-        const currentSelectedArrangementBoard = selectedArrangement?.night_details?.[0]?.board_type === 'HB' ? 'halfboard' : 'breakfast';
+        const currentSelectedArrangementBoard =
+          selectedArrangement?.night_details?.[0]?.board_type === "HB"
+            ? "halfboard"
+            : "breakfast";
 
         let isCurrentPricingValid = true;
-        if (currentSelectedArrangementBoard === 'breakfast' && availBreakfast?.optimal_sequence) {
-            isCurrentPricingValid = isBreakfastPricingValid;
-        } else if (currentSelectedArrangementBoard === 'halfboard' && availHalfBoard?.optimal_sequence) {
-            isCurrentPricingValid = isHalfboardPricingValid;
-        } else if (!availBreakfast?.optimal_sequence && !availHalfBoard?.optimal_sequence) {
-             // If no arrangements were found initially, this check isn't the primary issue
-             isCurrentPricingValid = true; // Allow existing error handling to take precedence
+        if (
+          currentSelectedArrangementBoard === "breakfast" &&
+          availBreakfast?.optimal_sequence
+        ) {
+          isCurrentPricingValid = isBreakfastPricingValid;
+        } else if (
+          currentSelectedArrangementBoard === "halfboard" &&
+          availHalfBoard?.optimal_sequence
+        ) {
+          isCurrentPricingValid = isHalfboardPricingValid;
+        } else if (
+          !availBreakfast?.optimal_sequence &&
+          !availHalfBoard?.optimal_sequence
+        ) {
+          // If no arrangements were found initially, this check isn't the primary issue
+          isCurrentPricingValid = true; // Allow existing error handling to take precedence
         } else {
-            // If the initially selected board option didn't have an arrangement,
-            // check the validity of the fallback option that *was* selected.
-            const fallbackBoard = selectedBoardOption; // This state holds the actual selected board
-             if (fallbackBoard === 'breakfast' && availBreakfast?.optimal_sequence) {
-                isCurrentPricingValid = isBreakfastPricingValid;
-            } else if (fallbackBoard === 'halfboard' && availHalfBoard?.optimal_sequence) {
-                isCurrentPricingValid = isHalfboardPricingValid;
-            }
+          // If the initially selected board option didn't have an arrangement,
+          // check the validity of the fallback option that *was* selected.
+          const fallbackBoard = selectedBoardOption; // This state holds the actual selected board
+          if (
+            fallbackBoard === "breakfast" &&
+            availBreakfast?.optimal_sequence
+          ) {
+            isCurrentPricingValid = isBreakfastPricingValid;
+          } else if (
+            fallbackBoard === "halfboard" &&
+            availHalfBoard?.optimal_sequence
+          ) {
+            isCurrentPricingValid = isHalfboardPricingValid;
+          }
         }
 
-
         if (!isCurrentPricingValid) {
-          setError(t('roomPicker.error.noArrangementsAvailableBody', 'No arrangements available for the selected criteria.')); // Keep this key
+          setError(
+            t(
+              "roomPicker.error.noArrangementsAvailableBody",
+              "No arrangements available for the selected criteria.",
+            ),
+          ); // Keep this key
           setLoading(false);
           return; // Stop processing
         }
         // --- END NEW ---
-
 
         setPricingData({
           breakfast: pricingBreakfastRes.data.data,
@@ -771,7 +809,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           //   err.response.status,
           // );
         }
-        setError(err.message || t('common.error', 'Error fetching data')); // Keep this key
+        setError(err.message || t("common.error", "Error fetching data")); // Keep this key
       } finally {
         setLoading(false);
       }
@@ -1028,10 +1066,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <img
           src="/corsendonk_green_png.png" // Use relative path from public folder
-          alt={t('common.loading', 'Loading Logo')}
+          alt={t("common.loading", "Loading Logo")}
           className="w-auto max-w-[180px] md:max-w-[220px] h-auto mb-6 animate-pulse"
         />
-        <p className="text-lg text-gray-700">{t('common.pleaseWait', 'Just a moment please')}</p>
+        <p className="text-lg text-gray-700">
+          {t("common.pleaseWait", "Just a moment please")}
+        </p>
       </div>
     );
 
@@ -1044,16 +1084,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           </div>
           <h2 className="text-xl font-semibold text-[#2C4A3C] mb-4">
             {/* Display the specific error message */}
-            {error || t('common.error', 'An error occurred')}
+            {error || t("common.error", "An error occurred")}
           </h2>
           <p className="text-gray-600 mb-4">
-            {t('roomPicker.error.checkSelectionOrTryLater', 'Please check your selection or try again later.')}
+            {t(
+              "roomPicker.error.checkSelectionOrTryLater",
+              "Please check your selection or try again later.",
+            )}
           </p>
           <button
             onClick={onBack}
             className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            {t('common.backToArrangementForm', 'Back to arrangement form')}
+            {t("common.backToArrangementForm", "Back to arrangement form")}
           </button>
         </div>
       </div>
@@ -1072,16 +1115,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             <XCircle className="text-orange-500 w-12 h-12" />
           </div>
           <h2 className="text-xl font-semibold text-[#2C4A3C] mb-4">
-            {t('roomPicker.error.noOptionsFoundTitle', 'No Options Found')}
+            {t("roomPicker.error.noOptionsFoundTitle", "No Options Found")}
           </h2>
           <p className="text-gray-600 mb-4">
-            {t('roomPicker.error.noArrangementsAvailableBody', 'No arrangements available for the selected criteria.')}
+            {t(
+              "roomPicker.error.noArrangementsAvailableBody",
+              "No arrangements available for the selected criteria.",
+            )}
           </p>
           <button
             onClick={onBack}
             className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            {t('common.backToArrangementForm', 'Back to arrangement form')}
+            {t("common.backToArrangementForm", "Back to arrangement form")}
           </button>
         </div>
       </div>
@@ -1096,7 +1142,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       <div className="max-w-7xl px-4 sm:px-6 lg:px-8 pt-8">
         <Breadcrumb
           currentStep={2}
-          title={t('breadcrumb.yourBooking', 'Your Booking')}
+          title={t("breadcrumb.yourBooking", "Your Booking")}
           onNavigate={(step) => {
             if (step === 1) {
               onBack(); // Keep existing logic, just translate title
@@ -1115,12 +1161,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         {travelMode === "cycling" ? (
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-2">
             <Bike size={16} />
-            <span>{t('travelMode.cycling', 'Cycling')}</span>
+            <span>{t("travelMode.cycling", "Cycling")}</span>
           </div>
         ) : (
           <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-2">
             <Mountain size={16} />
-            <span>{t('travelMode.walking', 'Walking')}</span>
+            <span>{t("travelMode.walking", "Walking")}</span>
           </div>
         )}
         <div className="flex flex-col lg:flex-row gap-6 mb-12">
@@ -1149,7 +1195,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                           <div className="space-y-4">
                             <div className="flex justify-between items-start">
                               <h4 className="font-medium text-[#2C4A3C]">
-                                {t('room.roomNumber', { number: index + 1, defaultValue: `Room ${index + 1}` })}
+                                {t("room.roomNumber", {
+                                  number: index + 1,
+                                  defaultValue: `Room ${index + 1}`,
+                                })}
                               </h4>
                               <button
                                 onClick={() => {
@@ -1202,23 +1251,30 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               >
                                 {night.room_options.map((roomOption: any) => {
                                   // how many of this category are already chosen tonight?
-                                  const currentSelectedCount = night.chosen_rooms.filter(
-                                    (r: any) => r.category_id === roomOption.category_id,
-                                  ).length;
+                                  const currentSelectedCount =
+                                    night.chosen_rooms.filter(
+                                      (r: any) =>
+                                        r.category_id ===
+                                        roomOption.category_id,
+                                    ).length;
 
                                   const isExhausted =
-                                    currentSelectedCount >= roomOption.available_count;
+                                    currentSelectedCount >=
+                                    roomOption.available_count;
 
                                   const isSelectedHere =
                                     room.category_id === roomOption.category_id;
 
-                                  const guestsInThisSlot = (room.occupant_countAdults ?? 0) + (room.occupant_countChildren ?? 0);
-                                    
+                                  const guestsInThisSlot =
+                                    (room.occupant_countAdults ?? 0) +
+                                    (room.occupant_countChildren ?? 0);
 
-                                  const isOverCapacity = roomOption.bed_capacity < guestsInThisSlot;
+                                  const isOverCapacity =
+                                    roomOption.bed_capacity < guestsInThisSlot;
 
                                   const shouldDisable =
-                                    isOverCapacity || (isExhausted && !isSelectedHere);
+                                    isOverCapacity ||
+                                    (isExhausted && !isSelectedHere);
 
                                   return (
                                     <option
@@ -1227,10 +1283,11 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                       disabled={shouldDisable}
                                     >
                                       {roomOption.category_name}
-                                      {isExhausted && !isSelectedHere ? ` (${t('room.full', 'Full')})` : ""}
+                                      {isExhausted && !isSelectedHere
+                                        ? ` (${t("room.full", "Full")})`
+                                        : ""}
                                     </option>
                                   );
-
                                 })}
                               </select>
                               <div className="flex justify-between text-sm text-gray-500">
@@ -1247,7 +1304,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                           x.hotel === night.hotel,
                                       );
                                     if (!foundEntry?.pricing) {
-                                      return t('room.priceUnavailable', 'Price unavailable');
+                                      return t(
+                                        "room.priceUnavailable",
+                                        "Price unavailable",
+                                      );
                                     }
                                     const price = getPriceForSingleRoom(
                                       foundEntry.pricing,
@@ -1262,7 +1322,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                     );
                                     return price > 0
                                       ? `€${price.toFixed(2)}` // Format price
-                                      : t('room.priceUnavailable', 'Price unavailable');
+                                      : t(
+                                          "room.priceUnavailable",
+                                          "Price unavailable",
+                                        );
                                   })()}
                                 </span>
                               </div>
@@ -1271,7 +1334,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               <div className="mt-2 space-y-2">
                                 {adults > 0 && (
                                   <div className="flex items-center gap-2">
-                                    <span className="w-24">{t('occupancy.adults', 'Adults')}:</span>
+                                    <span className="w-24">
+                                      {t("occupancy.adults", "Adults")}:
+                                    </span>
                                     <button
                                       onClick={() => {
                                         setSelectedArrangement(
@@ -1367,7 +1432,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                 )}
                                 {children > 0 && (
                                   <div className="flex items-center gap-2">
-                                    <span className="w-24">{t('occupancy.children', 'Children')}:</span>
+                                    <span className="w-24">
+                                      {t("occupancy.children", "Children")}:
+                                    </span>
                                     <button
                                       onClick={() => {
                                         setSelectedArrangement(
@@ -1470,12 +1537,26 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                               <div className="mt-2 text-sm min-h-6 text-red-600">
                                 {currentAssignedAdults < adults && (
                                   <p>
-                                    {t('roomPicker.warning.adultsUnassigned', { count: adults - currentAssignedAdults, defaultValue: `${adults - currentAssignedAdults} adult(s) unassigned!` })}
+                                    {t("roomPicker.warning.adultsUnassigned", {
+                                      count: adults - currentAssignedAdults,
+                                      defaultValue: `${
+                                        adults - currentAssignedAdults
+                                      } adult(s) unassigned!`,
+                                    })}
                                   </p>
                                 )}
                                 {currentAssignedChildren < children && (
                                   <p>
-                                    {t('roomPicker.warning.childrenUnassigned', { count: children - currentAssignedChildren, defaultValue: `${children - currentAssignedChildren} child(ren) unassigned!` })}
+                                    {t(
+                                      "roomPicker.warning.childrenUnassigned",
+                                      {
+                                        count:
+                                          children - currentAssignedChildren,
+                                        defaultValue: `${
+                                          children - currentAssignedChildren
+                                        } child(ren) unassigned!`,
+                                      },
+                                    )}
                                   </p>
                                 )}
                               </div>
@@ -1484,7 +1565,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                             room.occupant_countAdults === 0 &&
                             room.occupant_countChildren === 0 && (
                               <div className="mt-2 text-sm text-red-600">
-                                {t('roomPicker.warning.noGuestsAssigned', 'No guests assigned to this room!')}
+                                {t(
+                                  "roomPicker.warning.noGuestsAssigned",
+                                  "No guests assigned to this room!",
+                                )}
                               </div>
                             )}
                           {/* Optional Extras Section Start */}
@@ -1595,13 +1679,15 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                       <div className="flex gap-4 items-center">
                         <div className="flex items-center gap-2">
                           <Coffee className="w-5 h-5 text-[#2C4A3C]" />
-                          <span className="text-sm text-gray-600">{t('mealPlan.breakfast', 'Breakfast')}</span>
+                          <span className="text-sm text-gray-600">
+                            {t("mealPlan.breakfast", "Breakfast")}
+                          </span>
                         </div>
                         {night.board_type === "HB" && (
                           <div className="flex items-center gap-2">
                             <UtensilsCrossed className="w-5 h-5 text-[#2C4A3C]" />
                             <span className="text-sm text-gray-600">
-                              {t('mealPlan.halfBoard', 'Half Board')}
+                              {t("mealPlan.halfBoard", "Half Board")}
                             </span>
                           </div>
                         )}
@@ -1610,13 +1696,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                         night.board_type === "B&B" &&
                         selectedBoardOption === "halfboard" && (
                           <p className="mt-2 text-sm text-orange-600">
-                            {t('roomPicker.warning.externalRestaurantsFull', 'External restaurants fully booked, only breakfast possible')}
+                            {t(
+                              "roomPicker.warning.externalRestaurantsFull",
+                              "External restaurants fully booked, only breakfast possible",
+                            )}
                           </p>
                         )}
                       <div className="mt-2 flex items-center gap-2">
                         <User className="w-5 h-5 text-[#2C4A3C]" />
                         <span className="text-sm text-gray-600">
-                          {t('roomPicker.totalGuests', { count: adults + children, defaultValue: `Total ${adults + children} guests` })}
+                          {t("roomPicker.totalGuests", {
+                            count: adults + children,
+                            defaultValue: `Total ${adults + children} guests`,
+                          })}
                         </span>
                       </div>
                     </div>
