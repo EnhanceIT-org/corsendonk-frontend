@@ -328,14 +328,12 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     restaurantChosen: string | null, // NEW: Add restaurant parameter
   ): number {
     if (!nightlyPricing?.CategoryPrices) {
-      
       return 0;
     }
     const cat = nightlyPricing.CategoryPrices.find(
       (cp: any) => cp.CategoryId === room.category_id,
     );
     if (!cat) {
-      
       return 0;
     }
 
@@ -391,7 +389,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     }
 
     if (!occupantPriceEntry) {
-      
       return 0;
     }
 
@@ -407,7 +404,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       (rgp: any) => rgp.MinRateId === rateId,
     );
     if (!rPrice) {
-      
       return 0;
     }
 
@@ -678,8 +674,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
         const [pricingBreakfastRes, pricingHalfBoardRes] =
           await Promise.all(pricingPromises);
-        console.log(pricingBreakfastRes);
-        console.log(pricingHalfBoardRes);
         const validatePricing = (
           pricingResult: any,
           boardType: string,
