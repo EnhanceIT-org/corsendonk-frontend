@@ -25,5 +25,5 @@ if (useProductionMappings) {
 
 export const ageCategoryMapping = ageCategoryMappingExport;
 export const BoardMapping = BoardMappingExport;
-export const optionalProducts = optionalProductsExport;
+
 export const HOTEL_NAME_MAPPING = HOTEL_NAME_MAPPING_EXPORT;
