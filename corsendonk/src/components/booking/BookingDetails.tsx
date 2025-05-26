@@ -9,7 +9,6 @@ import {
   ageCategoryMapping,
   BoardMapping,
   HOTEL_NAME_MAPPING,
-  optionalProducts,
 } from "../../mappings/mappings";
 
 // Removed chargingMethodToDutch function - use t('chargingMethods...') instead
@@ -162,10 +161,30 @@ function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// ---------- OPTIONAL-PRODUCT HELPERS ----------
+type ChargingMode = "Once" | "PerPerson" | "PerPersonNight";
+
+function getProductMeta(
+  hotel: string,
+  key: string,
+  arrangementLength: 3 | 4,
+  products: any,
+) {
+  if (!products?.[hotel]) return null;
+  if (key === "lunch" || key === "huisdier") return products[hotel][key];
+  if (products[hotel].bicycleRent) {
+    const lenKey = arrangementLength === 3 ? "3D" : "2D";
+    return products[hotel].bicycleRent?.[lenKey]?.[key] ?? null;
+  }
+  return null;
+}
+
+
 // UPDATED: Added new prop onShowRoomDetail and removed local selectedRoom state.
 interface BookingDetailsProps {
   bookingData: any; // Ensure this includes arrangementLength
   onShowRoomDetail: (room: any) => void;
+  optionalProducts: { [hotel: string]: any };
 }
 
 function getHotelDisplayName(hotelKey: string): string {
@@ -175,6 +194,7 @@ function getHotelDisplayName(hotelKey: string): string {
 export function BookingDetails({
   bookingData,
   onShowRoomDetail,
+  optionalProducts,
 }: Readonly<BookingDetailsProps>) {
   const { t, i18n } = useTranslation(); // Instantiate hook
   // Calculate City Tax
@@ -276,7 +296,68 @@ export function BookingDetails({
                         })}
                       </span>
                     </div>
-                    {null /* Hide Selected Extras */}
+                    {(() => {
+                    // collect selected extras across ALL rooms of this night
+                    const extras: Record<string, number> = {};
+                    reservation.chosen_rooms.forEach((r: any) => {
+                      Object.entries(r.extras ?? {}).forEach(([k, v]: any) => {
+                        if (v.selected && (v.amount ?? 0) > 0) {
+                          extras[k] = (extras[k] ?? 0) + (v.amount || 1);
+                        }
+                      });
+                    });
+                    const keys = Object.keys(extras);
+                    if (keys.length === 0) return null;
+
+                    return (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">
+                          {t("bookingDetails.selectedExtras", "Selected extras")}
+                        </h4>
+                        <ul className="space-y-1">
+                          {keys.map((k) => {
+                            const meta = getProductMeta(
+                              reservation.hotel,
+                              k,
+                              bookingData.arrangementLength as 3 | 4,
+                              optionalProducts,
+                            );
+                            if (!meta) return null;
+
+                            const { price, chargingMode } = meta as { price: number; chargingMode: ChargingMode };
+
+                            // how many people sleep this night?
+                            const guestsTonight = reservation.chosen_rooms.reduce(
+                              (acc: number, r: any) =>
+                                acc +
+                                (r.occupant_countAdults ?? 0) +
+                                (r.occupant_countChildren ?? 0),
+                              0,
+                            );
+
+                            // ① units selected in UI (extras[k] is 1 for PerPerson / PerPersonNight)
+                            // ② multiply by guests when the product is *not* “Once”
+                            const quantity =
+                              chargingMode === "Once" ? extras[k] : extras[k] * guestsTonight;
+
+                            const lineTotal = price * quantity;
+
+                            return (
+                              <li key={k} className="flex justify-between text-sm">
+                                <span>
+                                  {t(`optionalProducts.${k.toLowerCase()}`, k)}
+                                  {quantity > 1 ? ` ×${quantity}` : ""}
+                                </span>
+                                <span>€{lineTotal.toFixed(2)}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+
+                      </div>
+                    );
+                  })()}
+
                   </div>
                 ))}
               </div>

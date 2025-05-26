@@ -33,7 +33,7 @@
   "room.maxPersons": "Max. {{count}} persons",
   "room.guestsInRoom": "Guests in this room:",
   "room.noGuestsAssigned": "This room has no guests assigned.",
-  "room.optionalExtras": "Optional Extras:",
+  "room.optionalExtras": "Optional Extras",
   "chargingMethods.once": "Once",
   "chargingMethods.perperson": "Per person",
   "chargingMethods.perpersonnight": "Per person per night",
@@ -132,5 +132,9 @@
   "common.close": "Close",
   "pricingSummary.totalPriceLabel": "Total Price",
   "pricingSummary.avgPriceLabel": "Average price per room per night: €{{price}}",
-  "pricingSummary.reserveButton": "Reserve your rooms now"
+  "pricingSummary.reserveButton": "Reserve your rooms now",
+  "optionalProducts.lunch": "Packed lunch",
+  "optionalProducts.huisdier": "Pet stay",
+  "optionalProducts.electricBike": "Electric bike rental",
+  "optionalProducts.cityBike": "City bike rental"
 }

@@ -86,6 +86,7 @@ interface RoomPickerProps {
     boardOption: any,
     travelMode: "walking" | "cycling",
     rawConfig: any,
+    optionalProducts: { [hotel: string]: any },
   ) => void;
   onBack: () => void;
 }
@@ -494,6 +495,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       selectedBoardOption,
       travelMode,
       rawConfig,
+      optionalProducts,
     );
   };
 

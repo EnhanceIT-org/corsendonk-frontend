@@ -33,7 +33,7 @@
   "room.maxPersons": "Max. {{count}} personnes",
   "room.guestsInRoom": "Invités dans cette chambre :",
   "room.noGuestsAssigned": "Aucun invité assigné à cette chambre.",
-  "room.optionalExtras": "Suppléments facultatifs :",
+  "room.optionalExtras": "Suppléments facultatifs",
   "chargingMethods.once": "Une fois",
   "chargingMethods.perperson": "Par personne",
   "chargingMethods.perpersonnight": "Par personne et par nuit",

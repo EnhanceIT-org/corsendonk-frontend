@@ -33,7 +33,7 @@
   "room.maxPersons": "Max. {{count}} personen",
   "room.guestsInRoom": "Gasten in deze kamer:",
   "room.noGuestsAssigned": "Deze kamer heeft geen gasten toegewezen.",
-  "room.optionalExtras": "Optionele Extra's:",
+  "room.optionalExtras": "Optionele Extra's",
   "chargingMethods.once": "X",
   "chargingMethods.perperson": "Per persoon",
   "chargingMethods.perpersonnight": "Per persoon per nacht",

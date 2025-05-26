@@ -465,6 +465,7 @@ interface BookingData {
   };
   arrangementLength: number;
   travelMode: "walking" | "cycling";
+  optionalProducts: { [hotel: string]: any }; // Added to fix type error
 }
 
 interface BookingSummaryProps {
@@ -475,6 +476,7 @@ interface BookingSummaryProps {
   // optionalProducts prop removed
   travelMode: "walking" | "cycling";
   rawConfig: any;
+  optionalProducts: { [hotel: string]: any };
   onBack: () => void;
   onBackToStep2: () => void;
   onBackToStep1: () => void;
@@ -487,6 +489,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   totalPrice,
   boardOption,
   travelMode,
+  optionalProducts,
   onBack,
   onBackToStep1,
   onBackToStep2,
@@ -503,6 +506,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
     total: totalPrice,
     arrangementLength: arrangementLength,
     travelMode: travelMode,
+    optionalProducts,
   });
 
   const [showRoomDetailModal, setShowRoomDetailModal] = useState(false);
@@ -531,6 +535,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                 setModalRoomData(room);
                 setShowRoomDetailModal(true);
               }}
+              optionalProducts={optionalProducts}
             />
           </div>
           <div className="lg:w-[400px]">
