@@ -1627,7 +1627,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                   return (
                                     <div
                                       key={k}
-                                      className="flex items-center gap-3 cursor-pointer"
+                                      className="flex items-center gap-3 cursor-pointer w-full"
                                     >
                                       <input
                                         type="checkbox"
@@ -1641,19 +1641,14 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                         }
                                         className="rounded border-gray-300 text-[#2C4A3C] focus:ring-[#2C4A3C]/50 h-4 w-4"
                                       />
-                                      <div>
-                                        <span className="font-medium text-sm">
-                                          {label}
-                                        </span>
+                                      <div className="flex-1">
+                                        <span className="font-medium text-sm">{label}</span>
                                         <span className="text-xs text-gray-500 ml-2">
-                                          {`€${meta.price.toFixed(2)} ${t(
-                                            `chargingMethods.${charging.toLowerCase()}`,
-                                            { defaultValue: charging } // Fallback if key missing
-                                          )}`}
+                                          €{meta.price.toFixed(2)} {t(`chargingMethods.${charging.toLowerCase()}`, { defaultValue: charging })}
                                         </span>
                                       </div>
                                       {selected && charging === "Once" && (
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 ml-auto">
                                           <button
                                             onClick={() =>
                                               handleExtraAmountChange(
