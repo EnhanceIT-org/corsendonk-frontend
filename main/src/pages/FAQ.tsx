@@ -1,4 +1,9 @@
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from "@/components/ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+} from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
 import {
   Accordion,
@@ -8,20 +13,24 @@ import {
 } from "@/components/ui/accordion";
 import { ChevronRight } from "lucide-react";
 
-const FAQ = () => {
+const Faq = () => {
   const faqs = [
     {
       question: "Hoe weet ik of mijn bedrijf baat heeft bij automatisering?",
-      answer: "Als u merkt dat uw team veel tijd verliest aan repetitieve taken, kunnen wij u helpen processen te automatiseren."
+      answer:
+        "Als u merkt dat uw team veel tijd verliest aan repetitieve taken, kunnen wij u helpen processen te automatiseren.",
     },
     {
-      question: "Zijn de oplossingen van EnhanceIT geschikt voor kleine bedrijven?",
-      answer: "Ja! Onze oplossingen zijn schaalbaar en passen zich aan uw behoeften aan."
+      question:
+        "Zijn de oplossingen van EnhanceIT geschikt voor kleine bedrijven?",
+      answer:
+        "Ja! Onze oplossingen zijn schaalbaar en passen zich aan uw behoeften aan.",
     },
     {
       question: "Hoe lang duurt het om een oplossing te ontwikkelen?",
-      answer: "Dit hangt af van de complexiteit van het project, maar we werken snel en efficiënt zonder in te boeten op kwaliteit."
-    }
+      answer:
+        "Dit hangt af van de complexiteit van het project, maar we werken snel en efficiënt zonder in te boeten op kwaliteit.",
+    },
   ];
 
   return (
@@ -31,7 +40,9 @@ const FAQ = () => {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <Link to="/" className="text-gray-600 hover:text-primary">Home</Link>
+                <Link to="/" className="text-gray-600 hover:text-primary">
+                  Home
+                </Link>
               </BreadcrumbItem>
               <ChevronRight className="h-4 w-4 text-gray-400" />
               <BreadcrumbItem>
@@ -47,10 +58,16 @@ const FAQ = () => {
           </div>
 
           <div className="mt-16 max-w-3xl mx-auto">
-            <Accordion type="single" collapsible className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Accordion
+              type="single"
+              collapsible
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+            >
               {faqs.map((faq, index) => (
                 <AccordionItem key={index} value={`item-${index}`}>
-                  <AccordionTrigger className="text-left hover:text-primary transition-colors">{faq.question}</AccordionTrigger>
+                  <AccordionTrigger className="text-left hover:text-primary transition-colors">
+                    {faq.question}
+                  </AccordionTrigger>
                   <AccordionContent>{faq.answer}</AccordionContent>
                 </AccordionItem>
               ))}
@@ -62,4 +79,4 @@ const FAQ = () => {
   );
 };
 
-export default FAQ;
+export default Faq;

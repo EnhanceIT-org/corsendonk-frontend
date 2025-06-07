@@ -8,8 +8,9 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Projects from "./pages/Projects";
-import FAQ from "./pages/FAQ";
+import Faq from "./pages/FAQ";
 import Contact from "./pages/Contact";
+import ProjectDetailCorsendonk from "./pages/projectdetails/ProjectDetailsCorsendonk";
 
 const queryClient = new QueryClient();
 
@@ -25,8 +26,12 @@ const App = () => (
           <Route path="/over-ons" element={<About />} />
           <Route path="/diensten" element={<Services />} />
           <Route path="/projecten" element={<Projects />} />
-          <Route path="/faq" element={<FAQ />} />
+          <Route path="/faq" element={<Faq />} />
           <Route path="/contact" element={<Contact />} />
+          <Route
+            path="/projecten/corsendonk-hotels"
+            element={<ProjectDetailCorsendonk />}
+          />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

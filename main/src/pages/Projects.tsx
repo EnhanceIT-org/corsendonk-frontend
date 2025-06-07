@@ -1,4 +1,9 @@
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from "@/components/ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+} from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 
@@ -10,7 +15,9 @@ const Projects = () => {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <Link to="/" className="text-gray-600 hover:text-primary">Home</Link>
+                <Link to="/" className="text-gray-600 hover:text-primary">
+                  Home
+                </Link>
               </BreadcrumbItem>
               <ChevronRight className="h-4 w-4 text-gray-400" />
               <BreadcrumbItem>
@@ -24,47 +31,111 @@ const Projects = () => {
               Eerdere Projecten
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">
-            Hier presenteren we een selectie van onze projecten waarmee we bedrijven hebben geholpen hun processen te optimaliseren, tijd te besparen en de efficiëntie te verhogen. 
-            
+              Hier presenteren we een selectie van onze projecten waarmee we
+              bedrijven hebben geholpen hun processen te optimaliseren, tijd te
+              besparen en de efficiëntie te verhogen.
             </p>
           </div>
 
           <div className="mt-16 grid gap-8 md:grid-cols-2">
-            {/* Placeholder Project 1 */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                <img src="LI006.png" className="absolute top-0 left-0 h-full w-full rounded-lg object-cover" alt="" />
+            <Link
+              to="/projecten/corsendonk-hotels"
+              className="block hover:shadow-xl transition-shadow"
+            >
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg h-full">
+                <div
+                  className="relative w-full"
+                  style={{ paddingTop: "56.25%" }}
+                >
+                  <img
+                    src="bookingEngine.png"
+                    className="absolute top-0 left-0 h-full w-full rounded-lg object-cover"
+                    alt=""
+                  />
+                </div>
+                <h3 className="pt-4 text-3xl font-semibold mb-4">
+                  Corsendonk Hotels
+                </h3>
+                <p className="text-gray-600">
+                  Corsendonk Hotels worstelde met trage reservaties voor hun
+                  wandelarrangementen en fietsarrangementen door manuele
+                  verwerking tussen hotels. Wij bouwden een boekingstool waarmee
+                  ze in minder dan een minuut een voorstel kunnen opmaken. Het
+                  resultaat: minder werkdruk, snellere service en tevreden
+                  klanten.
+                </p>
               </div>
-              <h3 className="pt-4 text-3xl font-semibold mb-4">Tattletoad</h3>
+            </Link>
+            <Link to="/projecten">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg h-full">
+                <div
+                  className="relative w-full"
+                  style={{ paddingTop: "56.25%" }}
+                >
+                  <img
+                    src="LI006.png"
+                    className="absolute top-0 left-0 h-full w-full rounded-lg object-cover"
+                    alt=""
+                  />
+                </div>
+                <h3 className="pt-4 text-3xl font-semibold mb-4">Tattletoad</h3>
+                <p className="text-gray-600">
+                  Een project waarbij we een spel ontwikkelden om kinderen op
+                  een speelse manier te leren lezen. Tegelijkertijd maakten we
+                  het werk van leerkrachten eenvoudiger door leestesten en
+                  verhalen volledig te automatiseren. Daarnaast zorgden we voor
+                  een helder overzicht van de prestaties van de leerlingen,
+                  zodat leerkrachten deze makkelijk konden opvolgen.
+                </p>
+              </div>
+            </Link>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+              <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+                <img
+                  src="dashboard2.png"
+                  className="absolute top-0 left-0 h-full w-full rounded-lg object-cover"
+                  alt=""
+                />
+              </div>
+              <h3 className="pt-4 text-3xl font-semibold mb-4">
+                Data dashboards
+              </h3>
               <p className="text-gray-600">
-                  Een project waarbij we een spel ontwikkelden om kinderen op een speelse manier te leren lezen. 
-                  Tegelijkertijd maakten we het werk van leerkrachten eenvoudiger door leestesten en verhalen volledig te automatiseren. 
-                  Daarnaast zorgden we voor een helder overzicht van de prestaties van de leerlingen, zodat leerkrachten deze makkelijk konden opvolgen.
+                We ontwikkelden een op maat gemaakt dashboard specifiek voor de
+                hotelindustrie. Dit dashboard biedt een helder overzicht van
+                cruciale statistieken zoals omzet, bezettingsgraad, gemiddelde
+                kamerprijs en meer. Het stelt hotelmanagers in staat om
+                eenvoudig historische data te analyseren en trends te
+                identificeren. Dankzij de gebruiksvriendelijke interface en op
+                maat gemaakte grafieken krijg je in één oogopslag de informatie
+                die nodig is om strategische beslissingen te nemen en de
+                prestaties van jouw hotel te optimaliseren.
               </p>
             </div>
 
-            {/* Placeholder Project 2 */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                <img src="dashboard2.png" className="absolute top-0 left-0 h-full w-full rounded-lg object-cover" alt="" />
+              <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+                <img
+                  src="reportgenerator.png"
+                  className="absolute top-0 left-0 h-full w-full rounded-lg object-cover"
+                  alt=""
+                />
               </div>
-              <h3 className="pt-4 text-3xl font-semibold mb-4">Data dashboards</h3>
+              <h3 className="pt-4 text-3xl font-semibold mb-4">
+                Hotel Client Report Generator
+              </h3>
               <p className="text-gray-600">
-              We ontwikkelden een op maat gemaakt dashboard specifiek voor de hotelindustrie. Dit dashboard biedt een helder overzicht van cruciale statistieken zoals omzet, bezettingsgraad, gemiddelde kamerprijs en meer. Het stelt hotelmanagers in staat om eenvoudig historische data te analyseren en trends te identificeren. Dankzij de gebruiksvriendelijke interface en op maat gemaakte grafieken krijg je in één oogopslag de informatie die nodig is om strategische beslissingen te nemen en de prestaties van jouw hotel te optimaliseren.
+                We ontwikkelden een gebruiksvriendelijke webapp waarmee
+                gebruikers eenvoudig rapporten kunnen genereren voor hotels
+                binnen hun account. De interface toont een lijst met beschikbare
+                hotels, waarbij de gebruiker kan selecteren voor welke hotels
+                hij rapporten wil genereren. Met één klik op 'Genereer rapport'
+                verwerkt de backend de gegevens en creëert een gedetailleerd
+                PDF-rapport, klaar om naar de klant gestuurd te worden!. Uren
+                werk om klantenrapporten samen te stellen werden via onze
+                oplossing bespaard.
               </p>
             </div>
-
-            {/* Placeholder Project 3 */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                <img src="reportgenerator.png" className="absolute top-0 left-0 h-full w-full rounded-lg object-cover" alt="" />
-              </div>
-              <h3 className="pt-4 text-3xl font-semibold mb-4">Hotel Client Report Generator</h3>
-              <p className="text-gray-600">
-              We ontwikkelden een gebruiksvriendelijke webapp waarmee gebruikers eenvoudig rapporten kunnen genereren voor hotels binnen hun account. De interface toont een lijst met beschikbare hotels, waarbij de gebruiker kan selecteren voor welke hotels hij rapporten wil genereren. Met één klik op 'Genereer rapport' verwerkt de backend de gegevens en creëert een gedetailleerd PDF-rapport, klaar om naar de klant gestuurd te worden!. Uren werk om klantenrapporten samen te stellen werden via onze oplossing bespaard.
-              </p>
-            </div>
-
           </div>
         </div>
       </div>
