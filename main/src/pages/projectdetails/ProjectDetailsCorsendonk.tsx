@@ -59,9 +59,7 @@ const ProjectDetailCorsendonk = () => (
         vroeger een frustrerend en omslachtig proces was, is nu supersnel en
         foutloos. We zijn enorm tevreden over de samenwerking met EnhanceIT.”
         <br />
-        <span className="not-italic font-medium">
-          — Eline Van Ginneken, Office Manager, Corsendonk Hotels
-        </span>
+        <span className="not-italic font-medium">— Corsendonk Hotels</span>
       </blockquote>
 
       <div className="mt-8">
