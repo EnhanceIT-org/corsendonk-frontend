@@ -13,7 +13,7 @@ import {
 
 // Removed chargingMethodToDutch function - use t('chargingMethods...') instead
 
-function getPriceForSingleRoom(
+export function getPriceForSingleRoom(
   nightlyPricing: any,
   hotel: string,
   boardType: string,
@@ -164,7 +164,7 @@ function capitalizeFirstLetter(str: string) {
 // ---------- OPTIONAL-PRODUCT HELPERS ----------
 type ChargingMode = "Once" | "PerPerson" | "PerPersonNight";
 
-function getProductMeta(
+export function getProductMeta(
   hotel: string,
   key: string,
   arrangementLength: 3 | 4,

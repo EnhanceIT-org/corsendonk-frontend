@@ -278,6 +278,7 @@ function allowedProductKeys(travelMode: "walking" | "cycling") {
     : ["lunch", "huisdier", "ElectricBike", "CityBike"];
 }
 
+const GLOBAL_OPTIONAL_PRODUCT_KEYS = ["ElectricBike", "CityBike", "huisdier"] as const;
 
 /**
  * Resolve a flat key (eg "lunch", "ElectricBike") to the leaf node that
@@ -1032,55 +1033,82 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     (nightIndex: number, roomIndex: number, extraKey: string) => {
       setSelectedArrangement((currentArrangement) => {
         if (!currentArrangement) return null;
-        const updatedArrangement = JSON.parse(
-          JSON.stringify(currentArrangement),
-        );
+        const updated = JSON.parse(JSON.stringify(currentArrangement));
 
-        const room =
-          updatedArrangement.night_details[nightIndex].chosen_rooms[roomIndex];
-        if (room && typeof room.extras === "object" && room.extras !== null) {
-          if (!room.extras[extraKey]?.selected) {
-            room.extras[extraKey] = { selected: true, amount: 1 };
-          } else {
-            room.extras[extraKey].selected = false;
-            room.extras[extraKey].amount = 0;
-          }
+        // Determine new state for this toggle
+        const currentRoom =
+          updated.night_details[nightIndex].chosen_rooms[roomIndex];
+        if (!currentRoom.extras?.[extraKey]) return updated;
+        const willBeSelected = !currentRoom.extras[extraKey].selected;
+
+        // If it's one of the 3 global extras, apply to every room
+        const isGlobal = GLOBAL_OPTIONAL_PRODUCT_KEYS.includes(extraKey as any);
+        if (isGlobal) {
+          updated.night_details.forEach((night) => {
+            night.chosen_rooms.forEach((r) => {
+              if (r.extras?.[extraKey]) {
+                r.extras[extraKey].selected = willBeSelected;
+                r.extras[extraKey].amount = willBeSelected ? 1 : 0;
+              }
+            });
+          });
         } else {
-          // console.warn(
-          //   `[handleToggleExtra] Could not find night or extras object at index ${roomIndex}`,
-          // );
+          // Only toggle this single room (e.g. lunch)
+          currentRoom.extras[extraKey].selected = willBeSelected;
+          currentRoom.extras[extraKey].amount = willBeSelected ? 1 : 0;
         }
 
-        return updatedArrangement;
+        return updated;
       });
     },
     [],
   );
 
+
   const handleExtraAmountChange = useCallback(
-    (nightIdx: number, roomIndex: number, extraKey: string, delta: number) => {
-      setSelectedArrangement((currentArrangement) => {
-        if (!currentArrangement) return null;
+    (nightIdx: number, roomIdx: number, extraKey: string, delta: number) => {
+      setSelectedArrangement(prev => {
+        if (!prev) return null;
+        const updated = JSON.parse(JSON.stringify(prev));        // deep clone
 
-        const updatedArrangement = JSON.parse(
-          JSON.stringify(currentArrangement),
-        );
+        const isGlobal = GLOBAL_OPTIONAL_PRODUCT_KEYS.includes(extraKey as any);
 
-        const room =
-          updatedArrangement.night_details[nightIdx].chosen_rooms[roomIndex];
-        if (room?.extras?.[extraKey]?.selected) {
-          const currentAmount = room.extras[extraKey].amount ?? 1;
-          room.extras[extraKey].amount = Math.max(1, currentAmount + delta);
+        // helper → guest cap for one hotel-night
+        const guestsOfNight = (n: typeof updated.night_details[number]) =>
+          sumNightAdults(n) + sumNightChildren(n);
+
+        if (isGlobal) {
+          /* ---------- GLOBAL BEHAVIOUR ---------- */
+          const triggerRoom =
+            updated.night_details[nightIdx].chosen_rooms[roomIdx];
+          const current = triggerRoom.extras[extraKey].amount ?? 1;
+          const proposed = Math.max(1, current + delta);          // never < 1
+
+          updated.night_details.forEach(night => {
+            const capped = Math.min(proposed, guestsOfNight(night)); // guest-limit
+            night.chosen_rooms.forEach(r => {
+              if (r.extras?.[extraKey]?.selected) {
+                r.extras[extraKey].amount = capped;
+              }
+            });
+          });
         } else {
-          // console.warn(
-          //   `[handleExtraAmountChange] Could not find selected extra at index ${roomIndex}`,
-          // );
+          /* ---------- SINGLE-ROOM BEHAVIOUR (unchanged, but guest capped) ---------- */
+          const night   = updated.night_details[nightIdx];
+          const room    = night.chosen_rooms[roomIdx];
+          if (room?.extras?.[extraKey]?.selected) {
+            const current = room.extras[extraKey].amount ?? 1;
+            const capped  = Math.min(
+              Math.max(1, current + delta),
+              guestsOfNight(night)                                 // cap here too
+            );
+            room.extras[extraKey].amount = capped;
+          }
         }
-
-        return updatedArrangement;
+        return updated;
       });
     },
-    [],
+    []
   );
 
   if (loading)
@@ -1624,20 +1652,20 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                   const label = t(`optionalProducts.${k.toLowerCase()}`, k);
                                   const selected = room.extras?.[k]?.selected ?? false;
                                   const amount = room.extras?.[k]?.amount ?? 0; // Assuming 'room' is equivalent to 'night.chosen_rooms[index]' contextually
+                                  const hotelGuestCap = sumNightAdults(night) + sumNightChildren(night);
+                                  const disablePlus   = amount >= hotelGuestCap;
                                   return (
-                                    <div
+                                    <label
                                       key={k}
+                                      htmlFor={`extra-${nightIdx}-${index}-${k}`}
                                       className="flex items-center gap-3 cursor-pointer w-full"
                                     >
                                       <input
                                         type="checkbox"
+                                        id={`extra-${nightIdx}-${index}-${k}`}
                                         checked={selected}
                                         onChange={() =>
-                                          handleToggleExtra(
-                                            nightIdx,
-                                            index, // Assuming 'index' is available in this scope
-                                            k,
-                                          )
+                                          handleToggleExtra(nightIdx, index, k)
                                         }
                                         className="rounded border-gray-300 text-[#2C4A3C] focus:ring-[#2C4A3C]/50 h-4 w-4"
                                       />
@@ -1658,10 +1686,10 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                                 -1,
                                               )
                                             }
-                                            className="p-1 border rounded text-gray-600 hover:bg-gray-100"
+                                            className="p-0.3 border rounded text-gray-600 hover:bg-gray-100 flex items-center justify-center"
                                             disabled={amount <= 1}
                                           >
-                                            -
+                                            <Minus className="w-3 h-3" />
                                           </button>
                                           <span className="text-sm">
                                             {amount}
@@ -1675,13 +1703,14 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                                 1,
                                               )
                                             }
-                                            className="p-1 border rounded text-gray-600 hover:bg-gray-100"
+                                            className="p-0.3 border rounded text-gray-600 hover:bg-gray-100 flex items-center justify-center"
+                                            disabled={disablePlus}
                                           >
-                                            +
+                                            <Plus className="w-3 h-3" />
                                           </button>
                                         </div>
                                       )}
-                                    </div>
+                                    </label>
                                   );
                                 })}
                               {allowedProductKeys(travelMode).filter((k) =>

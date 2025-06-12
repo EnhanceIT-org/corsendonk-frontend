@@ -149,7 +149,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 </div>
               </div>
                <div className="flex sm:flex-row flex-col sm:items-center items-start justify-between max-w-[300px]">
-                <span className="sm:mb-0 mb-1">Kinderen</span>
+                <span className="sm:mb-0 mb-1">{t('occupancy.children', 'Children')}</span>
                 <div className="flex items-center">
                   <button
                     onClick={() => handleDecrement("children")}

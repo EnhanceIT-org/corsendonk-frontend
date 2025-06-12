@@ -21,7 +21,8 @@ declare global {
 }
 
 export function PersonalInformationForm({ bookingData, travelMode }) {
-  const { t } = useTranslation(); // Instantiate hook
+  const { t, i18n } = useTranslation(); // Instantiate hook
+  
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -33,7 +34,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     expiry: "",
     notes: "",
   });
-  const [contactForBikeRental, setContactForBikeRental] = useState(false);
+  
 
   const [errors, setErrors] = useState({
     email: "",
@@ -67,8 +68,8 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
   useEffect(() => {
     const script = document.createElement("script");
     script.src =
-      "https://pay.datatrans.com/upp/payment/js/secure-fields-2.0.0.js";
-    script.async = true;
+      "https://pay.datatrans.com/upp/payment/js/secure-fields-2.0.0.js"; // use for demo: https://pay.sandbox.datatrans.com/upp/payment/js/secure-fields-2.0.0.js
+    script.async = true;                                                 // use for prod: https://pay.datatrans.com/upp/payment/js/secure-fields-2.0.0.js
 
     script.onload = () => {
       setIsReady(true);
@@ -109,7 +110,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         secureFieldsRef.current = new SecureFields();
 
         secureFieldsRef.current.initTokenize(
-          "3000013748",
+          "3000013748", //3000013748 prod or 1100016827 demo
           {
             cardNumber: cardNumberPlaceholderRef.current.id.toString(),
             cvv: cvvPlaceholderRef.current.id.toString(),
@@ -206,12 +207,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
     clearError(name);
   };
 
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    if (name === "contactForBikeRental") {
-      setContactForBikeRental(checked);
-    }
-  };
+
 
   const handlePaymentMethodChange = (method) => {
     setFormData((prev) => ({
@@ -336,13 +332,8 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         "0",
       )}`;
 
-      // Append bike rental note if checkbox is checked, geen vertaling nodig hier
-      let finalNotes = formDataRef.current.notes;
-      if (contactForBikeRental) {
-        finalNotes = finalNotes
-          ? `${finalNotes} | Contacteer ivm fietsverhuur`
-          : "Contacteer ivm fietsverhuur";
-      }
+      
+      const finalNotes = formDataRef.current.notes;
 
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/reservations/book/`,
@@ -356,10 +347,11 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
             travelMode,
             personalInformation: {
               ...formDataRef.current,
-              notes: finalNotes, // Use the potentially modified notes
+              notes: finalNotes,
+              locale: i18n.language,
             },
             paymentInfo: {
-              method: formDataRef.current.paymentMethod, // Use ref here too for consistency
+              method: formDataRef.current.paymentMethod,
               transactionId: paymentTransactionId,
               expiry: formattedExpiry,
               holderName: formData.creditCardName,
@@ -537,7 +529,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
         <p className="mb-4">
           {t(
             "personalInfoForm.success.confirmationNote",
-            "Please note: you will receive a separate confirmation email for each hotel. This allows you to easily check which hotel you are staying at each night.",
+            "Please check your email for your reservation details.",
           )}
         </p>
 
@@ -896,33 +888,7 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
           />
         </div>
 
-        {/* Fietsverhuur Section*/}
-        {travelMode === "cycling" && (
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t("personalInfoForm.bikeRentalLabel", "Bike Rental?")}
-            </label>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="contactForBikeRental"
-                name="contactForBikeRental"
-                checked={contactForBikeRental}
-                onChange={handleCheckboxChange}
-                className="h-4 w-4 text-[#2C4A3C] focus:ring-[#2C4A3C] border-gray-300 rounded"
-              />
-              <label
-                htmlFor="contactForBikeRental"
-                className="ml-2 block text-sm text-gray-900"
-              >
-                {t(
-                  "personalInfoForm.bikeRentalCheckbox",
-                  "Contact me regarding bike rental",
-                )}
-              </label>
-            </div>
-          </div>
-        )}
+        
         <div className="mt-4 text-sm text-gray-900">
           {t(
             "personalInfoForm.acceptTermsLabelBeforeLink",

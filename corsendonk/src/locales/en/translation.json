@@ -120,7 +120,7 @@
   "personalInfoForm.error.paymentSystemNotInitialized": "Payment system is not initialized. Please refresh the page and try again.",
   "personalInfoForm.success.title": "Reservation successful!",
   "personalInfoForm.success.thankYou": "Thank you for your reservation!",
-  "personalInfoForm.success.confirmationNote": "Please note: you will receive a separate confirmation email for each hotel. This allows you to easily check which hotel you are staying at each night.",
+  "personalInfoForm.success.confirmationNote": "Please check your email for your reservation details.",
   "personalInfoForm.success.backToHomeButton": "Back to Corsendonk homepage",
   "roomDetailModal.unknownRoom": "Unknown Room",
   "roomDetailModal.descriptionUnavailable": "Description not available.",

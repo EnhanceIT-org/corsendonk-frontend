@@ -120,7 +120,7 @@
   "personalInfoForm.error.paymentSystemNotInitialized": "Betaalsysteem is niet geïnitialiseerd. Vernieuw de pagina en probeer opnieuw.",
   "personalInfoForm.success.title": "Reservering succesvol!",
   "personalInfoForm.success.thankYou": "Bedankt voor uw reservering!",
-  "personalInfoForm.success.confirmationNote": "Let op: u ontvangt per hotel een afzonderlijke bevestigingsmail. Zo kunt u eenvoudig nagaan in welk hotel u per overnachting verblijft.",
+  "personalInfoForm.success.confirmationNote": "Controleer alstublieft uw e-mail voor de details van uw reservering.",
   "personalInfoForm.success.backToHomeButton": "Terug naar Corsendonk homepagina",
   "roomDetailModal.unknownRoom": "Onbekende Kamer",
   "roomDetailModal.descriptionUnavailable": "Beschrijving niet beschikbaar.",
