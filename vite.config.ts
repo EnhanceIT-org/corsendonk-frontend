@@ -7,6 +7,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
+    base: '/corsendonk-frontend/',
     port: 8080,
   },
   plugins: [
