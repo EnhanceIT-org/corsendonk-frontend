@@ -1,0 +1,5 @@
+# Proxy API requests to your backend
+/api/* http://134.98.133.75/:splat 200
+
+# Your specific endpoint would become:
+# https://corsendonkfrontend.netlify.app/api/reservations/initial-setup/?startDate=2025-08-07&length=3
