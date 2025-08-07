@@ -8,15 +8,15 @@ export const ageCategoryMapping: Record<
 > = {
   hotel1: {
     adult: "e6c1575b-5c75-41b9-8667-adf200f7bc48", // Adults (No age limit)
-    child: "c8d2e446-f518-45ac-bc83-aee600df5e0e", // Baby (0-2 years)
+    child: "d99ca5b0-ff54-4b8f-9105-af3b00ae6cee", // Child 6-12 years
   },
   hotel2: {
     adult: "30a5e937-e0ec-4888-946a-ae4a00d4dad6", // Adults (No age limit)
-    child: "30a5e937-e0ec-4888-946a-ae4a00d4dad6", // Child 6-12 years not found in response so same as adult for now
+    child: "25ce1bd7-d5e7-4e5f-a617-af5500bf631c", // Child 6-12 years
   },
   hotel3: {
     adult: "e3bc5a6c-366e-4fd8-9273-ade400cf5657", // Adults (No age limit)
-    child: "e3bc5a6c-366e-4fd8-9273-ade400cf5657", // Child 6-12 years not found in response so same as adult for now
+    child: "1707052e-2fbc-443d-a9a7-af6600bdc199", // Child 6-12 years
   },
 };
 
@@ -123,39 +123,9 @@ export const HOTEL_NAME_MAPPING: { [key: string]: string } = {
   hotel3: "Turnova",
 };
 
-export const optionalProducts = [
-  {
-    key: "lunch",
-    name: "Lunch pakket",
-    price: {
-      hotel1: 17.5,
-      hotel2: 20,
-      hotel3: 20,
-    },
-    chargingMethod: "PerPerson",
-    availableFor: ["walking", "cycling"],
-  },
-  {
-    //TODO fill in the correct mapping
-    key: "bicycleRent",
-    name: "Fiets Verhuur",
-    price: {
-      hotel1: 20,
-      hotel2: 25,
-      hotel3: 30,
-    },
-    chargingMethod: "PerPersonNight",
-    availableFor: ["cycling"],
-  },
-  {
-    key: "huisdier",
-    name: "Huisdier op kamer",
-    price: {
-      hotel1: 20,
-      hotel2: 25,
-      hotel3: 25,
-    },
-    chargingMethod: "Once",
-    availableFor: ["walking", "cycling"],
-  },
-];
+
+export const lunchAdjustmentForChild: Record<string, number> = {
+  hotel1: 7.50,
+  hotel2: 8.50,
+  hotel3: 8.50,
+};

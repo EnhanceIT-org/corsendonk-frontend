@@ -189,24 +189,24 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                   </button>
                 </div>
               </div>
-              {/* <div className="flex sm:flex-row flex-col sm:items-center items-start justify-between max-w-[300px]">
-                <span className="sm:mb-0 mb-1">Kinderen</span>
+                <div className="flex sm:flex-row flex-col sm:items-center items-start justify-between max-w-[300px]">
+                <span className="sm:mb-0 mb-1">{t("occupancy.children", "Children")}</span>
                 <div className="flex items-center">
                   <button
-                    onClick={() => handleDecrement("children")}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  onClick={() => handleDecrement("children")}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                   >
-                    <Minus className="w-4 h-4" />
+                  <Minus className="w-4 h-4" />
                   </button>
                   <span className="w-16 text-center">{formData.children}</span>
                   <button
-                    onClick={() => handleIncrement("children")}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  onClick={() => handleIncrement("children")}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                   >
-                    <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   </button>
                 </div>
-              </div> */}
+                </div>
             </div>
           </div>
           <div>

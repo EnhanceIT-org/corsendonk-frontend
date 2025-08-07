@@ -426,6 +426,7 @@ export interface finalReservationData {
     };
   };
   rawConfig: any;
+  optionalProducts: { [hotel: string]: any };
 }
 
 const Index = () => {
@@ -447,6 +448,7 @@ const Index = () => {
     boardOption: any,
     travelMode: "walking" | "cycling",
     rawConfig: any,
+    optionalProducts: { [hotel: string]: any },
   ) => {
     setFinalReservationData({
       selectedArrangement,
@@ -454,6 +456,7 @@ const Index = () => {
       boardOption,
       travelMode,
       rawConfig,
+      optionalProducts,
     });
     setTotalPrice(totalPrice);
     setCurrentStep(3);
@@ -497,6 +500,7 @@ const Index = () => {
             boardOption={finalReservationData.boardOption}
             travelMode={finalReservationData.travelMode}
             rawConfig={finalReservationData.rawConfig}
+            optionalProducts={finalReservationData.optionalProducts}
             onBack={() => setCurrentStep(2)}
             onBookingSuccess={handleBookingSuccess}
             onBackToStep2={() => setCurrentStep(2)}
