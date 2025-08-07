@@ -34,9 +34,13 @@
   "room.guestsInRoom": "Guests in this room:",
   "room.noGuestsAssigned": "This room has no guests assigned.",
   "room.optionalExtras": "Optional Extras",
-  "chargingMethods.once": "Once",
+  "chargingMethods.once": "Per item",
   "chargingMethods.perperson": "Per person",
   "chargingMethods.perpersonnight": "Per person per night",
+  "chargingMethods.pertimeunit": "Per room",
+  "optionalProducts": {
+  "perDay": "Per day"
+},
   "languageSwitcher.title": "Select Language",
   "languageSwitcher.nl": "Nederlands",
   "languageSwitcher.en": "English",
@@ -68,6 +72,7 @@
   "breadcrumb.completeBooking": "Complete your booking",
   "bookingDetails.title": "Details of your booking",
   "bookingDetails.occupancy": "{{adults}} Adults, {{children}} Children",
+  "bookingDetails.selectedExtras": "Selected extras",
   "common.total": "Total",
   "bookingDetails.cityTaxNote": "Excluding city tax of €{{amount}}, payable at the hotel (€{{rate}} per person per night).",
   "bookingDetails.warning.externalRestaurantsFull": "External restaurants fully booked, only breakfast possible",
@@ -132,9 +137,6 @@
   "common.close": "Close",
   "pricingSummary.totalPriceLabel": "Total Price",
   "pricingSummary.avgPriceLabel": "Average price per room per night: €{{price}}",
-  "pricingSummary.reserveButton": "Reserve your rooms now",
-  "optionalProducts.lunch": "Packed lunch",
-  "optionalProducts.huisdier": "Pet stay",
-  "optionalProducts.electricBike": "Electric bike rental",
-  "optionalProducts.cityBike": "City bike rental"
+  "pricingSummary.reserveButton": "Reserve your rooms now"
+  
 }

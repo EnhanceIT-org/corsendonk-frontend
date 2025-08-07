@@ -123,39 +123,9 @@ export const HOTEL_NAME_MAPPING: { [key: string]: string } = {
   hotel3: "Turnova",
 };
 
-export const optionalProducts = [
-  {
-    key: "lunch",
-    name: "Lunch pakket",
-    price: {
-      hotel1: 17.5,
-      hotel2: 20,
-      hotel3: 20,
-    },
-    chargingMethod: "PerPerson",
-    availableFor: ["walking", "cycling"],
-  },
-  {
-    //TODO fill in the correct mapping
-    key: "bicycleRent",
-    name: "Fiets Verhuur",
-    price: {
-      hotel1: 20,
-      hotel2: 25,
-      hotel3: 30,
-    },
-    chargingMethod: "PerPersonNight",
-    availableFor: ["cycling"],
-  },
-  {
-    key: "huisdier",
-    name: "Huisdier op kamer",
-    price: {
-      hotel1: 20,
-      hotel2: 25,
-      hotel3: 25,
-    },
-    chargingMethod: "Once",
-    availableFor: ["walking", "cycling"],
-  },
-];
+
+export const lunchAdjustmentForChild: Record<string, number> = {
+  hotel1: 7.50,
+  hotel2: 8.50,
+  hotel3: 8.50,
+};

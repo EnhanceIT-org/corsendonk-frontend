@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useTranslation } from 'react-i18next'; // Import hook
+import { useTranslation } from "react-i18next"; // Import hook
 import {
   Minus,
   Plus,
@@ -7,6 +7,7 @@ import {
   Coffee,
   UtensilsCrossed,
   Footprints,
+  CalendarDays,
 } from "lucide-react";
 import { format } from "date-fns";
 import { DateRangePicker } from "@/components/DateRangePicker";
@@ -44,7 +45,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
     arrangementLength:
       bookingData.arrangementLength === 3 || bookingData.arrangementLength === 4
         ? bookingData.arrangementLength
-        : 3,
+        : 4,
     startDate: bookingData.startDate || format(new Date(), "yyyy-MM-dd"),
     adults: bookingData.adults >= 0 ? bookingData.adults : 2,
     children: bookingData.children >= 0 ? bookingData.children : 0,
@@ -64,10 +65,13 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
   const handleIncrement = (field: "adults" | "children" | "rooms") => {
     setFormData((prev) => {
       // total guests to 10 (mews api call doesnt allow more)
-      if ((field === "adults" || field === "children") && prev.adults + prev.children >= 10) {
-        return prev; 
+      if (
+        (field === "adults" || field === "children") &&
+        prev.adults + prev.children >= 10
+      ) {
+        return prev;
       }
-      
+
       return {
         ...prev,
         [field]: prev[field] + 1,
@@ -89,30 +93,63 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
   return (
     <main className="min-h-screen w-full bg-gray-50 pb-32" data-prototypeid="2">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <Breadcrumb currentStep={1} title={t('breadcrumb.planStay', 'Plan your stay')} />
+        <Breadcrumb
+          currentStep={1}
+          title={t("breadcrumb.planStay", "Plan your stay")}
+        />
 
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-8">
           <div>
             <h2 className="text-lg font-semibold mb-3">
-              {t('arrangementForm.selectDurationTitle', 'Select the duration of your stay')}
+              {t(
+                "arrangementForm.selectDurationTitle",
+                "Select the duration of your stay",
+              )}
             </h2>
-            <select
-              className="w-full max-w-[200px] border border-gray-200 rounded-lg px-4 py-2.5 appearance-none bg-white hover:border-[#2C4A3C] transition-colors focus:outline-none focus:border-[#2C4A3C] cursor-pointer"
-              value={formData.arrangementLength}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  arrangementLength: parseInt(e.target.value) === 3 ? 3 : 4,
-                 }))
-               }
-             >
-              <option value={3}>{t('arrangementForm.duration.3days', '3 Days')}</option>
-              <option value={4}>{t('arrangementForm.duration.4days', '4 Days')}</option>
-            </select>
+            <div className="flex gap-2">
+              {" "}
+              {/* Added a div to group the buttons */}
+              <button
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
+                  formData.arrangementLength === 3
+                    ? "border-[#2C4A3C] bg-[#2C4A3C] text-white"
+                    : "border-gray-200 hover:border-[#2C4A3C]"
+                }`}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    arrangementLength: 3,
+                  }))
+                }
+              >
+                {/* You can add an icon here if desired, similar to Footprints */}
+                <CalendarDays className="w-5 h-5" />
+                <span>{t("arrangementForm.duration.3days", "3 Days")}</span>
+              </button>
+              <button
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
+                  formData.arrangementLength === 4
+                    ? "border-[#2C4A3C] bg-[#2C4A3C] text-white"
+                    : "border-gray-200 hover:border-[#2C4A3C]"
+                }`}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    arrangementLength: 4,
+                  }))
+                }
+              >
+                <CalendarDays className="w-5 h-5" />
+                <span>{t("arrangementForm.duration.4days", "4 Days")}</span>
+              </button>
+            </div>
           </div>
           <div>
             <h2 className="text-lg font-semibold mb-3">
-              {t('arrangementForm.selectStartDateTitle', 'Choose a start date for your stay')}
+              {t(
+                "arrangementForm.selectStartDateTitle",
+                "Choose a start date for your stay",
+              )}
             </h2>
             <DateRangePicker
               arrangementLength={formData.arrangementLength}
@@ -128,10 +165,14 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             />
           </div>
           <div>
-            <h2 className="text-lg font-semibold mb-4">{t('arrangementForm.guestCountTitle', 'Number of Guests')}</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              {t("arrangementForm.guestCountTitle", "Number of Guests")}
+            </h2>
             <div className="space-y-4 align-start">
               <div className="flex sm:flex-row flex-col sm:items-center justify-between items-start max-w-[300px]">
-                <span className="sm:mb-0 mb-1">{t('occupancy.adults', 'Adults')}</span>
+                <span className="sm:mb-0 mb-1">
+                  {t("occupancy.adults", "Adults")}
+                </span>
                 <div className="flex items-center">
                   <button
                     onClick={() => handleDecrement("adults")}
@@ -148,30 +189,32 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                   </button>
                 </div>
               </div>
-               <div className="flex sm:flex-row flex-col sm:items-center items-start justify-between max-w-[300px]">
-                <span className="sm:mb-0 mb-1">{t('occupancy.children', 'Children')}</span>
+                <div className="flex sm:flex-row flex-col sm:items-center items-start justify-between max-w-[300px]">
+                <span className="sm:mb-0 mb-1">{t("occupancy.children", "Children")}</span>
                 <div className="flex items-center">
                   <button
-                    onClick={() => handleDecrement("children")}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  onClick={() => handleDecrement("children")}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                   >
-                    <Minus className="w-4 h-4" />
+                  <Minus className="w-4 h-4" />
                   </button>
                   <span className="w-16 text-center">{formData.children}</span>
                   <button
-                    onClick={() => handleIncrement("children")}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  onClick={() => handleIncrement("children")}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                   >
-                    <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
+                </div>
             </div>
           </div>
           <div>
-            <h2 className="text-lg font-semibold mb-4">{t('arrangementForm.roomCountTitle', 'Number of Rooms')}</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              {t("arrangementForm.roomCountTitle", "Number of Rooms")}
+            </h2>
             <div className="flex items-center justify-between max-w-[300px]">
-              <span>{t('arrangementForm.roomsLabel', 'Rooms')}</span>
+              <span>{t("arrangementForm.roomsLabel", "Rooms")}</span>
               <div className="flex items-center">
                 <button
                   onClick={() => handleDecrement("rooms")}
@@ -199,13 +242,16 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             </div>
             {formData.rooms === formData.adults + formData.children && (
               <span className="text-sm text-gray-500">
-                {t('arrangementForm.maxRoomsReached', 'Maximum number of rooms reached')}
+                {t(
+                  "arrangementForm.maxRoomsReached",
+                  "Maximum number of rooms reached",
+                )}
               </span>
             )}
           </div>
           <div>
             <h2 className="text-lg font-semibold mb-4">
-              {t('arrangementForm.travelPreferenceTitle', 'Travel Preference')}
+              {t("arrangementForm.travelPreferenceTitle", "Travel Preference")}
             </h2>
             <div className="gap-4 flex flex-col sm:flex-row">
               <button
@@ -222,7 +268,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 }
               >
                 <Footprints className="w-5 h-5" />
-                <span>{t('travelMode.walking', 'Walking')}</span>
+                <span>{t("travelMode.walking", "Walking")}</span>
               </button>
               <button
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
@@ -238,12 +284,14 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 }
               >
                 <Bike className="w-5 h-5" />
-                <span>{t('travelMode.cycling', 'Cycling')}</span>
+                <span>{t("travelMode.cycling", "Cycling")}</span>
               </button>
             </div>
           </div>
           <div>
-            <h2 className="text-lg font-semibold mb-4">{t('arrangementForm.mealsTitle', 'Meals')}</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              {t("arrangementForm.mealsTitle", "Meals")}
+            </h2>
             <div className="gap-4 flex flex-col sm:flex-row">
               <button
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
@@ -259,7 +307,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 }
               >
                 <Coffee className="w-5 h-5" />
-                <span>{t('mealPlan.breakfastOnly', 'Breakfast Only')}</span>
+                <span>{t("mealPlan.breakfastOnly", "Breakfast Only")}</span>
               </button>
               <button
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
@@ -275,7 +323,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 }
               >
                 <UtensilsCrossed className="w-5 h-5" />
-                <span>{t('mealPlan.halfBoard', 'Half Board')}</span>
+                <span>{t("mealPlan.halfBoard", "Half Board")}</span>
               </button>
             </div>
           </div>
@@ -285,7 +333,10 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             onClick={handleContinue}
             className="bg-[#2C4A3C] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#2C4A3C]/90 transition-colors"
           >
-            {t('arrangementForm.continueToRoomSelection', 'Continue to room selection')}
+            {t(
+              "arrangementForm.continueToRoomSelection",
+              "Continue to room selection",
+            )}
           </button>
         </div>
       </div>

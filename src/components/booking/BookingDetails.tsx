@@ -9,6 +9,7 @@ import {
   ageCategoryMapping,
   BoardMapping,
   HOTEL_NAME_MAPPING,
+  lunchAdjustmentForChild,
 } from "../../mappings/mappings";
 
 // Removed chargingMethodToDutch function - use t('chargingMethods...') instead
@@ -162,7 +163,7 @@ function capitalizeFirstLetter(str: string) {
 }
 
 // ---------- OPTIONAL-PRODUCT HELPERS ----------
-type ChargingMode = "Once" | "PerPerson" | "PerPersonNight";
+type ChargingMode = "Once" | "PerPerson" | "PerTimeUnit" | "PerPersonNight";
 
 export function getProductMeta(
   hotel: string,
@@ -173,7 +174,8 @@ export function getProductMeta(
   if (!products?.[hotel]) return null;
   if (key === "lunch" || key === "huisdier") return products[hotel][key];
   if (products[hotel].bicycleRent) {
-    const lenKey = arrangementLength === 3 ? "3D" : "2D";
+    // CORRECTED LOGIC
+    const lenKey = arrangementLength === 4 ? "3D" : "2D";
     return products[hotel].bicycleRent?.[lenKey]?.[key] ?? null;
   }
   return null;
@@ -247,119 +249,113 @@ export function BookingDetails({
                   reservation.board_type === "B&B" &&
                   bookingData.mealPlan === "halfboard" && (
                     <p className="mt-1 text-sm text-orange-600">
-                      {t(
-                        "bookingDetails.warning.externalRestaurantsFull",
-                        "External restaurants fully booked, only breakfast possible",
-                      )}
+                      {t("bookingDetails.warning.externalRestaurantsFull")}
                     </p>
                   )}
-                {reservation.chosen_rooms.map((room, roomIndex) => (
-                  <div key={roomIndex} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2">
+                {reservation.chosen_rooms.map((room, roomIndex) => {
+                  // --- START: LOGIC MOVED INSIDE THE ROOM LOOP ---
+                  const selectedExtrasForThisRoom = Object.entries(room.extras ?? {})
+                    .filter(([key, value]: any) => value.selected && (value.amount ?? 0) > 0);
+                  // --- END: LOGIC MOVED INSIDE THE ROOM LOOP ---
+
+                  return (
+                    <div key={roomIndex} className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{room.category_name}</span>
+                          <button
+                            className="text-[#2C4A3C] hover:text-[#2C4A3C]/80"
+                            onClick={() => onShowRoomDetail({ ...room, hotel: reservation.hotel })}
+                          >
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </div>
                         <span className="font-medium">
-                          {room.category_name}
+                          €{getPriceForSingleRoom(
+                            nightlyPricing,
+                            reservation.hotel,
+                            boardKey,
+                            room,
+                            reservation,
+                            bookingData.travelMode,
+                            bookingData.arrangementLength,
+                            reservation.restaurant_chosen,
+                          ).toFixed(2)}
                         </span>
-                        <button
-                          className="text-[#2C4A3C] hover:text-[#2C4A3C]/80"
-                          onClick={() =>
-                            onShowRoomDetail({
-                              ...room,
-                              hotel: reservation.hotel,
-                            })
-                          }
-                        >
-                          <Info className="w-4 h-4" />
-                        </button>
                       </div>
-                      <span className="font-medium">
-                        €
-                        {getPriceForSingleRoom(
-                          nightlyPricing,
-                          reservation.hotel,
-                          boardKey,
-                          room,
-                          reservation,
-                          bookingData.travelMode,
-                          bookingData.arrangementLength,
-                          reservation.restaurant_chosen, // NEW: Pass restaurant_chosen
-                        ).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users className="w-4 h-4" />
-                      <span>
-                        {t("bookingDetails.occupancy", {
-                          adults: room.occupant_countAdults,
-                          children: room.occupant_countChildren,
-                          defaultValue: `${room.occupant_countAdults} Adults, ${room.occupant_countChildren} Children`,
-                        })}
-                      </span>
-                    </div>
-                    {(() => {
-                    // collect selected extras across ALL rooms of this night
-                    const extras: Record<string, number> = {};
-                    reservation.chosen_rooms.forEach((r: any) => {
-                      Object.entries(r.extras ?? {}).forEach(([k, v]: any) => {
-                        if (v.selected && (v.amount ?? 0) > 0) {
-                          extras[k] = (extras[k] ?? 0) + (v.amount || 1);
-                        }
-                      });
-                    });
-                    const keys = Object.keys(extras);
-                    if (keys.length === 0) return null;
-
-                    return (
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">
-                          {t("bookingDetails.selectedExtras", "Selected extras")}
-                        </h4>
-                        <ul className="space-y-1">
-                          {keys.map((k) => {
-                            const meta = getProductMeta(
-                              reservation.hotel,
-                              k,
-                              bookingData.arrangementLength as 3 | 4,
-                              optionalProducts,
-                            );
-                            if (!meta) return null;
-
-                            const { price, chargingMode } = meta as { price: number; chargingMode: ChargingMode };
-
-                            // how many people sleep this night?
-                            const guestsTonight = reservation.chosen_rooms.reduce(
-                              (acc: number, r: any) =>
-                                acc +
-                                (r.occupant_countAdults ?? 0) +
-                                (r.occupant_countChildren ?? 0),
-                              0,
-                            );
-
-                            // ① units selected in UI (extras[k] is 1 for PerPerson / PerPersonNight)
-                            // ② multiply by guests when the product is *not* “Once”
-                            const quantity =
-                              chargingMode === "Once" ? extras[k] : extras[k] * guestsTonight;
-
-                            const lineTotal = price * quantity;
-
-                            return (
-                              <li key={k} className="flex justify-between text-sm">
-                                <span>
-                                  {t(`optionalProducts.${k.toLowerCase()}`, k)}
-                                  {quantity > 1 ? ` ×${quantity}` : ""}
-                                </span>
-                                <span>€{lineTotal.toFixed(2)}</span>
-                              </li>
-                            );
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Users className="w-4 h-4" />
+                        <span>
+                          {t("bookingDetails.occupancy", {
+                            adults: room.occupant_countAdults,
+                            children: room.occupant_countChildren,
                           })}
-                        </ul>
-
+                        </span>
                       </div>
-                    );
-                  })()}
 
-                  </div>
-                ))}
+                      {/* Render extras only if there are any for THIS room */}
+                      {selectedExtrasForThisRoom.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-gray-200">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            {t("bookingDetails.selectedExtras", "Selected extras")}
+                          </h4>
+                          <ul className="space-y-1">
+                            {selectedExtrasForThisRoom.map(([key, details]: any) => {
+                              const meta = getProductMeta(
+                                reservation.hotel,
+                                key,
+                                bookingData.arrangementLength as 3 | 4,
+                                optionalProducts,
+                              );
+                              if (!meta) return null;
+
+                              const name = meta.translations[i18n.language] || meta.translations.en || key;
+                              const { price, chargingMode } = meta;
+
+                              let lineTotal = 0;
+                              let displayQuantity = details.amount;
+                              const isBicycle = key === 'ElectricBike' || key === 'CityBike';
+                              const adultsInRoom = room.occupant_countAdults ?? 0;
+                              const childrenInRoom = room.occupant_countChildren ?? 0;
+
+                              // --- START: MODIFIED LOGIC BLOCK ---
+                              if (isBicycle) {
+                                const dailyRate = bookingData.arrangementLength === 4 ? price / 3 : price / 2;
+                                lineTotal = dailyRate * displayQuantity;
+                              } else if (chargingMode === 'PerPerson') {
+                                const guestsInRoom = adultsInRoom + childrenInRoom;
+                                displayQuantity = guestsInRoom; // The quantity to display is the number of guests
+
+                                if (key === 'lunch' && childrenInRoom > 0) {
+                                  const adjustment = lunchAdjustmentForChild[reservation.hotel] ?? 0;
+                                  const childPrice = Math.max(0, price - adjustment);
+                                  lineTotal = (adultsInRoom * price) + (childrenInRoom * childPrice);
+                                } else {
+                                  lineTotal = price * guestsInRoom;
+                                }
+                              } else { // This now correctly handles 'Once' and 'PerTimeUnit'
+                                lineTotal = price * displayQuantity;
+                              }
+                              // --- END: MODIFIED LOGIC BLOCK ---
+
+                              if (lineTotal === 0) return null;
+
+                              return (
+                                <li key={key} className="flex justify-between text-sm">
+                                  <span>
+                                    {name}
+                                    {displayQuantity > 1 ? ` ×${displayQuantity}` : ""}
+                                  </span>
+                                  <span>€{lineTotal.toFixed(2)}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );

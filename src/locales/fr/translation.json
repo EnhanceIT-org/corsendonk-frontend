@@ -34,9 +34,13 @@
   "room.guestsInRoom": "Invités dans cette chambre :",
   "room.noGuestsAssigned": "Aucun invité assigné à cette chambre.",
   "room.optionalExtras": "Suppléments facultatifs",
-  "chargingMethods.once": "Une fois",
+  "chargingMethods.once": "Par pièce",
   "chargingMethods.perperson": "Par personne",
   "chargingMethods.perpersonnight": "Par personne et par nuit",
+  "chargingMethods.pertimeunit": "Par chambre",
+  "optionalProducts": {
+  "perDay": "Par jour"
+},
   "languageSwitcher.title": "Choisir la langue",
   "languageSwitcher.nl": "Nederlands",
   "languageSwitcher.en": "English",
@@ -68,6 +72,7 @@
   "breadcrumb.completeBooking": "Finaliser votre réservation",
   "bookingDetails.title": "Détails de votre réservation",
   "bookingDetails.occupancy": "{{adults}} Adultes, {{children}} Enfants",
+  "bookingDetails.selectedExtras": "Suppléments sélectionnés",
   "common.total": "Total",
   "bookingDetails.cityTaxNote": "Hors taxe de séjour de €{{amount}}, payable à l'hôtel (€{{rate}} par personne et par nuit).",
   "bookingDetails.warning.externalRestaurantsFull": "Restaurants externes complets, seul le petit-déjeuner est possible",

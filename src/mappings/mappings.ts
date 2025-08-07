@@ -8,22 +8,22 @@ const useProductionMappings = mappingEnv === "production";
 
 let ageCategoryMappingExport,
   BoardMappingExport,
-  optionalProductsExport,
-  HOTEL_NAME_MAPPING_EXPORT;
+  HOTEL_NAME_MAPPING_EXPORT,
+  lunchAdjustmentForChildExport;
 
 if (useProductionMappings) {
   ageCategoryMappingExport = prodMappings.ageCategoryMapping;
   BoardMappingExport = prodMappings.BoardMapping;
-  optionalProductsExport = prodMappings.optionalProducts;
   HOTEL_NAME_MAPPING_EXPORT = prodMappings.HOTEL_NAME_MAPPING;
+  lunchAdjustmentForChildExport = prodMappings.lunchAdjustmentForChild; 
 } else {
   ageCategoryMappingExport = devMappings.ageCategoryMapping;
   BoardMappingExport = devMappings.BoardMapping;
-  optionalProductsExport = devMappings.optionalProducts;
   HOTEL_NAME_MAPPING_EXPORT = devMappings.HOTEL_NAME_MAPPING;
+  lunchAdjustmentForChildExport = devMappings.lunchAdjustmentForChild; 
 }
 
 export const ageCategoryMapping = ageCategoryMappingExport;
 export const BoardMapping = BoardMappingExport;
-
 export const HOTEL_NAME_MAPPING = HOTEL_NAME_MAPPING_EXPORT;
+export const lunchAdjustmentForChild = lunchAdjustmentForChildExport;

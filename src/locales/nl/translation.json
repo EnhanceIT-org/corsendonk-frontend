@@ -34,9 +34,13 @@
   "room.guestsInRoom": "Gasten in deze kamer:",
   "room.noGuestsAssigned": "Deze kamer heeft geen gasten toegewezen.",
   "room.optionalExtras": "Optionele Extra's",
-  "chargingMethods.once": "X",
+  "chargingMethods.once": "Per stuk",
   "chargingMethods.perperson": "Per persoon",
   "chargingMethods.perpersonnight": "Per persoon per nacht",
+  "chargingMethods.pertimeunit": "Per kamer",
+  "optionalProducts": {
+  "perDay": "Per dag"
+},
   "languageSwitcher.title": "Selecteer Taal",
   "languageSwitcher.nl": "Nederlands",
   "languageSwitcher.en": "English",
@@ -68,6 +72,7 @@
   "breadcrumb.completeBooking": "Voltooi uw boeking",
   "bookingDetails.title": "Details van uw boeking",
   "bookingDetails.occupancy": "{{adults}} Volwassenen, {{children}} Kinderen",
+  "bookingDetails.selectedExtras": "Geselecteerde extra's",
   "common.total": "Totaal",
   "bookingDetails.cityTaxNote": "Exclusief toeristenbelasting van €{{amount}}, te voldoen in het hotel (€{{rate}} per persoon per nacht).",
   "bookingDetails.warning.externalRestaurantsFull": "Externe restaurants volboekt, enkel ontbijt mogelijk",
