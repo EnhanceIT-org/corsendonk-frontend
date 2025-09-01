@@ -10,6 +10,8 @@ export interface BookingFormData {
   rooms: number;
   adults: number;
   children: number;
+  children6_12: number;
+  children3_5: number;
   travelMode: "walking" | "cycling";
   boardOption: "breakfast" | "halfboard";
 }
@@ -479,6 +481,8 @@ const Index = () => {
               startDate: bookingData?.startDate,
               adults: bookingData?.adults,
               children: bookingData?.children,
+              children6_12: bookingData?.children6_12,
+              children3_5: bookingData?.children3_5,
               rooms: bookingData?.rooms,
               travelMode: bookingData?.travelMode,
               boardOption: bookingData?.boardOption,

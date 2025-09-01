@@ -9,7 +9,8 @@ import {
   ageCategoryMapping,
   BoardMapping,
   HOTEL_NAME_MAPPING,
-  lunchAdjustmentForChild,
+  lunchAdjustmentForChild6_12,
+  lunchAdjustmentForChild3_5,
 } from "../../mappings/mappings";
 
 // Removed chargingMethodToDutch function - use t('chargingMethods...') instead

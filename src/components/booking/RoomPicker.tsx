@@ -24,7 +24,7 @@ import {
   ageCategoryMapping,
   BoardMapping,
   HOTEL_NAME_MAPPING,
-  lunchAdjustmentForChild,
+  lunchAdjustmentForChild6_12,
 } from "../../mappings/mappings";
 
 // Removed chargingMethodToDutch function - use t('chargingMethods...') instead
@@ -40,6 +40,8 @@ interface selectedArrangementInterface {
       category_name: string;
       occupant_countAdults?: number;
       occupant_countChildren?: number;
+      occupant_countChildren6_12?: number;
+      occupant_countChildren3_5?: number;
       extras: {
         [key: string]: {
           selected: boolean;
@@ -78,6 +80,8 @@ interface RoomPickerProps {
     rooms: number;
     adults: number;
     children: number;
+    children6_12: number;
+    children3_5: number;
     travelMode: "walking" | "cycling";
     boardOption: "breakfast" | "halfboard";
   };
@@ -178,11 +182,9 @@ function calculateTotalPrice(
         const isBicycle = productKey === 'ElectricBike' || productKey === 'CityBike';
 
         if (isBicycle) {
-          // --- NEW LOGIC: Calculate daily rate and add it for this night ---
           const dailyRate = arrangementLen === 4 ? price / 3 : price / 2;
           added = dailyRate * room.extras[productKey].amount;
         } else {
-          // Handle other products like lunch or pets (non-bicycle)
           switch (chargingMode as ChargingMode) {
             case "Once":
             case "PerTimeUnit":
@@ -191,14 +193,16 @@ function calculateTotalPrice(
             case "PerPerson":
             default:
               const adultsInRoom = room.occupant_countAdults ?? 0;
-              const childrenInRoom = room.occupant_countChildren ?? 0;
+              const babiesInRoom = room.occupant_countBabies ?? 0;
+              const children3_5 = room.occupant_countChildren3_5 ?? 0;
+              const children6_12 = room.occupant_countChildren6_12 ?? 0;
 
-              if (productKey === 'lunch' && childrenInRoom > 0) {
-                  const adjustment = lunchAdjustmentForChild[night.hotel] ?? 0;
-                  const childPrice = Math.max(0, price - adjustment); // Prevent negative price
-                  added = (adultsInRoom * price) + (childrenInRoom * childPrice);
+              if (productKey === 'lunch' && (children3_5 > 0 || children6_12 > 0)) {
+                  const adjustment = lunchAdjustmentForChild6_12[night.hotel] ?? 0;
+                  const childPrice = Math.max(0, price - adjustment);
+                  added = (adultsInRoom * price) + ((children3_5 + children6_12) * childPrice);
               } else {
-                  const guestsInRoom = adultsInRoom + childrenInRoom;
+                  const guestsInRoom = adultsInRoom + children3_5 + children6_12;
                   added = price * guestsInRoom;
               }
               break;
@@ -212,8 +216,6 @@ function calculateTotalPrice(
   return total;
 }
 
-// --- Helper function: Distribute Guests ---
-// NOTE: This function mutates the chosenRooms array passed to it.
 function distributeGuestsEvenly(
   count: number,
   chosenRooms: any[],
@@ -237,6 +239,7 @@ function distributeGuestsEvenly(
     const room = chosenRooms[i];
     const existingAdults = room.occupant_countAdults ?? 0;
     const existingChildren = room.occupant_countChildren ?? 0;
+
     const used = existingAdults + existingChildren;
     const free = room.bed_capacity - used;
     occupantWanted[i] = Math.min(occupantWanted[i], free);
@@ -353,7 +356,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   const [showRoomDetailModal, setShowRoomDetailModal] = useState(false);
   const [modalRoomData, setModalRoomData] = useState<any>(null);
 
-  const { startDate, arrangementLength, rooms, adults, children, travelMode } =
+  const { startDate, arrangementLength, rooms, adults, children, children6_12, children3_5, travelMode } =
     bookingData;
 
   const [openExtrasSections, setOpenExtrasSections] = useState<boolean[]>(() =>
@@ -364,7 +367,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     [hotel: string]: any;
   }>(null);
 
-  // Removed getProductPriceFn helper function
 
   function getPriceForSingleRoom(
     nightlyPricing: any,
@@ -373,6 +375,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     travelMode: string,
     room: any,
     childrenCount: number,
+    children6_12Count: number,
+    children3_5Count: number,
     adultsCount: number,
     arrangementLengthParam: number,
     restaurantChosen: string | null, // NEW: Add restaurant parameter
@@ -391,6 +395,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     const occupantArray: any[] = [];
     const adultAgeCatId = ageCategoryMapping[hotel]?.adult; // Get IDs from imported mapping
     const childAgeCatId = ageCategoryMapping[hotel]?.child;
+    const child6_12AgeCatId = ageCategoryMapping[hotel]?.child6_12;
+    const child3_5AgeCatId = ageCategoryMapping[hotel]?.child3_5;
 
     if (adultsCount > 0) {
       occupantArray.push({
@@ -402,6 +408,18 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       occupantArray.push({
         AgeCategoryId: childAgeCatId,
         PersonCount: childrenCount,
+      });
+    }
+    if (children6_12Count > 0) {
+      occupantArray.push({
+        AgeCategoryId: child6_12AgeCatId,
+        PersonCount: children6_12Count,
+      });
+    }
+    if (children3_5Count > 0) {
+      occupantArray.push({
+        AgeCategoryId: child3_5AgeCatId,
+        PersonCount: children3_5Count,
       });
     }
 
@@ -475,9 +493,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
   const formattedStartDatePOST = `${day}-${month}-${year}`;
 
   const handleExtrasToggle = (toggledIndex: number) => {
-    // We use a functional update to get the latest state
     setOpenExtrasSections(currentOpenState => {
-      // Create a new array with the toggled value
       const newState = [...currentOpenState];
       newState[toggledIndex] = !newState[toggledIndex];
       return newState;
@@ -509,12 +525,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       return;
     }
 
-    // Ensure selectedArrangement is not null before proceeding
     if (!selectedArrangement) {
       setError(t("roomPicker.error.noArrangementSelected"));
-      // console.error(
-      //   "[onReserve] Attempted to continue without a selected arrangement.",
-      // );
       return;
     }
 
@@ -573,7 +585,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         const availBreakfast = availBreakfastRes.data.data;
         const availHalfBoard = availHalfBoardRes.data.data;
 
-        // Check for errors/empty results from availability
         if (availBreakfast?.error && availHalfBoard?.error) {
           setError(
             availBreakfast.error ??
@@ -595,11 +606,23 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
               "roomPicker.error.noArrangementsAvailableBody",
               "No arrangements available for this selection.",
             ),
-          ); // Keep this key
+          );
           setLoading(false);
           return;
         }
 
+        if (availBreakfast?.optimal_sequence) {
+          availBreakfast.optimal_sequence.adults = adults;
+          availBreakfast.optimal_sequence.children = children;
+          availBreakfast.optimal_sequence.children6_12 = children6_12;
+          availBreakfast.optimal_sequence.children3_5 = children3_5;
+        }
+        if (availHalfBoard?.optimal_sequence) {
+          availHalfBoard.optimal_sequence.adults = adults;
+          availHalfBoard.optimal_sequence.children = children;
+          availHalfBoard.optimal_sequence.children6_12 = children6_12;
+          availHalfBoard.optimal_sequence.children3_5 = children3_5;
+        }
         setArrangements({
           breakfast: availBreakfast?.optimal_sequence,
           halfboard: availHalfBoard?.optimal_sequence,
@@ -622,7 +645,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                 "roomPicker.error.noArrangementsAvailableTitle",
                 "No Arrangements Available",
               ),
-            ); // Keep this key
+            );
             setLoading(false);
             return;
           } else {
@@ -710,9 +733,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           );
         } else {
           pricingPromises.push(Promise.resolve({ data: { data: null } })); // Placeholder if no breakfast arrangement
-          // console.warn(
-          //   "[RoomPicker InitEffect] No breakfast arrangement, skipping breakfast pricing fetch.",
-          // );
         }
 
         if (availHalfBoard?.optimal_sequence) {
@@ -970,6 +990,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             roomAdults,
             arrangementLength,
             night.restaurant_chosen,
+
           );
           
           // If the room is occupied but has no price, it's a fatal error.
@@ -986,6 +1007,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
     setPricesPerNight(nightlyTotals);
 
+    if (isPriceMissingForOccupiedRoom){
+      console.error("[RoomPicker] Pricing data is missing for an occupied room. This indicates a configuration or data issue that needs to be addressed.");
+    }
     // Set the error state based ONLY on our more intelligent check.
     // The old `hasMissingPrice` logic is now removed.
     setError(
@@ -1199,9 +1223,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
   // Handle case where arrangements might still be null after loading and no error
   if (!selectedArrangement) {
-    // console.warn(
-    //   "[RoomPicker Render] No selectedArrangement available for rendering. Displaying 'Not Found' message.",
-    // );
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="bg-white rounded-lg shadow-sm p-6 text-center max-w-md mx-auto">

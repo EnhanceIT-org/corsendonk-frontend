@@ -17,7 +17,9 @@ interface ArrangementFormData {
   arrangementLength: 3 | 4;
   startDate: string;
   adults: number;
-  children: number;
+  babies: number;
+  children6_12: number;
+  children3_5: number;
   rooms: number;
   travelMode: "walking" | "cycling";
   boardOption: "breakfast" | "halfboard";
@@ -29,7 +31,9 @@ interface ArrangementFormProps {
     arrangementLength: number;
     startDate: string;
     adults: number;
-    children: number;
+    babies: number;
+    children6_12: number;
+    children3_5: number;
     rooms: number;
     travelMode: "walking" | "cycling";
     boardOption: "breakfast" | "halfboard";
@@ -48,26 +52,28 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
         : 4,
     startDate: bookingData.startDate || format(new Date(), "yyyy-MM-dd"),
     adults: bookingData.adults >= 0 ? bookingData.adults : 2,
-    children: bookingData.children >= 0 ? bookingData.children : 0,
+    children6_12: bookingData.children6_12 >= 0 ? bookingData.children6_12 : 0,
+    children3_5: bookingData.children3_5 >= 0 ? bookingData.children3_5 : 0,
+    babies: bookingData.babies >= 0 ? bookingData.babies : 0,
     rooms: bookingData.rooms > 0 ? bookingData.rooms : 1,
     travelMode:
       bookingData.travelMode === "walking" ||
-      bookingData.travelMode === "cycling"
+        bookingData.travelMode === "cycling"
         ? bookingData.travelMode
         : "walking",
     boardOption:
       bookingData.boardOption === "breakfast" ||
-      bookingData.boardOption === "halfboard"
+        bookingData.boardOption === "halfboard"
         ? bookingData.boardOption
         : "breakfast",
   });
 
-  const handleIncrement = (field: "adults" | "children" | "rooms") => {
+  const handleIncrement = (field: "adults" | "babies" | "children3_5" | "children6_12" | "rooms") => {
     setFormData((prev) => {
       // total guests to 10 (mews api call doesnt allow more)
       if (
-        (field === "adults" || field === "children") &&
-        prev.adults + prev.children >= 10
+        (field === "adults" || field === "children6_12" || field === "children3_5") &&
+        prev.adults + prev.children6_12 + prev.children3_5 >= 10
       ) {
         return prev;
       }
@@ -79,7 +85,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
     });
   };
 
-  const handleDecrement = (field: "adults" | "children" | "rooms") => {
+  const handleDecrement = (field: "adults" | "babies" | "children3_5" | "children6_12" | "rooms") => {
     setFormData((prev) => ({
       ...prev,
       [field]: Math.max(field === "rooms" ? 1 : 0, prev[field] - 1),
@@ -110,11 +116,10 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
               {" "}
               {/* Added a div to group the buttons */}
               <button
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
-                  formData.arrangementLength === 3
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${formData.arrangementLength === 3
                     ? "border-[#2C4A3C] bg-[#2C4A3C] text-white"
                     : "border-gray-200 hover:border-[#2C4A3C]"
-                }`}
+                  }`}
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
@@ -127,11 +132,10 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 <span>{t("arrangementForm.duration.3days", "3 Days")}</span>
               </button>
               <button
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
-                  formData.arrangementLength === 4
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${formData.arrangementLength === 4
                     ? "border-[#2C4A3C] bg-[#2C4A3C] text-white"
                     : "border-gray-200 hover:border-[#2C4A3C]"
-                }`}
+                  }`}
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
@@ -164,51 +168,87 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
               }}
             />
           </div>
-          <div>
+            <div>
             <h2 className="text-lg font-semibold mb-4">
               {t("arrangementForm.guestCountTitle", "Number of Guests")}
             </h2>
-            <div className="space-y-4 align-start">
-              <div className="flex sm:flex-row flex-col sm:items-center justify-between items-start max-w-[300px]">
-                <span className="sm:mb-0 mb-1">
-                  {t("occupancy.adults", "Adults")}
-                </span>
-                <div className="flex items-center">
-                  <button
-                    onClick={() => handleDecrement("adults")}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="w-16 text-center">{formData.adults}</span>
-                  <button
-                    onClick={() => handleIncrement("adults")}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between items-start max-w-[300px]">
+              <span className="sm:mb-0 mb-1">
+                {t("occupancy.adults", "Adults")}
+              </span>
+              <div className="flex items-center">
+                <button
+                onClick={() => handleDecrement("adults")}
+                className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-16 text-center">{formData.adults}</span>
+                <button
+                onClick={() => handleIncrement("adults")}
+                className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                <Plus className="w-4 h-4" />
+                </button>
               </div>
-                <div className="flex sm:flex-row flex-col sm:items-center items-start justify-between max-w-[300px]">
-                <span className="sm:mb-0 mb-1">{t("occupancy.children", "Children")}</span>
-                <div className="flex items-center">
-                  <button
-                  onClick={() => handleDecrement("children")}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                  <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="w-16 text-center">{formData.children}</span>
-                  <button
-                  onClick={() => handleIncrement("children")}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                  <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center items-start justify-between max-w-[300px]">
+              <span className="sm:mb-0 mb-1">{t("occupancy.babies", "Babies")}</span>
+              <div className="flex items-center">
+                <button
+                onClick={() => handleDecrement("babies")}
+                className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-16 text-center">{formData.babies}</span>
+                <button
+                onClick={() => handleIncrement("babies")}
+                className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center items-start justify-between max-w-[300px]">
+              <span className="sm:mb-0 mb-1">{t("occupancy.children6_12", "Children 6-12")}</span>
+              <div className="flex items-center">
+                <button
+                onClick={() => setFormData(prev => ({ ...prev, children6_12: Math.max(0, prev.children6_12 - 1) }))}
+                className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-16 text-center">{formData.children6_12}</span>
+                <button
+                onClick={() => setFormData(prev => ({ ...prev, children6_12: prev.children6_12 + 1 }))}
+                className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center items-start justify-between max-w-[300px]">
+              <span className="sm:mb-0 mb-1">{t("occupancy.children3_5", "Children 3-5")}</span>
+              <div className="flex items-center">
+                <button
+                onClick={() => setFormData(prev => ({ ...prev, children3_5: Math.max(0, prev.children3_5 - 1) }))}
+                className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-16 text-center">{formData.children3_5}</span>
+                <button
+                onClick={() => setFormData(prev => ({ ...prev, children3_5: prev.children3_5 + 1 }))}
+                className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              </div>
             </div>
-          </div>
+            </div>
           <div>
             <h2 className="text-lg font-semibold mb-4">
               {t("arrangementForm.roomCountTitle", "Number of Rooms")}
@@ -223,12 +263,13 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                   <Minus className="w-4 h-4" />
                 </button>
                 <span className="w-16 text-center">{formData.rooms}</span>
-                {formData.rooms < formData.adults + formData.children && (
+                {/* Didn't use babies here because it seems an extra */}
+                {formData.rooms < formData.adults + formData.children6_12 + formData.children3_5 && (
                   <button
                     onClick={() => {
                       if (
                         formData.rooms <
-                        formData.adults + formData.children
+                        formData.adults + formData.children6_12 + formData.children3_5
                       ) {
                         handleIncrement("rooms");
                       }
@@ -240,7 +281,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 )}
               </div>
             </div>
-            {formData.rooms === formData.adults + formData.children && (
+            {formData.rooms === formData.adults + formData.children6_12 + formData.children3_5 && (
               <span className="text-sm text-gray-500">
                 {t(
                   "arrangementForm.maxRoomsReached",
@@ -255,11 +296,10 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             </h2>
             <div className="gap-4 flex flex-col sm:flex-row">
               <button
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
-                  formData.travelMode === "walking"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${formData.travelMode === "walking"
                     ? "border-[#2C4A3C] bg-[#2C4A3C] text-white"
                     : "border-gray-200 hover:border-[#2C4A3C]"
-                }`}
+                  }`}
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
@@ -271,11 +311,10 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 <span>{t("travelMode.walking", "Walking")}</span>
               </button>
               <button
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
-                  formData.travelMode === "cycling"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${formData.travelMode === "cycling"
                     ? "border-[#2C4A3C] bg-[#2C4A3C] text-white"
                     : "border-gray-200 hover:border-[#2C4A3C]"
-                }`}
+                  }`}
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
@@ -294,11 +333,10 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
             </h2>
             <div className="gap-4 flex flex-col sm:flex-row">
               <button
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
-                  formData.boardOption === "breakfast"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${formData.boardOption === "breakfast"
                     ? "border-[#2C4A3C] bg-[#2C4A3C] text-white"
                     : "border-gray-200 hover:border-[#2C4A3C]"
-                }`}
+                  }`}
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
@@ -310,11 +348,10 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 <span>{t("mealPlan.breakfastOnly", "Breakfast Only")}</span>
               </button>
               <button
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
-                  formData.boardOption === "halfboard"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${formData.boardOption === "halfboard"
                     ? "border-[#2C4A3C] bg-[#2C4A3C] text-white"
                     : "border-gray-200 hover:border-[#2C4A3C]"
-                }`}
+                  }`}
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
