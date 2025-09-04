@@ -386,8 +386,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
     const occupantTotal = adultsCount + children6_12Count + children3_5Count;
     const occupantArray: any[] = [];
-    const adultAgeCatId = ageCategoryMapping[hotel]?.adult; // Get IDs from imported mapping
-    const babiesAgeCatId = ageCategoryMapping[hotel]?.babies;
+    const adultAgeCatId = ageCategoryMapping[hotel]?.adult;
     const child6_12AgeCatId = ageCategoryMapping[hotel]?.child6_12;
     const child3_5AgeCatId = ageCategoryMapping[hotel]?.child3_5;
 
