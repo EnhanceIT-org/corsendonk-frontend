@@ -40,9 +40,6 @@
   "chargingMethods.perperson": "Per persoon",
   "chargingMethods.perpersonnight": "Per persoon per nacht",
   "chargingMethods.pertimeunit": "Per kamer",
-  "optionalProducts": {
-  "perDay": "Per dag"
-},
   "languageSwitcher.title": "Selecteer Taal",
   "languageSwitcher.nl": "Nederlands",
   "languageSwitcher.en": "English",
@@ -139,5 +136,8 @@
   "common.close": "Sluiten",
   "pricingSummary.totalPriceLabel": "Totale Prijs",
   "pricingSummary.avgPriceLabel": "Gemiddelde prijs per kamer per nacht: € {{price}}",
-  "pricingSummary.reserveButton": "Reserveer uw kamers nu"
+  "pricingSummary.reserveButton": "Reserveer uw kamers nu",
+  "optionalProducts.perDay": "Per dag",
+  "optionalProducts.lunch": "Lunch",
+  "optionalProducts.huisdier": "Huisdier"
 }

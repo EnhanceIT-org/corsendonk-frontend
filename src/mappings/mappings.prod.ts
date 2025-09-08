@@ -2,26 +2,26 @@
 export const ageCategoryMapping: Record<
   string,
   { adult: string;
-    child: string;
+    child6_12: string;
     child3_5: string;
     babies: string;
   }
 > = {
   hotel1: {
     adult: "e6c1575b-5c75-41b9-8667-adf200f7bc48", // Adults (No age limit)
-    child: "d99ca5b0-ff54-4b8f-9105-af3b00ae6cee", // Child 6-12 years
+    child6_12: "d99ca5b0-ff54-4b8f-9105-af3b00ae6cee", // Child 6-12 years
     child3_5: "d99ca5b0-ff54-4b8f-9105-af3b00ae6cee", //child 3-5
     babies: "d99ca5b0-ff54-4b8f-9105-af3b00ae6cee", 
   },
   hotel2: {
     adult: "30a5e937-e0ec-4888-946a-ae4a00d4dad6", // Adults (No age limit)
-    child: "25ce1bd7-d5e7-4e5f-a617-af5500bf631c", // Child 6-12 years
+    child6_12: "25ce1bd7-d5e7-4e5f-a617-af5500bf631c", // Child 6-12 years
     child3_5: "25ce1bd7-d5e7-4e5f-a617-af5500bf631c", // Child 3-5 years
     babies: "25ce1bd7-d5e7-4e5f-a617-af5500bf631c", // Babies
   },
   hotel3: {
     adult: "e3bc5a6c-366e-4fd8-9273-ade400cf5657", // Adults (No age limit)
-    child: "1707052e-2fbc-443d-a9a7-af6600bdc199", // Child 6-12 years
+    child6_12: "1707052e-2fbc-443d-a9a7-af6600bdc199", // Child 6-12 years
     child3_5: "1707052e-2fbc-443d-a9a7-af6600bdc199", // Child 3-5 years
     babies: "1707052e-2fbc-443d-a9a7-af6600bdc199", // Babies
   },

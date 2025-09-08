@@ -40,9 +40,6 @@
   "chargingMethods.perperson": "Per person",
   "chargingMethods.perpersonnight": "Per person per night",
   "chargingMethods.pertimeunit": "Per room",
-  "optionalProducts": {
-  "perDay": "Per day"
-},
   "languageSwitcher.title": "Select Language",
   "languageSwitcher.nl": "Nederlands",
   "languageSwitcher.en": "English",
@@ -139,6 +136,8 @@
   "common.close": "Close",
   "pricingSummary.totalPriceLabel": "Total Price",
   "pricingSummary.avgPriceLabel": "Average price per room per night: €{{price}}",
-  "pricingSummary.reserveButton": "Reserve your rooms now"
-  
+  "pricingSummary.reserveButton": "Reserve your rooms now",
+  "optionalProducts.perDay": "Per day",
+  "optionalProducts.lunch": "Lunch",
+  "optionalProducts.huisdier": "Pet"
 }

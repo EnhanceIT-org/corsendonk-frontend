@@ -390,6 +390,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     const child6_12AgeCatId = ageCategoryMapping[hotel]?.child6_12;
     const child3_5AgeCatId = ageCategoryMapping[hotel]?.child3_5;
 
+
     if (adultsCount > 0) {
       occupantArray.push({
         AgeCategoryId: adultAgeCatId,
@@ -409,6 +410,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       });
     }
 
+
     let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
       if (!op.Occupancies || op.Occupancies.length !== occupantArray.length) {
         return false;
@@ -419,18 +421,28 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       const sortedTargetOccupancies = [...occupantArray].sort((a, b) =>
         (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
       );
+
+      console.log(sortedApiOccupancies);
+      console.log(sortedTargetOccupancies);
+      console.log(sortedApiOccupancies.length)
+
       for (let i = 0; i < sortedApiOccupancies.length; i++) {
+        console.log(sortedApiOccupancies[i])
+        console.log(sortedTargetOccupancies[i]);
         if (
           sortedApiOccupancies[i].AgeCategoryId !==
           sortedTargetOccupancies[i].AgeCategoryId ||
-          sortedApiOccupancies[i].PersonCount !==
+          sortedApiOccupancies[i].PersonCount <
           sortedTargetOccupancies[i].PersonCount
         ) {
           return false;
         }
       }
+      console.log("great success");
       return true;
     });
+
+    console.log("occupantPriceEntry", occupantPriceEntry);
 
     if (!occupantPriceEntry) {
       occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
@@ -443,6 +455,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     }
 
     if (!occupantPriceEntry) {
+      console.log("no occupant price entry");
       return 0;
     }
 
@@ -458,6 +471,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       (rgp: any) => rgp.MinRateId === rateId,
     );
     if (!rPrice) {
+      console.log("no rate price");
       return 0;
     }
 
@@ -466,6 +480,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
       return val;
     }
 
+    console.log("no value");
     return 0;
   }
 
@@ -768,6 +783,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           return true; // All nights have pricing data
         };
 
+
         const isBreakfastPricingValid = validatePricing(
           pricingBreakfastRes,
           "breakfast",
@@ -827,7 +843,7 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           setLoading(false);
           return; // Stop processing
         }
-        // --- END NEW ---
+
 
         setPricingData({
           breakfast: pricingBreakfastRes.data.data,
@@ -942,15 +958,16 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
     let isPriceMissingForOccupiedRoom = false;
 
+
     const nightlyTotals = selectedArrangement.night_details.map(
       (night) => {
         const chosenRooms = night.chosen_rooms ?? [];
         const boardKey = selectedBoardOption;
         const nightlyPricingForBoard = pricingData[boardKey]?.nightlyPricing ?? [];
+
         const foundEntry = nightlyPricingForBoard.find(
           (x: any) => x.date === night.date && x.hotel === night.hotel,
         );
-
         // If the entire pricing structure for the night is missing, it's an error
         // ONLY if there are guests assigned to this night (even if not yet in rooms).
         if (!foundEntry?.pricing) {
@@ -987,6 +1004,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             night.restaurant_chosen,
 
           );
+
+          console.log("priceForThisRoom", priceForThisRoom);
 
           // If the room is occupied but has no price, it's a fatal error.
           if (priceForThisRoom === 0) {
