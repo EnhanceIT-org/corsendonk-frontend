@@ -422,13 +422,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
       );
 
-      console.log(sortedApiOccupancies);
-      console.log(sortedTargetOccupancies);
-      console.log(sortedApiOccupancies.length)
 
       for (let i = 0; i < sortedApiOccupancies.length; i++) {
-        console.log(sortedApiOccupancies[i])
-        console.log(sortedTargetOccupancies[i]);
         if (
           sortedApiOccupancies[i].AgeCategoryId !==
           sortedTargetOccupancies[i].AgeCategoryId ||
@@ -438,11 +433,9 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           return false;
         }
       }
-      console.log("great success");
       return true;
     });
 
-    console.log("occupantPriceEntry", occupantPriceEntry);
 
     if (!occupantPriceEntry) {
       occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
@@ -779,7 +772,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
               return false; // Invalid pricing found
             }
           }
-          // console.log(`[Pricing Validation] Pricing for ${boardType} seems valid.`);
           return true; // All nights have pricing data
         };
 
@@ -1005,7 +997,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
 
           );
 
-          console.log("priceForThisRoom", priceForThisRoom);
 
           // If the room is occupied but has no price, it's a fatal error.
           if (priceForThisRoom === 0) {
