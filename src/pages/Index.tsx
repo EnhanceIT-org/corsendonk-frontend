@@ -464,9 +464,6 @@ const Index = () => {
     setCurrentStep(3);
   };
 
-  const handleBookingSuccess = (reservationData: any) => {
-    // You can redirect or display a final confirmation message here.
-  };
 
   return (
     <div className="min-h-screen bg-secondary">
@@ -505,8 +502,6 @@ const Index = () => {
             travelMode={finalReservationData.travelMode}
             rawConfig={finalReservationData.rawConfig}
             optionalProducts={finalReservationData.optionalProducts}
-            onBack={() => setCurrentStep(2)}
-            onBookingSuccess={handleBookingSuccess}
             onBackToStep2={() => setCurrentStep(2)}
             onBackToStep1={() => setCurrentStep(1)}
           />
