@@ -9,10 +9,12 @@ export const fetchWithBaseUrl = async (
   endpoint: string,
   options?: RequestInit,
 ) => {
-  const response = await fetch(
-    `${import.meta.env.VITE_API_URL}${endpoint}`,
-    options,
-  );
+  const baseUrl = import.meta.env.VITE_API_URL ?? "";
+  const normalizedBase = String(baseUrl).replace(/\/+$/g, "");
+  const normalizedEndpoint = `/${String(endpoint ?? "").replace(/^\/+/, "")}`;
+  const url = `${normalizedBase}${normalizedEndpoint}`;
+
+  const response = await fetch(url, options);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
