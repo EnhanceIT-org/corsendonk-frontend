@@ -193,7 +193,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 </button>
               </div>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center items-start justify-between max-w-[300px]">
+              {/* <div className="flex flex-col sm:flex-row sm:items-center items-start justify-between max-w-[300px]">
               <span className="sm:mb-0 mb-1">{t("occupancy.babies", "Babies")}</span>
               <div className="flex items-center">
                 <button
@@ -210,7 +210,7 @@ export const ArrangementForm: React.FC<ArrangementFormProps> = ({
                 <Plus className="w-4 h-4" />
                 </button>
               </div>
-              </div>
+              </div> */}
               <div className="flex flex-col sm:flex-row sm:items-center items-start justify-between max-w-[300px]">
               <span className="sm:mb-0 mb-1">{t("occupancy.children6_12", "Children 6-12")}</span>
               <div className="flex items-center">
