@@ -138,7 +138,7 @@ export const lunchAdjustmentForChild6_12: Record<string, number> = {
 };
 
 export const lunchAdjustmentForChild3_5: Record<string, number> = {
-  hotel1: 7.50,
-  hotel2: 8.50,
-  hotel3: 8.50,
+  hotel1: 11.25,
+  hotel2: 12.50,
+  hotel3: 12.50,
 };

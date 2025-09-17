@@ -194,7 +194,6 @@ function calculateTotalPrice(
             case "PerPerson":
             default:
               const adultsInRoom = room.occupant_countAdults ?? 0;
-              const babiesInRoom = room.occupant_countBabies ?? 0;
               const children3_5 = room.occupant_countChildren3_5 ?? 0;
               const children6_12 = room.occupant_countChildren6_12 ?? 0;
 

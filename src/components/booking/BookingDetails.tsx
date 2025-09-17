@@ -238,10 +238,10 @@ export function BookingDetails({
                     </p>
                   )}
                 {reservation.chosen_rooms.map((room, roomIndex) => {
-                  // --- START: LOGIC MOVED INSIDE THE ROOM LOOP ---
+                  
                   const selectedExtrasForThisRoom = Object.entries(room.extras ?? {})
                     .filter(([key, value]: any) => value.selected && (value.amount ?? 0) > 0);
-                  // --- END: LOGIC MOVED INSIDE THE ROOM LOOP ---
+                  
 
                   return (
                     <div key={roomIndex} className="bg-gray-50 rounded-lg p-4">
@@ -302,6 +302,8 @@ export function BookingDetails({
                               const isBicycle = key === 'ElectricBike' || key === 'CityBike';
                               const adultsInRoom = room.occupant_countAdults ?? 0;
                               const childrenInRoom = (room.occupant_countChildren6_12 ?? 0) + (room.occupant_countChildren3_5 ?? 0);
+                              const children3_5 = room.occupant_countChildren3_5 ?? 0;
+                              const children6_12 = room.occupant_countChildren6_12 ?? 0;
 
                               if (isBicycle) {
                                 const dailyRate = bookingData.arrangementLength === 4 ? price / 3 : price / 2;
@@ -315,7 +317,7 @@ export function BookingDetails({
                                   const adjustment3_5 = lunchAdjustmentForChild3_5[reservation.hotel] ?? 0;
                                   const childPrice6_12 = Math.max(0, price - adjustment6_12);
                                   const childPrice3_5 = Math.max(0, price - adjustment3_5);
-                                  lineTotal = (adultsInRoom * price) + ((childrenInRoom * childPrice3_5) + (childrenInRoom * childPrice6_12));
+                                  lineTotal = (adultsInRoom * price) + ((children3_5 * childPrice3_5) + (children6_12 * childPrice6_12));
                                 } else {
                                   lineTotal = price * guestsInRoom;
                                 }
