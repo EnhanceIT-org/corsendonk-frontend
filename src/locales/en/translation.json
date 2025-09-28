@@ -1,7 +1,7 @@
 {
   "common.backToSelection": "Back to Selection",
   "common.loading": "Loading...",
-  "common.pleaseWait": "Just a moment please",
+  "common.pleaseWait": "Please wait, we are retrieving availability and prices for you.",
   "common.error": "Error",
   "common.submit": "Submit",
   "common.next": "Next",
