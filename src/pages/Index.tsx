@@ -9,7 +9,9 @@ export interface BookingFormData {
   arrangementLength: number;
   rooms: number;
   adults: number;
-  children: number;
+  babies: number;
+  children6_12: number;
+  children3_5: number;
   travelMode: "walking" | "cycling";
   boardOption: "breakfast" | "halfboard";
 }
@@ -426,6 +428,7 @@ export interface finalReservationData {
     };
   };
   rawConfig: any;
+  optionalProducts: { [hotel: string]: any };
 }
 
 const Index = () => {
@@ -447,6 +450,7 @@ const Index = () => {
     boardOption: any,
     travelMode: "walking" | "cycling",
     rawConfig: any,
+    optionalProducts: { [hotel: string]: any },
   ) => {
     setFinalReservationData({
       selectedArrangement,
@@ -454,14 +458,12 @@ const Index = () => {
       boardOption,
       travelMode,
       rawConfig,
+      optionalProducts,
     });
     setTotalPrice(totalPrice);
     setCurrentStep(3);
   };
 
-  const handleBookingSuccess = (reservationData: any) => {
-    // You can redirect or display a final confirmation message here.
-  };
 
   return (
     <div className="min-h-screen bg-secondary">
@@ -475,7 +477,9 @@ const Index = () => {
               arrangementLength: bookingData?.arrangementLength,
               startDate: bookingData?.startDate,
               adults: bookingData?.adults,
-              children: bookingData?.children,
+              babies: bookingData?.babies,
+              children6_12: bookingData?.children6_12,
+              children3_5: bookingData?.children3_5,
               rooms: bookingData?.rooms,
               travelMode: bookingData?.travelMode,
               boardOption: bookingData?.boardOption,
@@ -497,8 +501,7 @@ const Index = () => {
             boardOption={finalReservationData.boardOption}
             travelMode={finalReservationData.travelMode}
             rawConfig={finalReservationData.rawConfig}
-            onBack={() => setCurrentStep(2)}
-            onBookingSuccess={handleBookingSuccess}
+            optionalProducts={finalReservationData.optionalProducts}
             onBackToStep2={() => setCurrentStep(2)}
             onBackToStep1={() => setCurrentStep(1)}
           />

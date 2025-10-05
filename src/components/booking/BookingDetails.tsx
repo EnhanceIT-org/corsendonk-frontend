@@ -1,28 +1,27 @@
-// components/new_components/BookingDetails.tsx
+
 import React from "react";
-import { useTranslation } from "react-i18next"; // Import hook
+import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
-import { nl, enUS, fr } from "date-fns/locale"; // Import required locales
+import { nl, enUS, fr } from "date-fns/locale";
 import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
-// Corrected import path and added optionalProducts import
 import {
   ageCategoryMapping,
   BoardMapping,
   HOTEL_NAME_MAPPING,
-  optionalProducts,
+  lunchAdjustmentForChild6_12,
+  lunchAdjustmentForChild3_5,
 } from "../../mappings/mappings";
 
-// Removed chargingMethodToDutch function - use t('chargingMethods...') instead
 
-function getPriceForSingleRoom(
+export function getPriceForSingleRoom(
   nightlyPricing: any,
   hotel: string,
   boardType: string,
   room: any,
   reservation: any,
   travelMode: string,
-  arrangementLength: number, // Added parameter
-  restaurantChosen: string | null, // NEW: Add restaurant parameter
+  arrangementLength: number,
+  restaurantChosen: string | null,
 ): number {
   const nightlyArr = nightlyPricing?.nightlyPricing ?? [];
   const foundEntry = nightlyArr.find(
@@ -35,8 +34,9 @@ function getPriceForSingleRoom(
   );
   if (!cat) return 0;
   const occupantAdults = room.occupant_countAdults ?? 0;
-  const occupantChildren = room.occupant_countChildren ?? 0;
-  const occupantTotal = occupantAdults + occupantChildren;
+  const occupant_countChildren6_12 = room.occupant_countChildren6_12 ?? 0;
+  const occupant_countChildren3_5 = room.occupant_countChildren3_5 ?? 0;
+  const occupantTotal = occupantAdults + occupant_countChildren6_12 + occupant_countChildren3_5;
   const occupantArray: any[] = [];
   if (occupantAdults > 0) {
     occupantArray.push({
@@ -44,10 +44,16 @@ function getPriceForSingleRoom(
       PersonCount: occupantAdults,
     });
   }
-  if (occupantChildren > 0) {
+  if (occupant_countChildren6_12 > 0) {
     occupantArray.push({
-      AgeCategoryId: ageCategoryMapping[hotel]?.child,
-      PersonCount: occupantChildren,
+      AgeCategoryId: ageCategoryMapping[hotel]?.child6_12,
+      PersonCount: occupant_countChildren6_12,
+    });
+  }
+  if (occupant_countChildren3_5 > 0) {
+    occupantArray.push({
+      AgeCategoryId: ageCategoryMapping[hotel]?.child3_5,
+      PersonCount: occupant_countChildren3_5,
     });
   }
   let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
@@ -78,7 +84,6 @@ function getPriceForSingleRoom(
     return sum === occupantTotal;
   });
   if (!occupantPriceEntry) return 0;
-  // NEW: Pass restaurantChosen to getNightlyRateId
   const rateId = getNightlyRateId(
     hotel,
     boardType,
@@ -96,12 +101,11 @@ function getPriceForSingleRoom(
 }
 function getNightlyRateId(
   hotel: string,
-  boardTypeInput: string, // Renamed to avoid conflict with variable name
+  boardTypeInput: string,
   travelMode: string,
   arrangementLength: number,
-  restaurantChosen: string | null, // NEW: Add restaurant parameter
+  restaurantChosen: string | null
 ) {
-  // Determine board key ('breakfast' or 'halfboard') from input ('breakfast' or 'halfboard')
   const board = boardTypeInput === "halfboard" ? "halfboard" : "breakfast";
   let mode = travelMode;
   if (mode !== "walking" && mode !== "cycling") mode = "walking";
@@ -111,7 +115,6 @@ function getNightlyRateId(
   const hotelRates = BoardMapping[hotel]?.[mode]?.[lengthKey];
 
   if (hotelRates) {
-    // NEW: Check for hotel3 halfboard with restaurant
     if (
       hotel === "hotel3" &&
       board === "halfboard" &&
@@ -120,8 +123,6 @@ function getNightlyRateId(
     ) {
       rateId = hotelRates[board]?.[restaurantChosen] ?? "";
     } else {
-      // Original logic for other hotels/boards or if restaurant is not applicable/provided
-      // Ensure we access the correct board key ('breakfast' or 'halfboard')
       rateId = hotelRates[board] ?? "";
     }
   }
@@ -129,14 +130,6 @@ function getNightlyRateId(
   return rateId;
 }
 
-function calculateTotalHumans(bookingData): number {
-  let total = 0;
-  bookingData.reservations[0].chosen_rooms.forEach((room: any) => {
-    total += room.occupant_countAdults;
-    total += room.occupant_countChildren;
-  });
-  return total;
-}
 
 function getLocale(language: string) {
   switch (language) {
@@ -155,28 +148,39 @@ function formatDateForLocale(dateString: string, currentLanguage: string) {
   const raw = format(new Date(dateString), "EEEE, d MMMM", { locale });
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
-// Removed formatDutchDate function
 
-function capitalizeFirstLetter(str: string) {
-  if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
+export function getProductMeta(
+  hotel: string,
+  key: string,
+  arrangementLength: 3 | 4,
+  products: any,
+) {
+  if (!products?.[hotel]) return null;
+  if (key === "lunch" || key === "huisdier") return products[hotel][key];
+  if (products[hotel].bicycleRent) {
+    const lenKey = arrangementLength === 4 ? "3D" : "2D";
+    return products[hotel].bicycleRent?.[lenKey]?.[key] ?? null;
+  }
+  return null;
 }
 
-// UPDATED: Added new prop onShowRoomDetail and removed local selectedRoom state.
+
 interface BookingDetailsProps {
   bookingData: any; // Ensure this includes arrangementLength
   onShowRoomDetail: (room: any) => void;
+  optionalProducts: { [hotel: string]: any };
 }
 
 function getHotelDisplayName(hotelKey: string): string {
-  return HOTEL_NAME_MAPPING[hotelKey] ?? hotelKey; // Use mapping, fallback to key if not found
+  return HOTEL_NAME_MAPPING[hotelKey] ?? hotelKey;
 }
 
 export function BookingDetails({
   bookingData,
   onShowRoomDetail,
+  optionalProducts,
 }: Readonly<BookingDetailsProps>) {
-  const { t, i18n } = useTranslation(); // Instantiate hook
+  const { t, i18n } = useTranslation();
   // Calculate City Tax
   const numberOfNights = bookingData.reservations.length;
   const firstNight = bookingData.reservations[0]; // Assume guest count is constant
@@ -184,7 +188,8 @@ export function BookingDetails({
     return (
       sum +
       (room.occupant_countAdults ?? 0) +
-      (room.occupant_countChildren ?? 0)
+      (room.occupant_countChildren6_12 ?? 0) +
+      (room.occupant_countChildren3_5 ?? 0)
     );
   }, 0);
   const cityTaxAmount = totalGuests * numberOfNights * 2.5;
@@ -227,58 +232,115 @@ export function BookingDetails({
                   reservation.board_type === "B&B" &&
                   bookingData.mealPlan === "halfboard" && (
                     <p className="mt-1 text-sm text-orange-600">
-                      {t(
-                        "bookingDetails.warning.externalRestaurantsFull",
-                        "External restaurants fully booked, only breakfast possible",
-                      )}
+                      {t("bookingDetails.warning.externalRestaurantsFull")}
                     </p>
                   )}
-                {reservation.chosen_rooms.map((room, roomIndex) => (
-                  <div key={roomIndex} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2">
+                {reservation.chosen_rooms.map((room, roomIndex) => {
+                  
+                  const selectedExtrasForThisRoom = Object.entries(room.extras ?? {})
+                    .filter(([key, value]: any) => value.selected && (value.amount ?? 0) > 0);
+                  
+
+                  return (
+                    <div key={roomIndex} className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{room.category_name}</span>
+                          <button
+                            className="text-[#2C4A3C] hover:text-[#2C4A3C]/80"
+                            onClick={() => onShowRoomDetail({ ...room, hotel: reservation.hotel })}
+                          >
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </div>
                         <span className="font-medium">
-                          {room.category_name}
+                          €{getPriceForSingleRoom(
+                            nightlyPricing,
+                            reservation.hotel,
+                            boardKey,
+                            room,
+                            reservation,
+                            bookingData.travelMode,
+                            bookingData.arrangementLength,
+                            reservation.restaurant_chosen,
+                          ).toFixed(2)}
                         </span>
-                        <button
-                          className="text-[#2C4A3C] hover:text-[#2C4A3C]/80"
-                          onClick={() =>
-                            onShowRoomDetail({
-                              ...room,
-                              hotel: reservation.hotel,
-                            })
-                          }
-                        >
-                          <Info className="w-4 h-4" />
-                        </button>
                       </div>
-                      <span className="font-medium">
-                        €
-                        {getPriceForSingleRoom(
-                          nightlyPricing,
-                          reservation.hotel,
-                          boardKey,
-                          room,
-                          reservation,
-                          bookingData.travelMode,
-                          bookingData.arrangementLength,
-                          reservation.restaurant_chosen, // NEW: Pass restaurant_chosen
-                        ).toFixed(2)}
-                      </span>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Users className="w-4 h-4" />
+                        <span>
+                          {t("bookingDetails.occupancy", {
+                            adults: room.occupant_countAdults,
+                            children: room.occupant_countChildren6_12 + room.occupant_countChildren3_5,
+                          })}
+                        </span>
+                      </div>
+
+                      {/* Render extras only if there are any for THIS room */}
+                      {selectedExtrasForThisRoom.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-gray-200">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            {t("bookingDetails.selectedExtras", "Selected extras")}
+                          </h4>
+                          <ul className="space-y-1">
+                            {selectedExtrasForThisRoom.map(([key, details]: any) => {
+                              const meta = getProductMeta(
+                                reservation.hotel,
+                                key,
+                                bookingData.arrangementLength as 3 | 4,
+                                optionalProducts,
+                              );
+                              if (!meta) return null;
+
+                              const name = meta.translations[i18n.language] || meta.translations.en || key;
+                              const { price, chargingMode } = meta;
+
+                              let lineTotal = 0;
+                              let displayQuantity = details.amount;
+                              const isBicycle = key === 'ElectricBike' || key === 'CityBike';
+                              const adultsInRoom = room.occupant_countAdults ?? 0;
+                              const childrenInRoom = (room.occupant_countChildren6_12 ?? 0) + (room.occupant_countChildren3_5 ?? 0);
+                              const children3_5 = room.occupant_countChildren3_5 ?? 0;
+                              const children6_12 = room.occupant_countChildren6_12 ?? 0;
+
+                              if (isBicycle) {
+                                const dailyRate = bookingData.arrangementLength === 4 ? price / 3 : price / 2;
+                                lineTotal = dailyRate * displayQuantity;
+                              } else if (chargingMode === 'PerPerson') {
+                                const guestsInRoom = adultsInRoom + childrenInRoom;
+                                displayQuantity = guestsInRoom; // The quantity to display is the number of guests
+
+                                if (key === 'lunch' && childrenInRoom > 0) {
+                                  const adjustment6_12 = lunchAdjustmentForChild6_12[reservation.hotel] ?? 0;
+                                  const adjustment3_5 = lunchAdjustmentForChild3_5[reservation.hotel] ?? 0;
+                                  const childPrice6_12 = Math.max(0, price - adjustment6_12);
+                                  const childPrice3_5 = Math.max(0, price - adjustment3_5);
+                                  lineTotal = (adultsInRoom * price) + ((children3_5 * childPrice3_5) + (children6_12 * childPrice6_12));
+                                } else {
+                                  lineTotal = price * guestsInRoom;
+                                }
+                              } else {
+                                lineTotal = price * displayQuantity;
+                              }
+
+                              if (lineTotal === 0) return null;
+
+                              return (
+                                <li key={key} className="flex justify-between text-sm">
+                                  <span>
+                                    {name}
+                                    {displayQuantity > 1 ? ` ×${displayQuantity}` : ""}
+                                  </span>
+                                  <span>€{lineTotal.toFixed(2)}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users className="w-4 h-4" />
-                      <span>
-                        {t("bookingDetails.occupancy", {
-                          adults: room.occupant_countAdults,
-                          children: room.occupant_countChildren,
-                          defaultValue: `${room.occupant_countAdults} Adults, ${room.occupant_countChildren} Children`,
-                        })}
-                      </span>
-                    </div>
-                    {null /* Hide Selected Extras */}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );

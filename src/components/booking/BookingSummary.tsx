@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { useTranslation } from 'react-i18next'; // Import hook
+import React, { useState, useEffect } from "react"; 
+import { useTranslation } from 'react-i18next';
 import { PersonalInformationForm } from "./PersonalInformationForm";
-import { BookingDetails } from "./BookingDetails";
+import { BookingDetails, getPriceForSingleRoom, getProductMeta } from "./BookingDetails"; 
 import { Breadcrumb } from "./Breadcrumb";
 import { RoomDetailModal } from "./RoomDetailModal";
 
@@ -17,9 +17,11 @@ interface BookingData {
       category_id: string;
       category_name: string;
       occupant_countAdults: number;
-      occupant_countChildren: number;
+      occupant_countChildren3_5: number;
+      occupant_countChildren6_12: number;
+      occupant_countBabies: number;
     }[];
-    extras: { [key: string]: boolean }; // Added extras to match RoomPicker's structure
+    extras: { [key: string]: boolean };
     room_options: {
       available_count: number;
       bed_capacity: number;
@@ -28,7 +30,6 @@ interface BookingData {
       room_group: string;
     }[];
   }[];
-  // optionalExtras removed - now part of reservations
   mealPlan: "breakfast" | "halfboard";
   total: number;
   pricing_data: {
@@ -465,20 +466,19 @@ interface BookingData {
   };
   arrangementLength: number;
   travelMode: "walking" | "cycling";
+  optionalProducts: { [hotel: string]: any };
 }
 
 interface BookingSummaryProps {
-  selectedArrangement: any; // Keep as any for now, but it matches selectedArrangementInterface from RoomPicker
+  selectedArrangement: any;
   pricingData: any;
   totalPrice: number;
   boardOption: any;
-  // optionalProducts prop removed
   travelMode: "walking" | "cycling";
   rawConfig: any;
-  onBack: () => void;
+  optionalProducts: { [hotel: string]: any };
   onBackToStep2: () => void;
   onBackToStep1: () => void;
-  onBookingSuccess: (reservationData: any) => void;
 }
 
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
@@ -487,13 +487,12 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   totalPrice,
   boardOption,
   travelMode,
-  onBack,
+  optionalProducts,
   onBackToStep1,
   onBackToStep2,
-  onBookingSuccess,
   rawConfig,
 }) => {
-  const { t } = useTranslation(); // Instantiate hook
+  const { t } = useTranslation();
   const arrangementLength = selectedArrangement.night_details.length + 1; // 2 nights = 3 days, 3 nights = 4 days
 
   const [bookingData, setBookingData] = useState<BookingData>({
@@ -503,8 +502,60 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
     total: totalPrice,
     arrangementLength: arrangementLength,
     travelMode: travelMode,
+    optionalProducts,
   });
 
+  useEffect(() => {
+    // Create a deep copy to avoid mutating the original prop
+    const enrichedReservations = JSON.parse(JSON.stringify(selectedArrangement.night_details));
+
+    // Loop through each night to add calculated prices
+    enrichedReservations.forEach((reservation: any) => {
+      const boardKey = reservation.board_type === "HB" ? "halfboard" : "breakfast";
+      const nightlyPricing = pricingData[boardKey];
+
+      // 1. Add price to each chosen room
+      reservation.chosen_rooms.forEach((room: any) => {
+        const price = getPriceForSingleRoom(
+          nightlyPricing,
+          reservation.hotel,
+          boardKey,
+          room,
+          reservation,
+          travelMode,
+          arrangementLength,
+          reservation.restaurant_chosen,
+        );
+        room.price = price; // Add the calculated price to the room object
+      });
+
+      // 2. Add unit price to each selected extra
+      reservation.chosen_rooms.forEach((room: any) => {
+        if (room.extras) {
+          Object.keys(room.extras).forEach((extraKey) => {
+            if (room.extras[extraKey].selected) {
+              const meta = getProductMeta(
+                reservation.hotel,
+                extraKey,
+                arrangementLength as 3 | 4,
+                optionalProducts
+              );
+              if (meta) {
+                // Add the price-per-unit to the extra object
+                room.extras[extraKey].unitPrice = meta.price;
+              }
+            }
+          });
+        }
+      });
+    });
+
+    setBookingData(prevData => ({
+      ...prevData,
+      reservations: enrichedReservations,
+    }));
+  }, [selectedArrangement, pricingData, boardOption, travelMode, optionalProducts, arrangementLength]);
+ 
   const [showRoomDetailModal, setShowRoomDetailModal] = useState(false);
   const [modalRoomData, setModalRoomData] = useState<any>(null);
 
@@ -531,6 +582,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                 setModalRoomData(room);
                 setShowRoomDetailModal(true);
               }}
+              optionalProducts={optionalProducts}
             />
           </div>
           <div className="lg:w-[400px]">
