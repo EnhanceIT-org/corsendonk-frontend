@@ -1,7 +1,7 @@
 {
   "common.backToSelection": "Retour à la sélection",
   "common.loading": "Chargement...",
-  "common.pleaseWait": "Veuillez patienter un instant",
+  "common.pleaseWait": "Veuillez patienter, nous récupérons la disponibilité et les prix pour vous.",
   "common.error": "Erreur",
   "common.submit": "Soumettre",
   "common.next": "Suivant",
@@ -18,7 +18,9 @@
   "occupancy.adult": "Ad.",
   "occupancy.child": "Enf.",
   "occupancy.adults": "Adultes",
-  "occupancy.children": "Enfants",
+  "occupancy.babies": "Bébés",
+  "occupancy.children3_5": "Enfants (3-5)",
+  "occupancy.children6_12": "Enfants (6-12)",
   "roomPicker.title": "Choisissez vos chambres et options",
   "roomPicker.error.guestsNotAssigned": "Tous les participants n'ont pas été assignés à des chambres, ou certaines chambres sont vides. Veuillez vérifier votre sélection.",
   "roomPicker.error.noArrangementSelected": "Impossible de continuer, aucune formule sélectionnée.",
@@ -38,9 +40,6 @@
   "chargingMethods.perperson": "Par personne",
   "chargingMethods.perpersonnight": "Par personne et par nuit",
   "chargingMethods.pertimeunit": "Par chambre",
-  "optionalProducts": {
-  "perDay": "Par jour"
-},
   "languageSwitcher.title": "Choisir la langue",
   "languageSwitcher.nl": "Nederlands",
   "languageSwitcher.en": "English",
@@ -137,5 +136,8 @@
   "common.close": "Fermer",
   "pricingSummary.totalPriceLabel": "Prix total",
   "pricingSummary.avgPriceLabel": "Prix moyen par chambre par nuit : €{{price}}",
-  "pricingSummary.reserveButton": "Réservez vos chambres maintenant"
+  "pricingSummary.reserveButton": "Réservez vos chambres maintenant",
+  "optionalProducts.perDay": "Par jour",
+  "optionalProducts.lunch": "Déjeuner",
+  "optionalProducts.huisdier": "Animal de compagnie"
 }

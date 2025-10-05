@@ -1,7 +1,7 @@
 {
   "common.backToSelection": "Back to Selection",
   "common.loading": "Loading...",
-  "common.pleaseWait": "Just a moment please",
+  "common.pleaseWait": "Please wait, we are retrieving availability and prices for you.",
   "common.error": "Error",
   "common.submit": "Submit",
   "common.next": "Next",
@@ -18,7 +18,9 @@
   "occupancy.adult": "Ad.",
   "occupancy.child": "Ch.",
   "occupancy.adults": "Adults",
-  "occupancy.children": "Children",
+  "occupancy.babies": "Babies",
+  "occupancy.children3_5": "Children (3-5)",
+  "occupancy.children6_12": "Children (6-12)",
   "roomPicker.title": "Choose your rooms and options",
   "roomPicker.error.guestsNotAssigned": "Not all guests have been assigned to rooms, or there are rooms without guests. Please check your selection.",
   "roomPicker.error.noArrangementSelected": "Cannot proceed, no arrangement selected.",
@@ -38,9 +40,6 @@
   "chargingMethods.perperson": "Per person",
   "chargingMethods.perpersonnight": "Per person per night",
   "chargingMethods.pertimeunit": "Per room",
-  "optionalProducts": {
-  "perDay": "Per day"
-},
   "languageSwitcher.title": "Select Language",
   "languageSwitcher.nl": "Nederlands",
   "languageSwitcher.en": "English",
@@ -137,6 +136,8 @@
   "common.close": "Close",
   "pricingSummary.totalPriceLabel": "Total Price",
   "pricingSummary.avgPriceLabel": "Average price per room per night: €{{price}}",
-  "pricingSummary.reserveButton": "Reserve your rooms now"
-  
+  "pricingSummary.reserveButton": "Reserve your rooms now",
+  "optionalProducts.perDay": "Per day",
+  "optionalProducts.lunch": "Lunch",
+  "optionalProducts.huisdier": "Pet"
 }

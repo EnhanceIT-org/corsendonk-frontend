@@ -1,22 +1,29 @@
 
-// AGE CATEGORIES ARE FUCKED. In the backend we can only specify 'Childcount', which
-//always defaults to 0-2 years, and because of the mews setup diner etc doesn't get added
-//for babies, so if children are selected pricing isn't correct.
 export const ageCategoryMapping: Record<
   string,
-  { adult: string; child: string }
+  { adult: string;
+    child6_12: string;
+    child3_5: string;
+    babies: string;
+  }
 > = {
   hotel1: {
     adult: "e6c1575b-5c75-41b9-8667-adf200f7bc48", // Adults (No age limit)
-    child: "d99ca5b0-ff54-4b8f-9105-af3b00ae6cee", // Child 6-12 years
+    child6_12: "d99ca5b0-ff54-4b8f-9105-af3b00ae6cee", // Child 6-12 years
+    child3_5: "aa6eeb7f-ab65-464c-9d4c-af3b00adedc8", //child 3-5
+    babies: "c8d2e446-f518-45ac-bc83-aee600df5e0e", 
   },
   hotel2: {
     adult: "30a5e937-e0ec-4888-946a-ae4a00d4dad6", // Adults (No age limit)
-    child: "25ce1bd7-d5e7-4e5f-a617-af5500bf631c", // Child 6-12 years
+    child6_12: "25ce1bd7-d5e7-4e5f-a617-af5500bf631c", // Child 6-12 years
+    child3_5: "20ab1fe5-7f9d-431c-a102-af5500bf3c23", // Child 3-5 years
+    babies: "aeef6d18-c058-437b-9e68-ae4a00d4dad7", // Babies
   },
   hotel3: {
     adult: "e3bc5a6c-366e-4fd8-9273-ade400cf5657", // Adults (No age limit)
-    child: "1707052e-2fbc-443d-a9a7-af6600bdc199", // Child 6-12 years
+    child6_12: "1707052e-2fbc-443d-a9a7-af6600bdc199", // Child 6-12 years
+    child3_5: "b594682f-d7fc-4414-8f75-af6600bd90c0", // Child 3-5 years
+    babies: "ac33afdc-32a2-4e4d-ace1-ade400cf5657", // Babies
   },
 };
 
@@ -124,8 +131,14 @@ export const HOTEL_NAME_MAPPING: { [key: string]: string } = {
 };
 
 
-export const lunchAdjustmentForChild: Record<string, number> = {
+export const lunchAdjustmentForChild6_12: Record<string, number> = {
   hotel1: 7.50,
   hotel2: 8.50,
   hotel3: 8.50,
+};
+
+export const lunchAdjustmentForChild3_5: Record<string, number> = {
+  hotel1: 11.25,
+  hotel2: 12.50,
+  hotel3: 12.50,
 };

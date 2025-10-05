@@ -1,18 +1,24 @@
 export const ageCategoryMapping: Record<
   string,
-  { adult: string; child: string }
+  { adult: string; child6_12: string; child3_5: string; babies: string }
 > = {
   hotel1: {
     adult: "16487bf1-af39-46e0-aae5-b1d100cfeec9",
-    child: "324ab00f-5da5-498b-a5d5-b1d100cfeec9",
+    child6_12: "585c1866-d27d-45b8-baa7-b2d900f3ba46",
+    child3_5: "324ab00f-5da5-498b-a5d5-b1d100cfeec9",
+    babies: "cb14fae0-0618-4ea9-99b8-b3510117a959",
   },
   hotel2: {
     adult: "37a0fb60-2212-450f-a17c-b1e900ba9722",
-    child: "514dd72f-3b63-45d2-aad3-b1e900ba9722",
+    child6_12: "514dd72f-3b63-45d2-aad3-b1e900ba9722",
+    child3_5: "e523bbf3-3328-49b4-ac9b-b3510128b6ae",
+    babies: "87528b11-0347-4432-8b3b-b351012893db",
   },
   hotel3: {
     adult: "28a0d68d-d2d7-438a-af37-af6a009d86ac",
-    child: "37119ed2-d0c3-4ce5-9abb-af6a009d86ac",
+    child6_12: "163b58ff-3063-4b10-81fc-b351012a26b3",
+    child3_5: "37119ed2-d0c3-4ce5-9abb-af6a009d86ac",
+    babies: "d36b4ee5-30ea-4f64-b063-afbd00edce5a",
   },
 };
 
@@ -105,7 +111,13 @@ export const HOTEL_NAME_MAPPING: { [key: string]: string } = {
 };
 
 
-export const lunchAdjustmentForChild: Record<string, number> = {
+export const lunchAdjustmentForChild6_12: Record<string, number> = {
+  hotel1: 7.50,
+  hotel2: 8.50,
+  hotel3: 8.50,
+};
+
+export const lunchAdjustmentForChild3_5: Record<string, number> = {
   hotel1: 7.50,
   hotel2: 8.50,
   hotel3: 8.50,

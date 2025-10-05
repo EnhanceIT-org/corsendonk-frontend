@@ -1,7 +1,7 @@
 {
   "common.backToSelection": "Terug naar Selectie",
   "common.loading": "Laden...",
-  "common.pleaseWait": "Eventjes Geduld Aub",
+  "common.pleaseWait": "Even geduld aub, we halen de beschikbaarheden en prijzen voor jou op.",
   "common.error": "Fout",
   "common.submit": "Verstuur",
   "common.next": "Volgende",
@@ -18,7 +18,9 @@
   "occupancy.adult": "Volw.",
   "occupancy.child": "Kind.",
   "occupancy.adults": "Volwassenen",
-  "occupancy.children": "Kinderen",
+  "occupancy.babies": "Baby's",
+  "occupancy.children3_5": "Kinderen (3-5)",
+  "occupancy.children6_12": "Kinderen (6-12)",
   "roomPicker.title": "Kies uw kamers en opties",
   "roomPicker.error.guestsNotAssigned": "Niet alle gasten zijn toegewezen aan kamers of er zijn kamers zonder gasten. Controleer uw selectie.",
   "roomPicker.error.noArrangementSelected": "Kan niet doorgaan, geen arrangement geselecteerd.",
@@ -38,9 +40,6 @@
   "chargingMethods.perperson": "Per persoon",
   "chargingMethods.perpersonnight": "Per persoon per nacht",
   "chargingMethods.pertimeunit": "Per kamer",
-  "optionalProducts": {
-  "perDay": "Per dag"
-},
   "languageSwitcher.title": "Selecteer Taal",
   "languageSwitcher.nl": "Nederlands",
   "languageSwitcher.en": "English",
@@ -137,5 +136,8 @@
   "common.close": "Sluiten",
   "pricingSummary.totalPriceLabel": "Totale Prijs",
   "pricingSummary.avgPriceLabel": "Gemiddelde prijs per kamer per nacht: € {{price}}",
-  "pricingSummary.reserveButton": "Reserveer uw kamers nu"
+  "pricingSummary.reserveButton": "Reserveer uw kamers nu",
+  "optionalProducts.perDay": "Per dag",
+  "optionalProducts.lunch": "Lunch",
+  "optionalProducts.huisdier": "Huisdier"
 }

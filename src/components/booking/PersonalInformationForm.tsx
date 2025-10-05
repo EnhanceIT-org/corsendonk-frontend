@@ -77,7 +77,6 @@ export function PersonalInformationForm({ bookingData, travelMode }) {
 
     document.body.appendChild(script);
 
-    // Cleanup function
     return () => {
       if (script.parentNode) {
         document.body.removeChild(script);
