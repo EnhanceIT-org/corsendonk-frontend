@@ -5,130 +5,11 @@ import { format } from "date-fns";
 import { nl, enUS, fr } from "date-fns/locale";
 import { Coffee, UtensilsCrossed, Users, Info } from "lucide-react";
 import {
-  ageCategoryMapping,
-  BoardMapping,
   HOTEL_NAME_MAPPING,
   lunchAdjustmentForChild6_12,
   lunchAdjustmentForChild3_5,
 } from "../../mappings/mappings";
-
-
-export function getPriceForSingleRoom(
-  nightlyPricing: any,
-  hotel: string,
-  boardType: string,
-  room: any,
-  reservation: any,
-  travelMode: string,
-  arrangementLength: number,
-  restaurantChosen: string | null,
-): number {
-  const nightlyArr = nightlyPricing?.nightlyPricing ?? [];
-  const foundEntry = nightlyArr.find(
-    (entry: any) => entry.date === reservation.date,
-  );
-  if (!foundEntry) return 0;
-  if (!foundEntry?.pricing.CategoryPrices) return 0;
-  const cat = foundEntry.pricing.CategoryPrices.find(
-    (cp: any) => cp.CategoryId === room.category_id,
-  );
-  if (!cat) return 0;
-  const occupantAdults = room.occupant_countAdults ?? 0;
-  const occupant_countChildren6_12 = room.occupant_countChildren6_12 ?? 0;
-  const occupant_countChildren3_5 = room.occupant_countChildren3_5 ?? 0;
-  const occupantTotal = occupantAdults + occupant_countChildren6_12 + occupant_countChildren3_5;
-  const occupantArray: any[] = [];
-  if (occupantAdults > 0) {
-    occupantArray.push({
-      AgeCategoryId: ageCategoryMapping[hotel]?.adult,
-      PersonCount: occupantAdults,
-    });
-  }
-  if (occupant_countChildren6_12 > 0) {
-    occupantArray.push({
-      AgeCategoryId: ageCategoryMapping[hotel]?.child6_12,
-      PersonCount: occupant_countChildren6_12,
-    });
-  }
-  if (occupant_countChildren3_5 > 0) {
-    occupantArray.push({
-      AgeCategoryId: ageCategoryMapping[hotel]?.child3_5,
-      PersonCount: occupant_countChildren3_5,
-    });
-  }
-  let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
-    if (op.Occupancies.length !== occupantArray.length) return false;
-    const sorted1 = [...op.Occupancies].sort((a, b) =>
-      (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
-    );
-    const sorted2 = occupantArray
-      .slice()
-      .sort((a, b) =>
-        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
-      );
-    for (let i = 0; i < sorted1.length; i++) {
-      if (
-        sorted1[i].AgeCategoryId !== sorted2[i].AgeCategoryId ||
-        sorted1[i].PersonCount !== sorted2[i].PersonCount
-      ) {
-        return false;
-      }
-    }
-    return true;
-  });
-  occupantPriceEntry ??= cat.OccupancyPrices.find((op: any) => {
-    const sum = op.Occupancies.reduce(
-      (acc: number, x: any) => acc + x.PersonCount,
-      0,
-    );
-    return sum === occupantTotal;
-  });
-  if (!occupantPriceEntry) return 0;
-  const rateId = getNightlyRateId(
-    hotel,
-    boardType,
-    travelMode,
-    arrangementLength,
-    restaurantChosen,
-  );
-  const rPrice = occupantPriceEntry.RateGroupPrices.find(
-    (rgp: any) => rgp.MinRateId === rateId,
-  );
-  if (!rPrice) return 0;
-  const val = rPrice.MinPrice?.TotalAmount?.GrossValue;
-  if (typeof val === "number") return val;
-  return 0;
-}
-function getNightlyRateId(
-  hotel: string,
-  boardTypeInput: string,
-  travelMode: string,
-  arrangementLength: number,
-  restaurantChosen: string | null
-) {
-  const board = boardTypeInput === "halfboard" ? "halfboard" : "breakfast";
-  let mode = travelMode;
-  if (mode !== "walking" && mode !== "cycling") mode = "walking";
-  const lengthKey = arrangementLength === 3 ? "3D" : "4D";
-
-  let rateId = "";
-  const hotelRates = BoardMapping[hotel]?.[mode]?.[lengthKey];
-
-  if (hotelRates) {
-    if (
-      hotel === "hotel3" &&
-      board === "halfboard" &&
-      restaurantChosen &&
-      (restaurantChosen === "Bink" || restaurantChosen === "Bardo")
-    ) {
-      rateId = hotelRates[board]?.[restaurantChosen] ?? "";
-    } else {
-      rateId = hotelRates[board] ?? "";
-    }
-  }
-
-  return rateId;
-}
+import { getPriceForSingleRoom } from "./pricing";
 
 
 function getLocale(language: string) {
@@ -205,6 +86,12 @@ export function BookingDetails({
             reservation.board_type === "HB" ? "halfboard" : "breakfast";
 
           const nightlyPricing = bookingData.pricing_data[boardKey];
+          // Resolve this night's pricing object (match by date + hotel) so we
+          // can hand the shared helper the per-night `.pricing` directly.
+          const nightPricing = nightlyPricing?.nightlyPricing?.find(
+            (e: any) =>
+              e.date === reservation.date && e.hotel === reservation.hotel,
+          )?.pricing;
 
           return (
             <div
@@ -255,12 +142,11 @@ export function BookingDetails({
                         </div>
                         <span className="font-medium">
                           €{getPriceForSingleRoom(
-                            nightlyPricing,
+                            nightPricing,
                             reservation.hotel,
                             boardKey,
-                            room,
-                            reservation,
                             bookingData.travelMode,
+                            room,
                             bookingData.arrangementLength,
                             reservation.restaurant_chosen,
                           ).toFixed(2)}
