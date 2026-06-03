@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react"; 
 import { useTranslation } from 'react-i18next';
 import { PersonalInformationForm } from "./PersonalInformationForm";
-import { BookingDetails, getPriceForSingleRoom, getProductMeta } from "./BookingDetails"; 
+import { BookingDetails, getProductMeta } from "./BookingDetails";
+import { getPriceForSingleRoom } from "./pricing";
 import { Breadcrumb } from "./Breadcrumb";
 import { RoomDetailModal } from "./RoomDetailModal";
 
@@ -513,16 +514,21 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
     enrichedReservations.forEach((reservation: any) => {
       const boardKey = reservation.board_type === "HB" ? "halfboard" : "breakfast";
       const nightlyPricing = pricingData[boardKey];
+      // Resolve this night's pricing object (match by date + hotel) for the
+      // shared helper, which expects the per-night `.pricing` directly.
+      const nightPricing = nightlyPricing?.nightlyPricing?.find(
+        (e: any) =>
+          e.date === reservation.date && e.hotel === reservation.hotel,
+      )?.pricing;
 
       // 1. Add price to each chosen room
       reservation.chosen_rooms.forEach((room: any) => {
         const price = getPriceForSingleRoom(
-          nightlyPricing,
+          nightPricing,
           reservation.hotel,
           boardKey,
-          room,
-          reservation,
           travelMode,
+          room,
           arrangementLength,
           reservation.restaurant_chosen,
         );

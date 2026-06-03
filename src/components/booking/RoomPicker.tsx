@@ -21,12 +21,11 @@ import {
 } from "lucide-react";
 
 import {
-  ageCategoryMapping,
-  BoardMapping,
   HOTEL_NAME_MAPPING,
   lunchAdjustmentForChild6_12,
   lunchAdjustmentForChild3_5,
 } from "../../mappings/mappings";
+import { getPriceForSingleRoom } from "./pricing";
 
 import { PricingSummary } from "./PricingSummary";
 import { Breadcrumb } from "./Breadcrumb";
@@ -113,37 +112,6 @@ const sumNightChildren = (night: any) =>
 
 function getHotelDisplayName(hotelKey: string): string {
   return HOTEL_NAME_MAPPING[hotelKey] || hotelKey;
-}
-
-function getNightlyRateId(
-  hotel: string,
-  boardType: string,
-  travelMode: string,
-  arrangementLength: number,
-  restaurantChosen: string | null,
-) {
-  const board = boardType === "HB" ? "halfboard" : "breakfast";
-  let mode = travelMode;
-  if (mode !== "walking" && mode !== "cycling") mode = "walking";
-  const lengthKey = arrangementLength === 3 ? "3D" : "4D";
-
-  let rateId = "";
-  const hotelRates = BoardMapping[hotel]?.[mode]?.[lengthKey];
-
-  if (hotelRates) {
-    if (
-      hotel === "hotel3" &&
-      board === "halfboard" &&
-      restaurantChosen &&
-      (restaurantChosen === "Bink" || restaurantChosen === "Bardo")
-    ) {
-      rateId = hotelRates[board]?.[restaurantChosen] || "";
-    } else {
-      rateId = hotelRates[board] || "";
-    }
-  }
-
-  return rateId;
 }
 
 function calculateTotalPrice(
@@ -360,121 +328,6 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     [hotel: string]: any;
   }>(null);
 
-
-  function getPriceForSingleRoom(
-    nightlyPricing: any,
-    hotel: string,
-    boardType: string, // "HB" or "B&B" based on night.board_type
-    travelMode: string,
-    room: any,
-    children6_12Count: number,
-    children3_5Count: number,
-    adultsCount: number,
-    arrangementLengthParam: number,
-    restaurantChosen: string | null,
-  ): number {
-    if (!nightlyPricing?.CategoryPrices) {
-      return 0;
-    }
-    const cat = nightlyPricing.CategoryPrices.find(
-      (cp: any) => cp.CategoryId === room.category_id,
-    );
-    if (!cat) {
-      return 0;
-    }
-
-    const occupantTotal = adultsCount + children6_12Count + children3_5Count;
-    const occupantArray: any[] = [];
-    const adultAgeCatId = ageCategoryMapping[hotel]?.adult;
-    const child6_12AgeCatId = ageCategoryMapping[hotel]?.child6_12;
-    const child3_5AgeCatId = ageCategoryMapping[hotel]?.child3_5;
-
-
-    if (adultsCount > 0) {
-      occupantArray.push({
-        AgeCategoryId: adultAgeCatId,
-        PersonCount: adultsCount,
-      });
-    }
-    if (children6_12Count > 0) {
-      occupantArray.push({
-        AgeCategoryId: child6_12AgeCatId,
-        PersonCount: children6_12Count,
-      });
-    }
-    if (children3_5Count > 0) {
-      occupantArray.push({
-        AgeCategoryId: child3_5AgeCatId,
-        PersonCount: children3_5Count,
-      });
-    }
-
-
-    let occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
-      if (!op.Occupancies || op.Occupancies.length !== occupantArray.length) {
-        return false;
-      }
-      const sortedApiOccupancies = [...op.Occupancies].sort((a, b) =>
-        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
-      );
-      const sortedTargetOccupancies = [...occupantArray].sort((a, b) =>
-        (a.AgeCategoryId ?? "").localeCompare(b.AgeCategoryId ?? ""),
-      );
-
-
-      for (let i = 0; i < sortedApiOccupancies.length; i++) {
-        if (
-          sortedApiOccupancies[i].AgeCategoryId !==
-          sortedTargetOccupancies[i].AgeCategoryId ||
-          sortedApiOccupancies[i].PersonCount <
-          sortedTargetOccupancies[i].PersonCount
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-
-
-    if (!occupantPriceEntry) {
-      occupantPriceEntry = cat.OccupancyPrices.find((op: any) => {
-        const sum = op.Occupancies.reduce(
-          (acc: number, x: any) => acc + x.PersonCount,
-          0,
-        );
-        return sum === occupantTotal;
-      });
-    }
-
-    if (!occupantPriceEntry) {
-      console.log("no occupant price entry");
-      return 0;
-    }
-
-    const rateId = getNightlyRateId(
-      hotel,
-      boardType,
-      travelMode,
-      arrangementLengthParam,
-      restaurantChosen,
-    );
-
-    const rPrice = occupantPriceEntry.RateGroupPrices.find(
-      (rgp: any) => rgp.MinRateId === rateId,
-    );
-    if (!rPrice) {
-      console.log("no rate price");
-      return 0;
-    }
-
-    const val = rPrice.MinPrice?.TotalAmount?.GrossValue;
-    if (typeof val === "number") {
-      return val;
-    }
-
-    console.log("no value");
-    return 0;
-  }
 
   const [pricesPerNight, setPricesPerNight] = useState<number[]>(
     Array(arrangementLength - 1).fill(0),
@@ -946,6 +799,13 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     // Wait until automatic distribution finished
     if (!defaultDistributed) return;
     if (!selectedArrangement || !pricingData) return;
+    // The pricing POST resolves *after* the arrangement is set, so pricingData
+    // briefly still holds its initial { breakfast: null, halfboard: null }. That
+    // object is truthy, so the guard above doesn't catch it. Treat a board whose
+    // pricing hasn't loaded yet as "still loading" rather than a missing-price
+    // error — otherwise we log a false positive and flash the error banner during
+    // load. A genuinely empty board is handled by isBoardAvailable / the toggle.
+    if (!pricingData[selectedBoardOption]?.nightlyPricing) return;
 
     let isPriceMissingForOccupiedRoom = false;
 
@@ -962,6 +822,14 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
         if (!foundEntry?.pricing) {
           // We check against the total booking guests, as they are intended for this night.
           if (adults + children3_5 + children6_12 > 0) {
+            console.error("[RoomPicker] price=0 cause: no nightly pricing entry for this date/hotel.", {
+              context: "nightlyTotals",
+              date: night.date,
+              hotel: night.hotel,
+              boardKey,
+              foundEntry,
+              availableNights: nightlyPricingForBoard.map((x: any) => ({ date: x.date, hotel: x.hotel })),
+            });
             isPriceMissingForOccupiedRoom = true;
           }
           return 0; // No pricing, so night total is 0.
@@ -986,12 +854,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
             night.board_type,
             travelMode,
             room,
-            roomChildren6_12,
-            roomChildren3_5,
-            roomAdults,
             arrangementLength,
             night.restaurant_chosen,
-
           );
 
 
@@ -1045,7 +909,19 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
     setTotalPrice(newTotal);
   }, [selectedArrangement, pricesPerNight, arrangementLength, optionalProducts]);
 
+  // A board option is only selectable when it has both an arrangement and
+  // non-empty nightly pricing. The backend can return an arrangement for a
+  // board while omitting its pricing payload (e.g. breakfast for hotel3),
+  // which would otherwise leave the user on a board that can never be priced.
+  const isBoardAvailable = (option: "breakfast" | "halfboard") =>
+    !!arrangements[option] &&
+    (pricingData[option]?.nightlyPricing?.length ?? 0) > 0;
+
   const handleBoardToggle = (option: "breakfast" | "halfboard") => {
+    // Guard against selecting a board whose pricing is missing/empty.
+    if (!isBoardAvailable(option)) {
+      return;
+    }
     setError(null);
     setSelectedBoardOption(option);
 
@@ -1275,6 +1151,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
           <MealPlanToggle
             selected={selectedBoardOption}
             onChange={handleBoardToggle}
+            breakfastAvailable={isBoardAvailable("breakfast")}
+            halfBoardAvailable={isBoardAvailable("halfboard")}
           />
         </div>
 
@@ -1437,11 +1315,8 @@ export const RoomPicker: React.FC<RoomPickerProps> = ({
                                       night.board_type,
                                       travelMode,
                                       room,
-                                      room.occupant_countChildren6_12 ?? 0,
-                                      room.occupant_countChildren3_5 ?? 0,
-                                      room.occupant_countAdults ?? 0,
                                       arrangementLength,
-                                      night.restaurant_chosen, // NEW: Pass restaurant_chosen here too for display consistency
+                                      night.restaurant_chosen,
                                     );
                                     return price > 0
                                       ? `€${price.toFixed(2)}` // Format price
